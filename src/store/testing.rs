@@ -2,72 +2,139 @@ use std::fmt::Debug;
 
 use flume::{unbounded, Receiver, Sender};
 
+use crate::effects::Effects;
 use crate::reducer::Reducer;
 
-pub struct Store<State: Reducer> {
-    state: State,
+pub struct Store<State: Reducer>
+where
+    <State as Reducer>::Action: Debug,
+{
+    state: Option<State>,
+    // `Option` so that `into_inner` does not break `Drop`
     effects: Sender<<State as Reducer>::Action>,
     actions: Receiver<<State as Reducer>::Action>,
 }
 
-impl<State: Reducer> Store<State> {
+impl<State: Reducer> Store<State>
+where
+    <State as Reducer>::Action: Debug,
+{
     pub fn new(initial: State) -> Self {
         let (effects, actions) = unbounded();
 
         Self {
-            state: initial,
+            state: Some(initial),
             effects,
             actions,
         }
     }
 
     #[track_caller]
-    pub fn send(
-        mut self,
-        action: <State as Reducer>::Action,
-        assert: impl FnOnce(&mut State),
-    ) -> Self
+    pub fn send(&mut self, action: <State as Reducer>::Action, assert: impl FnOnce(&mut State))
     where
         State: Clone + Debug + PartialEq,
     {
         let mut expected = self.state.clone();
-        assert(&mut expected);
+        assert(expected.as_mut().unwrap());
 
-        assert!(self.actions.is_empty(), "an extra action was received");
+        assert!(
+            self.actions.is_empty(),
+            "an extra action was received: {:#?}",
+            self.actions.drain().collect::<Vec<_>>()
+        );
 
-        self.state.reduce(action, self.effects.clone());
+        self.state
+            .as_mut()
+            .unwrap()
+            .reduce(action, self.effects.clone());
         assert_eq!(self.state, expected);
-        self
     }
 
     #[track_caller]
-    pub fn receive(
-        mut self,
-        action: <State as Reducer>::Action,
-        assert: impl FnOnce(&mut State),
-    ) -> Self
+    pub fn recv(&mut self, action: <State as Reducer>::Action, assert: impl FnOnce(&mut State))
     where
         State: Clone + Debug + PartialEq,
         <State as Reducer>::Action: Debug + PartialEq,
     {
         let mut expected = self.state.clone();
-        assert(&mut expected);
+        assert(expected.as_mut().unwrap());
 
         let received = self.actions.recv().expect("no action received");
         assert_eq!(received, action);
 
-        self.state.reduce(action, self.effects.clone());
+        self.state
+            .as_mut()
+            .unwrap()
+            .reduce(action, self.effects.clone());
         assert_eq!(self.state, expected);
-        self
+    }
+
+    pub fn into_inner(mut self) -> State {
+        self.state.take().unwrap()
     }
 }
 
-impl<State: Reducer> Drop for Store<State> {
+impl<State: Reducer> Drop for Store<State>
+where
+    <State as Reducer>::Action: Debug,
+{
     #[track_caller]
     fn drop(&mut self) {
         assert!(
             self.actions.is_empty(),
-            "one or more extra actions were not tested for"
+            "one or more extra actions were not tested for: {:#?}",
+            self.actions.drain().collect::<Vec<_>>()
         );
     }
+}
+
+#[test]
+fn test_test_store() {
+    #[derive(Clone, Debug, Default, PartialEq)]
+    struct State {
+        n: usize,
+    }
+
+    #[derive(Debug, PartialEq)]
+    enum Action {
+        Increment,
+        Decrement,
+    }
+
+    use Action::*;
+    impl Reducer for State {
+        type Action = Action;
+
+        // This reducer ensures the value is always an even number
+        fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
+            match action {
+                Increment => {
+                    self.n += 1;
+                    if self.n % 2 == 1 {
+                        effects.send(Increment);
+                    }
+                }
+                Decrement => {
+                    self.n -= 1;
+                    if self.n % 2 == 1 {
+                        effects.send(Decrement);
+                    }
+                }
+            }
+        }
+    }
+
+    let mut store = Store::new(State::default());
+
+    store.send(Increment, |state| state.n = 1);
+    store.recv(Increment, |state| state.n = 2);
+
+    store.send(Increment, |state| state.n = 3);
+    store.recv(Increment, |state| state.n = 4);
+
+    store.send(Decrement, |state| state.n = 3);
+    store.recv(Decrement, |state| state.n = 2);
+
+    let result = store.into_inner();
+    assert_eq!(result.n, 2);
 }
