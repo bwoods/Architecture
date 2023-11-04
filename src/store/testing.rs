@@ -106,7 +106,7 @@ fn test_test_store() {
         type Action = Action;
 
         // This reducer ensures the value is always an even number
-        fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
+        fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
             match action {
                 Increment => {
                     self.n += 1;
