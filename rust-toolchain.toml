@@ -1,0 +1,5 @@
+# until feature(return_position_impl_trait_in_trait) is stabilized
+#   https://github.com/rust-lang/rust/pull/115822
+#
+[toolchain]
+channel = "nightly"

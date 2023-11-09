@@ -26,25 +26,3 @@ impl<Action> Boxed<Action> {
         }
     }
 }
-
-#[cfg(test)]
-pub mod tests {
-    use super::Store;
-
-    struct State;
-
-    enum Action {}
-
-    impl Store for State {
-        type Action = Action;
-
-        fn send(&self, _action: Self::Action) {}
-    }
-
-    #[test]
-    fn test_object_safety() {
-        let _object: Box<dyn Store<Action = Action>> = Box::new(State);
-
-        // …
-    }
-}

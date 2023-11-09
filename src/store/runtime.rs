@@ -22,8 +22,8 @@ impl<State: Reducer> Runtime<State> {
         let handle = std::thread::Builder::new()
             .name("Store".into())
             .spawn(move || {
-                // `Selector` polls in order, so all `internal` events are exhausted
-                //  before polling for new `external` events
+                // `Selector` polls in order, so all `internal` events are
+                //  exhausted before polling for new `external` events
                 while let Some(action) = Selector::new()
                     .recv(&internal, |action| action.ok())
                     .recv(&external, |action| action.ok())
@@ -40,16 +40,23 @@ impl<State: Reducer> Runtime<State> {
         Runtime { actions, handle }
     }
 
+    #[inline(always)]
+    fn send(&self, action: impl Into<<State as Reducer>::Action>) {
+        self.actions.send(action.into()).expect("Store::send")
+    }
+
+    #[inline(always)]
+    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
+    where
+        <State as Reducer>::Action: From<ChildAction>,
+    {
+        (self.actions.clone(), Default::default())
+    }
+
     /// Stops the `Store`’s runtime and returns the current `State` value.
     pub fn into_inner(self) -> State {
         drop(self.actions); // ends the `Selector` while-let
         self.handle.join().unwrap()
-    }
-}
-
-impl<State: Reducer> Effects<<State as Reducer>::Action> for Runtime<State> {
-    fn send(&self, action: impl Into<<State as Reducer>::Action>) {
-        self.actions.send(action.into()).expect("Store::send")
     }
 }
 
@@ -73,7 +80,7 @@ pub mod tests {
     impl Reducer for State {
         type Action = Action;
 
-        fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
+        fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
             use Action::*;
 
             match action {
@@ -149,7 +156,7 @@ pub mod tests {
         impl Reducer for State {
             type Action = Action;
 
-            fn reduce(&mut self, _action: Self::Action, _effects: impl Effects<Self::Action>) {}
+            fn reduce(&mut self, _action: Self::Action, _effects: impl Effects<Action = Action>) {}
         }
 
         let store = Runtime::new(State);
