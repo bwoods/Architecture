@@ -1,28 +1,44 @@
-use std::fmt::Debug;
+use std::thread::JoinHandle;
 
-use stack_dst::{buffers, Value};
+use flume::Sender;
 
-#[cfg(test)]
-mod testing;
+use crate::effects::Effects;
+use crate::reducer::Reducer;
+
+pub(crate) mod testing;
 
 mod runtime;
 
-trait Store {
-    type Action;
-
-    fn send(&self, action: Self::Action);
+pub struct Store<State: Reducer> {
+    actions: Sender<<State as Reducer>::Action>,
+    handle: JoinHandle<State>,
 }
 
-/// An owned dynamically typed [`Store`] for use in cases where you can't
-/// statically type your result or need to add some indirection.
-struct Boxed<Action> {
-    inline: Value<dyn Store<Action = Action>, buffers::U64_2>, // <arc>, <vtbl>
-}
+impl<State: Reducer> Store<State> {
+    pub fn new(state: State) -> Self
+    where
+        State: Send + 'static,
+        <State as Reducer>::Action: Send,
+    {
+        Store::runtime(state)
+    }
 
-impl<Action> Boxed<Action> {
-    fn new<S: Store<Action = Action> + Debug + 'static>(store: S) -> Boxed<Action> {
-        Self {
-            inline: Value::new_stable(store, |val| val as _).unwrap(),
-        }
+    #[inline(always)]
+    pub fn send(&self, action: impl Into<<State as Reducer>::Action>) {
+        self.actions.send(action.into()).expect("Store::send")
+    }
+
+    #[inline(always)]
+    pub fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
+    where
+        <State as Reducer>::Action: From<ChildAction>,
+    {
+        (self.actions.clone(), Default::default())
+    }
+
+    /// Stops the [`Store`]’s runtime and returns the current `State` value.
+    pub fn into_inner(self) -> State {
+        drop(self.actions); // ends the runtime’s while-let
+        self.handle.join().unwrap()
     }
 }

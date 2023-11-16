@@ -1,17 +1,10 @@
-use std::thread::JoinHandle;
+use flume::{unbounded, Selector};
 
-use flume::{unbounded, Selector, Sender};
-
-use crate::effects::Effects;
 use crate::reducer::Reducer;
+use crate::store::Store;
 
-pub struct Runtime<State: Reducer> {
-    actions: Sender<<State as Reducer>::Action>,
-    handle: JoinHandle<State>,
-}
-
-impl<State: Reducer> Runtime<State> {
-    pub fn new(mut state: State) -> Self
+impl<State: Reducer> Store<State> {
+    pub(crate) fn runtime(mut state: State) -> Self
     where
         State: Send + 'static,
         <State as Reducer>::Action: Send,
@@ -37,26 +30,7 @@ impl<State: Reducer> Runtime<State> {
             })
             .unwrap();
 
-        Runtime { actions, handle }
-    }
-
-    #[inline(always)]
-    fn send(&self, action: impl Into<<State as Reducer>::Action>) {
-        self.actions.send(action.into()).expect("Store::send")
-    }
-
-    #[inline(always)]
-    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
-    where
-        <State as Reducer>::Action: From<ChildAction>,
-    {
-        (self.actions.clone(), Default::default())
-    }
-
-    /// Stops the `Store`’s runtime and returns the current `State` value.
-    pub fn into_inner(self) -> State {
-        drop(self.actions); // ends the `Selector` while-let
-        self.handle.join().unwrap()
+        Store { actions, handle }
     }
 }
 
@@ -65,6 +39,7 @@ pub mod tests {
     use std::sync::{Arc, Mutex};
 
     use super::*;
+    use crate::effects::Effects;
 
     #[derive(Clone, Debug, Default)]
     pub struct State {
@@ -123,7 +98,7 @@ pub mod tests {
     ///
     fn test_action_ordering_guarantees() {
         let characters = Arc::new(Mutex::new(Default::default()));
-        let store = Runtime::new(State {
+        let store = Store::new(State {
             characters: characters.clone(),
         });
 
@@ -159,7 +134,7 @@ pub mod tests {
             fn reduce(&mut self, _action: Self::Action, _effects: impl Effects<Action = Action>) {}
         }
 
-        let store = Runtime::new(State);
+        let store = Store::new(State);
         let _result = store.into_inner(); // ensuring that `into_inner` terminates
     }
 }

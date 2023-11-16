@@ -2,15 +2,13 @@ use std::fmt::Debug;
 
 use flume::{unbounded, Receiver, Sender};
 
-use crate::effects::Effects;
 use crate::reducer::Reducer;
 
 pub struct Store<State: Reducer>
 where
     <State as Reducer>::Action: Debug,
 {
-    state: Option<State>,
-    // `Option` so that `into_inner` does not break `Drop`
+    state: Option<State>, // `Option` so that `into_inner` does not break `Drop`
     effects: Sender<<State as Reducer>::Action>,
     actions: Receiver<<State as Reducer>::Action>,
 }
@@ -90,6 +88,8 @@ where
 
 #[test]
 fn test_test_store() {
+    use crate::effects::Effects;
+
     #[derive(Clone, Debug, Default, PartialEq)]
     struct State {
         n: usize,
