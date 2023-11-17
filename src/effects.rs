@@ -1,12 +1,9 @@
-// Nested tuples are used by the [`scope`] function
-use std::marker::PhantomData as Marker;
-
 use flume::Sender;
 
 pub trait Effects: Clone {
     type Action;
 
-    fn send(&self, action: impl Into<Self::Action>);
+    fn send(&self, action: Self::Action);
 
     #[inline(always)]
     fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
@@ -22,12 +19,16 @@ impl<Action> Effects for Sender<Action> {
     type Action = Action;
 
     #[inline(always)]
-    fn send(&self, action: impl Into<Action>) {
-        let _ = self.send(action.into());
+    /// Initializes an effect that immediately emits the action passed in.
+    fn send(&self, action: Action) {
+        let _ = self.send(action);
     }
 }
 
+use std::marker::PhantomData as Marker;
+
 #[doc(hidden)]
+/// Nested tuples are used by the [`scope`] function
 impl<Action, Parent> Effects for (Parent, Marker<Action>)
 where
     Parent: Effects,
@@ -35,8 +36,7 @@ where
 {
     type Action = Action;
 
-    fn send(&self, action: impl Into<Self::Action>) {
-        let action: Action = action.into();
-        self.0.send(Parent::Action::from(action));
+    fn send(&self, action: Action) {
+        self.0.send(action.into());
     }
 }

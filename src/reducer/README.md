@@ -1,4 +1,4 @@
-This trait to represents the domain, logic and behavior for a feature. The domain is specified by a `State` and the `Actions` which act upon it
+This trait to represents the domain, logic and behavior for a feature. The domain is specified by a `State` and the `Actions` which act upon it.
 
 ```rust
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -46,11 +46,9 @@ impl Reducer for State {
 }
 ```
 
-The `reduce` method’s first responsibility is to mutate the feature’s current state given an action. Its second responsibility is to return effects that will be executed asynchronously and feed their data back into the system. Currently `Feature` does not need to run any effects, and so [`none`](https://pointfreeco.github.io/swift-composable-architecture/main/documentation/composablearchitecture/effect/none) is returned.
+The `reduce` method’s first responsibility is to mutate the feature’s current state given an action. Its second responsibility is to trigger effects that feed their actions back into the system. Currently `Feature` does not need to run any effects so `effects` goes unused.
 
-If the feature does need to do effectful work, then more would need to be done. For example, suppose the feature has the ability to start and stop a timer, and with each tick of the timer the `count` will be incremented. That could be done like so:
-
-
+If the action does need side effects, then more would need to be done. For example, if the feature always maintained an even number for its `State`, then each `Increment` and `Decrement` would need an effect to follow:
 
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
@@ -90,3 +88,5 @@ impl Reducer for State {
 }
 ```
 
+- See [`TestStore`] for a more complete test of this example.
+- See [`Effects`] for all of the effects that can be used within a `Reducer`.

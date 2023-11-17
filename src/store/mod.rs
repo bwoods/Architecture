@@ -23,7 +23,6 @@ impl<State: Reducer> Store<State> {
         Store::runtime(state)
     }
 
-    #[inline(always)]
     pub fn send(&self, action: impl Into<<State as Reducer>::Action>) {
         self.actions.send(action.into()).expect("Store::send")
     }
