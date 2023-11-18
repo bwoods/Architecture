@@ -2,7 +2,6 @@ use std::thread::JoinHandle;
 
 use flume::Sender;
 
-use crate::effects::Effects;
 use crate::reducer::Reducer;
 
 pub(crate) mod testing;
@@ -25,14 +24,6 @@ impl<State: Reducer> Store<State> {
 
     pub fn send(&self, action: impl Into<<State as Reducer>::Action>) {
         self.actions.send(action.into()).expect("Store::send")
-    }
-
-    #[inline(always)]
-    pub fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
-    where
-        <State as Reducer>::Action: From<ChildAction>,
-    {
-        (self.actions.clone(), Default::default())
     }
 
     /// Stops the [`Store`]’s runtime and returns the current `State` value.

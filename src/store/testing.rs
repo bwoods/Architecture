@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use flume::{unbounded, Receiver, Sender};
+use flume::{Receiver, Sender, unbounded};
 
 use crate::reducer::Reducer;
 
@@ -31,6 +31,7 @@ where
     pub fn send(&mut self, action: <State as Reducer>::Action, assert: impl FnOnce(&mut State))
     where
         State: Clone + Debug + PartialEq,
+        <State as Reducer>::Action: 'static,
     {
         let mut expected = self.state.clone();
         assert(expected.as_mut().unwrap());
@@ -52,7 +53,7 @@ where
     pub fn recv(&mut self, action: <State as Reducer>::Action, assert: impl FnOnce(&mut State))
     where
         State: Clone + Debug + PartialEq,
-        <State as Reducer>::Action: Debug + PartialEq,
+        <State as Reducer>::Action: Debug + PartialEq + 'static,
     {
         let mut expected = self.state.clone();
         assert(expected.as_mut().unwrap());

@@ -1,5 +1,8 @@
-use flume::{unbounded, Selector};
+use flume::unbounded;
+use futures::executor::block_on;
+use futures::StreamExt;
 
+use crate::effects::Executor;
 use crate::reducer::Reducer;
 use crate::store::Store;
 
@@ -15,16 +18,20 @@ impl<State: Reducer> Store<State> {
         let handle = std::thread::Builder::new()
             .name("Store".into())
             .spawn(move || {
-                // `Selector` polls in order, so all `internal` events are
-                //  exhausted before polling for new `external` events
-                while let Some(action) = Selector::new()
-                    .recv(&internal, |action| action.ok())
-                    .recv(&external, |action| action.ok())
-                    .wait()
-                {
-                    let effects = effects.clone();
-                    state.reduce(action, effects);
-                }
+                let executor: Executor<'_, <State as Reducer>::Action> = Executor::default();
+
+                block_on(executor.run(async {
+                    let mut stream = external.into_stream();
+                    while let Some(action) = stream.next().await {
+                        state.reduce(action, (executor.clone(), effects.clone()));
+
+                        // this inner loop ensures all `internal` events are exhausted
+                        // before returning to polling `external` events, above
+                        for action in internal.try_iter() {
+                            state.reduce(action, (executor.clone(), effects.clone()));
+                        }
+                    }
+                }));
 
                 state
             })
@@ -38,8 +45,11 @@ impl<State: Reducer> Store<State> {
 pub mod tests {
     use std::sync::{Arc, Mutex};
 
-    use super::*;
+    use ntest_timeout::timeout;
+
     use crate::effects::Effects;
+
+    use super::*;
 
     #[derive(Clone, Debug, Default)]
     pub struct State {
@@ -122,8 +132,6 @@ pub mod tests {
         // '1'’s side-effects happen BEFORE the other actions are dispatched
         assert_eq!(*values, vec!['1', 'A', 'B', 'C', 'D', '2', '3']);
     }
-
-    use ntest_timeout::timeout;
 
     #[test]
     #[timeout(1000)]

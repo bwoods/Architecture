@@ -9,9 +9,18 @@ include = ["LICENSE-APACHE.md", "LICENSE-MIT.md"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+spin = ["flume/spin"]
+
 [dependencies]
-futures = "0.3.29"
-flume = { version = "0.11.0", features = ["select"], default-features = false }
+futures = { version = "0.3.29", features = ["executor"] }
+async-executor = { version = "1.6.0" }
+once_cell = { version = "1.18.0" }
+
+[dependencies.flume]
+git = "https://github.com/bwoods/flume.git"
+features = ["async"]
+default-features = false
 
 [dependencies.derive_more]
 version = "0.99.17"
@@ -23,15 +32,16 @@ ntest_timeout = "0.9.0"
 
 
 [profile.release]
+debug = true
 lto = "thin"
-#debug = true
 
 [profile.deployment]
 inherits = "release"
 codegen-units = 1
 incremental = false
-lto = "fat"
+debug = false
 strip = true
+lto = "fat"
 
 [profile.dev]
 opt-level = 0
