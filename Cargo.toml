@@ -18,6 +18,9 @@ version = "0.99.17"
 features = ["from", "try_into", "as_ref", "as_mut"]
 default-features = false
 
+[dev-dependencies]
+ntest_timeout = "0.9.0"
+
 
 [profile.release]
 lto = "thin"

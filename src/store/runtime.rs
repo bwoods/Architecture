@@ -123,8 +123,13 @@ pub mod tests {
         assert_eq!(*values, vec!['1', 'A', 'B', 'C', 'D', '2', '3']);
     }
 
+    use ntest_timeout::timeout;
+
     #[test]
-    fn test_into_inner() {
+    #[timeout(1000)]
+    /// ## Note
+    /// If this test **timeout**s, the [`join`][std::thread::JoinHandle::join] in [`Store::into_inner`] is hanging
+    fn test_into_inner_returns() {
         struct State;
         enum Action {}
 
@@ -135,6 +140,6 @@ pub mod tests {
         }
 
         let store = Store::new(State);
-        let _result = store.into_inner(); // ensuring that `into_inner` terminates
+        store.into_inner();
     }
 }
