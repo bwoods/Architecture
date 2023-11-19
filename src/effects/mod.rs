@@ -15,8 +15,7 @@ pub trait Effects: Clone {
     #[inline(always)]
     fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
     where
-        <Self as Effects>::Action: From<ChildAction> + 'static,
-        ChildAction: 'static,
+        <Self as Effects>::Action: From<ChildAction>,
     {
         (self.clone(), Marker)
     }
@@ -28,7 +27,6 @@ pub trait Effects: Clone {
 // Nested tuples are used by the [`scope`] function
 impl<Action, Parent> Effects for (Parent, Marker<Action>)
 where
-    Action: 'static,
     Parent: Effects,
     <Parent as Effects>::Action: From<Action>,
 {
@@ -47,10 +45,7 @@ where
 
 #[doc(hidden)]
 // `Parent` tuple for `Effect::scope` tuples
-impl<Action> Effects for Rc<(LocalExecutor<'_>, RefCell<VecDeque<Action>>)>
-where
-    Action: 'static,
-{
+impl<'a, Action: 'a> Effects for Rc<(LocalExecutor<'a>, RefCell<VecDeque<Action>>)> {
     type Action = Action;
 
     #[inline(always)]
@@ -71,10 +66,7 @@ where
 
 #[doc(hidden)]
 // `Parent` for `TestStore` effects
-impl<Action> Effects for Sender<Action>
-where
-    Action: 'static,
-{
+impl<Action> Effects for Sender<Action> {
     type Action = Action;
 
     #[inline(always)]
