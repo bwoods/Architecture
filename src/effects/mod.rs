@@ -47,7 +47,7 @@ where
 
 #[doc(hidden)]
 // `Parent` tuple for `Effect::scope` tuples
-impl<Action> Effects for (Rc<LocalExecutor<'_>>, Rc<RefCell<VecDeque<Action>>>)
+impl<Action> Effects for Rc<(LocalExecutor<'_>, RefCell<VecDeque<Action>>)>
 where
     Action: 'static,
 {
@@ -60,10 +60,10 @@ where
 
     #[inline(always)]
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        let actions = self.1.clone();
+        let actions = self.clone();
 
         Task(self.0.spawn(stream.for_each(move |action| {
-            actions.borrow_mut().push_back(action);
+            actions.1.borrow_mut().push_back(action);
             future::ready(()) // https://docs.rs/futures/0.3.29/futures/stream/trait.StreamExt.html#method.for_each
         })))
     }

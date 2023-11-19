@@ -5,7 +5,6 @@ use std::rc::Rc;
 use async_executor::LocalExecutor;
 use flume::unbounded;
 use futures::executor::block_on;
-use futures::StreamExt;
 
 use crate::reducer::Reducer;
 use crate::store::Store;
@@ -21,21 +20,19 @@ impl<State: Reducer> Store<State> {
         let handle = std::thread::Builder::new()
             .name("Store".into())
             .spawn(move || {
-                // Only a `LocalExecutor` is needed; it runs entirely in this thread
-                let executor = Rc::new(LocalExecutor::new());
+                let effects = Rc::new((
+                    LocalExecutor::new(), // `LocalExecutor` as it runs entirely in this thread
+                    RefCell::new(VecDeque::new()),
+                ));
 
-                block_on(executor.run(async {
-                    // Only an `Rc` is needed (vs, an Arc) as `effects` never leaves the `LocalExecutor`
-                    let effects = Rc::new(RefCell::new(VecDeque::new()));
-                    let mut actions = external.into_stream();
+                block_on(effects.0.run(async {
+                    for action in external {
+                        state.reduce(action, effects.clone());
 
-                    while let Some(action) = actions.next().await {
-                        state.reduce(action, (executor.clone(), effects.clone()));
-
-                        // this inner loop ensures all `internal` events are exhausted
-                        // before returning to polling `external` events (above)
-                        while let Some(action) = effects.borrow_mut().pop_front() {
-                            state.reduce(action, (executor.clone(), effects.clone()));
+                        // this inner loop ensures all `internal` effects are exhausted
+                        // before returning to polling `external` actions (above)
+                        while let Some(action) = effects.1.borrow_mut().pop_front() {
+                            state.reduce(action, effects.clone());
                         }
                     }
                 }));
