@@ -9,7 +9,7 @@ pub(crate) mod testing;
 mod runtime;
 
 pub struct Store<State: Reducer> {
-    actions: Sender<<State as Reducer>::Action>,
+    sender: Sender<<State as Reducer>::Action>,
     handle: JoinHandle<State>,
 }
 
@@ -19,16 +19,24 @@ impl<State: Reducer> Store<State> {
         State: Send + 'static,
         <State as Reducer>::Action: Send,
     {
-        Store::runtime(state)
+        Store::with_name(state, "Store".into())
+    }
+
+    pub fn with_name(state: State, name: String) -> Self
+    where
+        State: Send + 'static,
+        <State as Reducer>::Action: Send,
+    {
+        Store::runtime(state, name)
     }
 
     pub fn send(&self, action: impl Into<<State as Reducer>::Action>) {
-        self.actions.send(action.into()).expect("Store::send")
+        self.sender.send(action.into()).expect("Store::send")
     }
 
     /// Stops the [`Store`]’s runtime and returns the current `State` value.
     pub fn into_inner(self) -> State {
-        drop(self.actions); // ends the runtime’s (outer) while-let
+        drop(self.sender); // ends the runtime’s (outer) while-let
         self.handle.join().unwrap()
     }
 }

@@ -2,46 +2,48 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use async_executor::LocalExecutor;
 use flume::unbounded;
-use futures::executor::block_on;
+use futures::executor::LocalPool;
 
 use crate::reducer::Reducer;
 use crate::store::Store;
 
 impl<State: Reducer> Store<State> {
-    pub(crate) fn runtime(mut state: State) -> Self
+    pub(crate) fn runtime(mut state: State, name: String) -> Self
     where
         State: Send + 'static,
         <State as Reducer>::Action: Send,
     {
-        let (actions, external) = unbounded();
+        let (sender, receiver) = unbounded();
+        let actions = sender.downgrade();
 
         let handle = std::thread::Builder::new()
-            .name("Store".into())
+            .name(name)
             .spawn(move || {
-                let effects = Rc::new((
-                    LocalExecutor::new(), // `LocalExecutor` as it runs entirely in this thread
-                    RefCell::new(VecDeque::new()),
-                ));
+                let mut executor = LocalPool::new();
+                let queue = RefCell::new(VecDeque::new());
 
-                block_on(effects.0.run(async {
-                    for action in external {
+                // We wrap all of these in a single `Rc` so that each `Effects::scope`
+                // only increments a single reference count; otherwise it would be three
+                let effects = Rc::new((queue, executor.spawner(), actions));
+
+                executor.run_until(async {
+                    for action in receiver {
                         state.reduce(action, effects.clone());
 
-                        // this inner loop ensures all `internal` effects are exhausted
-                        // before returning to polling `external` actions (above)
-                        while let Some(action) = effects.1.borrow_mut().pop_front() {
+                        // this inner loop ensures all internal effects are exhausted
+                        // before returning to polling external actions (above)
+                        while let Some(action) = effects.0.borrow_mut().pop_front() {
                             state.reduce(action, effects.clone());
                         }
                     }
-                }));
+                });
 
                 state
             })
             .unwrap();
 
-        Store { actions, handle }
+        Store { sender, handle }
     }
 }
 

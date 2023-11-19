@@ -14,13 +14,7 @@ spin = ["flume/spin"]
 
 [dependencies]
 futures = { version = "0.3.29", features = ["executor"] }
-async-executor = { version = "1.6.0" }
-once_cell = { version = "1.18.0" }
-
-[dependencies.flume]
-git = "https://github.com/bwoods/flume.git"
-features = ["async"]
-default-features = false
+flume = { version = "0.11.0", features = ["async"], default-features = false }
 
 [dependencies.derive_more]
 version = "0.99.17"

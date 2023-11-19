@@ -3,8 +3,10 @@ use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Rc;
 
-use async_executor::LocalExecutor;
-use flume::Sender;
+use flume::{Sender, WeakSender};
+use futures::executor::LocalSpawner;
+use futures::future::RemoteHandle;
+use futures::task::LocalSpawnExt;
 use futures::{future, Stream, StreamExt};
 
 pub trait Effects: Clone {
@@ -45,22 +47,27 @@ where
 
 #[doc(hidden)]
 // `Parent` tuple for `Effect::scope` tuples
-impl<'a, Action: 'a> Effects for Rc<(LocalExecutor<'a>, RefCell<VecDeque<Action>>)> {
+impl<Action: 'static> Effects
+    for Rc<(RefCell<VecDeque<Action>>, LocalSpawner, WeakSender<Action>)>
+{
     type Action = Action;
 
     #[inline(always)]
     fn send(&self, action: Action) {
-        self.1.borrow_mut().push_back(action);
+        self.0.borrow_mut().push_back(action);
     }
 
-    #[inline(always)]
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        let actions = self.clone();
+        match self.2.upgrade() {
+            None => Task(None),
+            Some(sender) => {
+                let stream = stream.then(move |action| sender.clone().into_send_async(action));
+                let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
 
-        Task(self.0.spawn(stream.for_each(move |action| {
-            actions.1.borrow_mut().push_back(action);
-            future::ready(()) // https://docs.rs/futures/0.3.29/futures/stream/trait.StreamExt.html#method.for_each
-        })))
+                // may return a `Task(None)` while the `Store` is shutting down
+                Task(self.1.spawn_local_with_handle(future).ok())
+            }
+        }
     }
 }
 
@@ -74,34 +81,23 @@ impl<Action> Effects for Sender<Action> {
         let _ = self.send(action);
     }
 
-    #[inline(always)]
-    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        let executor = LocalExecutor::default();
-        let actions = self.clone();
-
-        let task = executor.spawn(stream.for_each(move |action| {
-            let _ = actions.send(action);
-            future::ready(())
-        }));
-
-        while !executor.is_empty() {
-            executor.try_tick(); // TestStore runs it’s executor to completion
-        }
-
-        Task(task)
+    fn task<S: Stream<Item = Action> + 'static>(&self, _stream: S) -> Task {
+        todo!()
     }
 }
 
 /// `Task` based `Effects` are run on an local async executor
-#[must_use = "Dropping a Task cancels it, which means its stream won't continue running"]
-pub struct Task(async_executor::Task<()>);
+#[must_use = "Dropping a Task cancels it"]
+pub struct Task(Option<RemoteHandle<()>>);
 
 impl Task {
     pub fn detach(self) {
-        self.0.detach();
+        if let Some(handle) = self.0 {
+            handle.forget()
+        }
     }
 
     pub fn cancel(self) {
-        // dropping an async_executor::Task cancels it
+        // dropping it cancels it
     }
 }
