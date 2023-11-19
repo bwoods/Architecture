@@ -4,8 +4,8 @@
 
 pub use effects::Effects;
 pub use reducer::Reducer;
-pub use store::Store;
 pub use store::testing::Store as TestStore;
+pub use store::Store;
 
 mod effects;
 mod reducer;
