@@ -1,5 +1,6 @@
+use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
-use std::ops::Deref;
 use std::rc::Rc;
 
 use async_executor::LocalExecutor;
@@ -47,17 +48,15 @@ where
 }
 
 #[doc(hidden)]
-// `Parent` for `Effect::scope` tuples; holds both the effects and actions `Sender`s
-impl<Action, Parent> Effects for (Executor<'_, Action>, Parent)
+// `Parent` tuple for `Effect::scope` tuples
+impl<Action> Effects for (Rc<LocalExecutor<'_>>, Rc<RefCell<VecDeque<Action>>>)
 where
     Action: 'static,
-    Parent: Effects,
-    <Parent as Effects>::Action: From<Action>,
 {
     type Action = Action;
 
     fn send(&self, action: Action) {
-        self.1.send(action.into());
+        self.1.borrow_mut().push_back(action);
     }
 
     #[inline(always)]
@@ -90,36 +89,5 @@ where
 
         let executor = LocalExecutor::default();
         block_on(executor.run(future));
-    }
-}
-
-pub(crate) struct Executor<'a, Action> {
-    inner: Rc<LocalExecutor<'a>>,
-    marker: Marker<Action>,
-}
-
-impl<Action> Clone for Executor<'_, Action> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            marker: Marker,
-        }
-    }
-}
-
-impl<Action> Default for Executor<'_, Action> {
-    fn default() -> Self {
-        Self {
-            inner: Default::default(),
-            marker: Marker,
-        }
-    }
-}
-
-impl<'a, Action> Deref for Executor<'a, Action> {
-    type Target = LocalExecutor<'a>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
     }
 }

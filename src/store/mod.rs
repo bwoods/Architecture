@@ -28,7 +28,7 @@ impl<State: Reducer> Store<State> {
 
     /// Stops the [`Store`]’s runtime and returns the current `State` value.
     pub fn into_inner(self) -> State {
-        drop(self.actions); // ends the runtime’s while-let
+        drop(self.actions); // ends the runtime’s (outer) while-let
         self.handle.join().unwrap()
     }
 }

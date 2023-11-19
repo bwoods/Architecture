@@ -1,8 +1,12 @@
+use std::cell::RefCell;
+use std::collections::VecDeque;
+use std::rc::Rc;
+
+use async_executor::LocalExecutor;
 use flume::unbounded;
 use futures::executor::block_on;
 use futures::StreamExt;
 
-use crate::effects::Executor;
 use crate::reducer::Reducer;
 use crate::store::Store;
 
@@ -13,21 +17,24 @@ impl<State: Reducer> Store<State> {
         <State as Reducer>::Action: Send,
     {
         let (actions, external) = unbounded();
-        let (effects, internal) = unbounded();
 
         let handle = std::thread::Builder::new()
             .name("Store".into())
             .spawn(move || {
-                let executor: Executor<'_, <State as Reducer>::Action> = Executor::default();
+                // Only a `LocalExecutor` is needed; it runs entirely in this thread
+                let executor = Rc::new(LocalExecutor::new());
 
                 block_on(executor.run(async {
-                    let mut stream = external.into_stream();
-                    while let Some(action) = stream.next().await {
+                    // Only an `Rc` is needed (vs, an Arc) as `effects` never leaves the `LocalExecutor`
+                    let effects = Rc::new(RefCell::new(VecDeque::new()));
+                    let mut actions = external.into_stream();
+
+                    while let Some(action) = actions.next().await {
                         state.reduce(action, (executor.clone(), effects.clone()));
 
                         // this inner loop ensures all `internal` events are exhausted
-                        // before returning to polling `external` events, above
-                        for action in internal.try_iter() {
+                        // before returning to polling `external` events (above)
+                        while let Some(action) = effects.borrow_mut().pop_front() {
                             state.reduce(action, (executor.clone(), effects.clone()));
                         }
                     }
