@@ -4,10 +4,10 @@ use std::marker::PhantomData as Marker;
 use std::rc::Rc;
 
 use flume::{Sender, WeakSender};
-use futures::executor::LocalSpawner;
+use futures::{future, Stream, StreamExt};
+use futures::executor::{LocalPool, LocalSpawner};
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
-use futures::{future, Stream, StreamExt};
 
 pub trait Effects: Clone {
     type Action;
@@ -47,25 +47,25 @@ where
 
 #[doc(hidden)]
 // `Parent` tuple for `Effect::scope` tuples
-impl<Action: 'static> Effects
-    for Rc<(RefCell<VecDeque<Action>>, LocalSpawner, WeakSender<Action>)>
-{
+impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
     #[inline(always)]
     fn send(&self, action: Action) {
-        self.0.borrow_mut().push_back(action);
+        self.borrow_mut().push_back(action);
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        match self.2.upgrade() {
+        let executor = ambience::thread::get::<Executor<Action>>().unwrap();
+
+        match executor.actions.upgrade() {
             None => Task(None),
             Some(sender) => {
                 let stream = stream.then(move |action| sender.clone().into_send_async(action));
                 let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
 
                 // may return a `Task(None)` while the `Store` is shutting down
-                Task(self.1.spawn_local_with_handle(future).ok())
+                Task(executor.spawner.spawn_local_with_handle(future).ok())
             }
         }
     }
@@ -99,5 +99,19 @@ impl Task {
 
     pub fn cancel(self) {
         // dropping it cancels it
+    }
+}
+
+pub(crate) struct Executor<Action> {
+    pub(crate) spawner: LocalSpawner,
+    pub(crate) actions: WeakSender<Action>,
+}
+
+impl<Action> Executor<Action> {
+    pub(crate) fn new(executor: &LocalPool, actions: WeakSender<Action>) -> Self {
+        Self {
+            spawner: executor.spawner(),
+            actions,
+        }
     }
 }

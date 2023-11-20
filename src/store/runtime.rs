@@ -5,6 +5,8 @@ use std::rc::Rc;
 use flume::unbounded;
 use futures::executor::LocalPool;
 
+use crate::dependency::with_dependency;
+use crate::effects::Executor as EffectsExecutor;
 use crate::reducer::Reducer;
 use crate::store::Store;
 
@@ -21,25 +23,24 @@ impl<State: Reducer> Store<State> {
             .name(name)
             .spawn(move || {
                 let mut executor = LocalPool::new();
-                let queue = RefCell::new(VecDeque::new());
+                let runtime = EffectsExecutor::new(&executor, actions);
+                let effects = Rc::new(RefCell::new(VecDeque::new()));
 
-                // We wrap all of these in a single `Rc` so that each `Effects::scope`
-                // only increments a single reference count; otherwise it would be three
-                let effects = Rc::new((queue, executor.spawner(), actions));
-
-                executor.run_until(async {
-                    for action in receiver {
-                        state.reduce(action, effects.clone());
-
-                        // this inner loop ensures all internal effects are exhausted
-                        // before returning to polling external actions (above)
-                        while let Some(action) = effects.0.borrow_mut().pop_front() {
+                with_dependency(runtime, || {
+                    executor.run_until(async {
+                        for action in receiver {
                             state.reduce(action, effects.clone());
-                        }
-                    }
-                });
 
-                state
+                            // this inner loop ensures all internal effects are exhausted
+                            // before returning to polling external actions (above)
+                            while let Some(action) = effects.borrow_mut().pop_front() {
+                                state.reduce(action, effects.clone());
+                            }
+                        }
+                    });
+
+                    state
+                })
             })
             .unwrap();
 

@@ -7,6 +7,7 @@ pub use reducer::Reducer;
 pub use store::testing::Store as TestStore;
 pub use store::Store;
 
+pub mod dependency;
 mod effects;
 mod reducer;
 mod store;
