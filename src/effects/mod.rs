@@ -12,6 +12,7 @@ use futures::{future, Future, FutureExt, Stream, StreamExt};
 pub trait Effects: Clone {
     type Action;
 
+    /// An effect that immediately sends an action through the `Store`.
     fn send(&self, action: Self::Action);
 
     #[inline(always)]
@@ -30,7 +31,8 @@ pub trait Effects: Clone {
     /// should be preferred.
     fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
 
-    /// …
+    /// An effect that runs a [`future`][`std::future`] and, if it returns an `Action`,
+    /// sends it through the `Store`.
     fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
     where
         Self::Action: 'static,
@@ -42,7 +44,8 @@ pub trait Effects: Clone {
         self.task(stream).detach()
     }
 
-    /// …
+    /// An effect that runs a [`stream`](https://docs.rs/futures/latest/futures/stream/index.html)
+    /// and sends every `Action` it returns through the `Store`.
     fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
         self.task(stream).detach()
     }

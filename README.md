@@ -1,6 +1,8 @@
 # A Composable Architecture
 
-> [!NOTE]  
+
+
+> ### Note
 > If you have already used another unidirectional data flow architecture for application state management, the main take-away is that the State-Reducer pattern is a great fit to Rust’s restrictions on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability):
 >
 > - Rust requires mutable references to be unique
