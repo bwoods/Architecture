@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Rc;
 
-use flume::{Sender, WeakSender};
+use flume::WeakSender;
 use futures::executor::{LocalPool, LocalSpawner};
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
@@ -91,21 +91,6 @@ impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
                 Task(executor.spawner.spawn_local_with_handle(future).ok())
             }
         }
-    }
-}
-
-#[doc(hidden)]
-// `Parent` for `TestStore` effects
-impl<Action> Effects for Sender<Action> {
-    type Action = Action;
-
-    #[inline(always)]
-    fn send(&self, action: Action) {
-        let _ = self.send(action);
-    }
-
-    fn task<S: Stream<Item = Action> + 'static>(&self, _stream: S) -> Task {
-        todo!()
     }
 }
 

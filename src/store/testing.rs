@@ -1,6 +1,7 @@
+use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::fmt::Debug;
-
-use flume::{Receiver, Sender, unbounded};
+use std::rc::Rc;
 
 use crate::reducer::Reducer;
 
@@ -9,8 +10,8 @@ where
     <State as Reducer>::Action: Debug,
 {
     state: Option<State>, // `Option` so that `into_inner` does not break `Drop`
-    effects: Sender<<State as Reducer>::Action>,
-    actions: Receiver<<State as Reducer>::Action>,
+    effects: Rc<RefCell<VecDeque<<State as Reducer>::Action>>>,
+    // TODO: actions: Sender<Action>
 }
 
 impl<State: Reducer> Store<State>
@@ -18,12 +19,11 @@ where
     <State as Reducer>::Action: Debug,
 {
     pub fn new(initial: State) -> Self {
-        let (effects, actions) = unbounded();
+        let effects = Rc::new(RefCell::new(VecDeque::new()));
 
         Self {
             state: Some(initial),
             effects,
-            actions,
         }
     }
 
@@ -37,9 +37,9 @@ where
         assert(expected.as_mut().unwrap());
 
         assert!(
-            self.actions.is_empty(),
+            self.effects.borrow().is_empty(),
             "an extra action was received: {:#?}",
-            self.actions.drain().collect::<Vec<_>>()
+            self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
         );
 
         self.state
@@ -58,7 +58,11 @@ where
         let mut expected = self.state.clone();
         assert(expected.as_mut().unwrap());
 
-        let received = self.actions.recv().expect("no action received");
+        let received = self
+            .effects
+            .borrow_mut()
+            .pop_front()
+            .expect("no action received");
         assert_eq!(received, action);
 
         self.state
@@ -80,9 +84,9 @@ where
     #[track_caller]
     fn drop(&mut self) {
         assert!(
-            self.actions.is_empty(),
+            self.effects.borrow().is_empty(),
             "one or more extra actions were not tested for: {:#?}",
-            self.actions.drain().collect::<Vec<_>>()
+            self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
         );
     }
 }
