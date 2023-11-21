@@ -4,10 +4,10 @@ use std::marker::PhantomData as Marker;
 use std::rc::Rc;
 
 use flume::{Sender, WeakSender};
-use futures::{future, Stream, StreamExt};
 use futures::executor::{LocalPool, LocalSpawner};
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
+use futures::{future, Future, FutureExt, Stream, StreamExt};
 
 pub trait Effects: Clone {
     type Action;
@@ -17,12 +17,35 @@ pub trait Effects: Clone {
     #[inline(always)]
     fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
     where
-        <Self as Effects>::Action: From<ChildAction>,
+        Self::Action: From<ChildAction>,
     {
         (self.clone(), Marker)
     }
 
+    /// A [`Task`] represents asynchronous work that will then [`send`][`Store::send`] zero or more
+    /// actions back into the [`Store`] as it runs.
+    ///
+    /// Use this method if yuu need to ability to [`cancel`][Task::cancel] the [`Task`]
+    /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
+    /// should be preferred.
     fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
+
+    /// …
+    fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
+    where
+        Self::Action: 'static,
+    {
+        let stream = future
+            .into_stream()
+            .map(future::ready)
+            .filter_map(|option| option);
+        self.task(stream).detach()
+    }
+
+    /// …
+    fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
+        self.task(stream).detach()
+    }
 }
 
 #[doc(hidden)]
@@ -46,7 +69,7 @@ where
 }
 
 #[doc(hidden)]
-// `Parent` tuple for `Effect::scope` tuples
+// `Parent` for `Effect::scope` tuples
 impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
@@ -86,19 +109,25 @@ impl<Action> Effects for Sender<Action> {
     }
 }
 
-/// `Task` based `Effects` are run on an local async executor
-#[must_use = "Dropping a Task cancels it"]
+/// Asynchronous work being performed by a [`Store`][`crate::Store`].
+///
+/// A `Store` uses a [Local Async Executor][Why] to run its `Task`s.
+///
+/// [Why]: https://maciej.codes/2022-06-09-local-async.html
+#[must_use = "dropping a Task cancels the underlying future"]
 pub struct Task(Option<RemoteHandle<()>>);
 
 impl Task {
+    /// Detaches the task; leaving its [`future`][`std::future`] running in the background.
     pub fn detach(self) {
         if let Some(handle) = self.0 {
             handle.forget()
         }
     }
 
+    /// Cancels the task; meaning its [`future`][`std::future`] won’t be polled again.
     pub fn cancel(self) {
-        // dropping it cancels it
+        drop(self)
     }
 }
 
