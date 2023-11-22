@@ -43,6 +43,12 @@ impl Reducer for State {
             }
         }
     }
+#
+#   type Output = usize;
+#
+#   fn into_inner(self) -> Self::Output {
+#       self.n
+#   }
 }
 ```
 
@@ -85,6 +91,12 @@ impl Reducer for State {
             }
         }
     }
+#
+#   type Output = usize;
+#
+#   fn into_inner(self) -> Self::Output {
+#       self.n
+#   }
 }
 ```
 

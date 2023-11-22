@@ -35,6 +35,12 @@ impl Reducer for State {
             }
         }
     }
+
+    type Output = Self;
+
+    fn into_inner(self) -> Self::Output {
+        self
+    }
 }
 
 const N: usize = 100000;

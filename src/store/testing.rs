@@ -127,6 +127,12 @@ fn test_test_store() {
                 }
             }
         }
+
+        type Output = Self;
+
+        fn into_inner(self) -> Self::Output {
+            self
+        }
     }
 
     let mut store = Store::new(State::default());

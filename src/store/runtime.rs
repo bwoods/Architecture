@@ -13,20 +13,22 @@ use crate::reducer::Reducer;
 use crate::store::Store;
 
 impl<State: Reducer> Store<State> {
-    pub(crate) fn runtime(mut state: State, name: String) -> Self
+    pub(crate) fn runtime<F>(named: String, with: F) -> Self
     where
-        State: Send + 'static,
-        <State as Reducer>::Action: Send,
+        F: (FnOnce() -> State) + Send + 'static,
+        <State as Reducer>::Action: Send + 'static,
+        <State as Reducer>::Output: Send + 'static,
     {
         let (sender, receiver) = unbounded();
         let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
 
         let handle = std::thread::Builder::new()
-            .name(name)
+            .name(named)
             .spawn(move || {
                 let mut executor = LocalPool::new();
                 let spawner = executor.spawner();
 
+                let mut state = with();
                 let runtime = EffectsExecutor::new(spawner.clone(), actions);
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
@@ -56,7 +58,7 @@ impl<State: Reducer> Store<State> {
                         }
                     });
 
-                    state
+                    state.into_inner()
                 })
             })
             .unwrap();
@@ -106,6 +108,12 @@ pub mod tests {
                     }
                 }
             }
+        }
+
+        type Output = Self;
+
+        fn into_inner(self) -> Self::Output {
+            self
         }
     }
 
@@ -169,6 +177,12 @@ pub mod tests {
             type Action = Action;
 
             fn reduce(&mut self, _action: Action, _effects: impl Effects<Action = Action>) {}
+
+            type Output = Self;
+
+            fn into_inner(self) -> Self::Output {
+                self
+            }
         }
 
         let store = Store::new(State);
