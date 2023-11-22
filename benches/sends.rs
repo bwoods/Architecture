@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use futures::{stream, StreamExt};
+use futures::{future, stream, StreamExt};
 
 use composable::{Effects, Reducer, Store};
 
@@ -10,6 +10,7 @@ enum Action {
     A,
     B,
     C,
+    D,
 }
 
 impl Reducer for State {
@@ -27,6 +28,11 @@ impl Reducer for State {
                 }
             }
             C => effects.stream(stream::repeat(std::hint::black_box(A)).take(N)),
+            D => {
+                for _ in 0..N {
+                    effects.future(future::ready(Some(std::hint::black_box(A))))
+                }
+            }
         }
     }
 }
@@ -58,9 +64,18 @@ mod one_hundred_thousand {
     }
 
     #[divan::bench]
-    fn executor_sends() {
+    fn task_sends_batched() {
         let store = Store::new(State(0));
         store.send(std::hint::black_box(Action::C));
+
+        let n = store.into_inner().0;
+        assert_eq!(n, N);
+    }
+
+    #[divan::bench]
+    fn task_sends() {
+        let store = Store::new(State(0));
+        store.send(std::hint::black_box(Action::D));
 
         let n = store.into_inner().0;
         assert_eq!(n, N);

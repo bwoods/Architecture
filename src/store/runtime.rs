@@ -35,7 +35,6 @@ impl<State: Reducer> Store<State> {
                         while let Ok(result) = receiver.recv_async().await {
                             match result {
                                 Ok(action) => {
-                                    // println!("action: {action:?}");
                                     state.reduce(action, effects.clone());
 
                                     while let Some(action) = effects.borrow_mut().pop_front() {
@@ -44,8 +43,10 @@ impl<State: Reducer> Store<State> {
                                 }
                                 Err(parked) => {
                                     spawner
-                                        // unpark a thread that is waiting for the store to shutdown;
-                                        // use a future so that it happens after other (waiting) futures
+                                        // `unpark` a thread that is waiting for the store to shutdown;
+                                        //  we use a future so that it happens after other (waiting) futures
+                                        //
+                                        //  See: `Store::into_inner` for the other size of this
                                         .spawn_local(async move {
                                             parked.unpark();
                                         })

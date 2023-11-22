@@ -4,9 +4,8 @@ use flume::Sender;
 
 use crate::reducer::Reducer;
 
-pub(crate) mod testing;
-
 mod runtime;
+pub(crate) mod testing;
 
 pub struct Store<State: Reducer> {
     sender: Sender<Result<<State as Reducer>::Action, Thread>>,
@@ -36,8 +35,10 @@ impl<State: Reducer> Store<State> {
 
     /// Stops the [`Store`]’s runtime and returns the current `State` value.
     pub fn into_inner(self) -> State {
-        let _ = self.sender.send(Err(std::thread::current())); // give the thread a chance to finish up async tasks…
-        std::thread::park(); // …while we wait
+        self.sender
+            .send(Err(std::thread::current()))
+            .expect("Store::into_inner");
+        std::thread::park(); // waiting for any async tasks to finish up
 
         drop(self.sender); // ends the runtime’s (outer) while-let
         self.handle.join().unwrap()

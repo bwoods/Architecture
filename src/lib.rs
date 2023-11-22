@@ -3,8 +3,7 @@
 
 pub use effects::{Effects, Task};
 pub use reducer::Reducer;
-pub use store::testing::Store as TestStore;
-pub use store::Store;
+pub use store::{testing::Store as TestStore, Store};
 
 pub mod dependency;
 mod effects;

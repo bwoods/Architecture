@@ -34,6 +34,7 @@ pub trait Effects: Clone {
 
     /// An effect that runs a [`future`][`std::future`] and, if it returns an `Action`,
     /// sends it through the `Store`.
+    #[inline]
     fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
     where
         Self::Action: 'static,
@@ -47,13 +48,14 @@ pub trait Effects: Clone {
 
     /// An effect that runs a [`stream`](https://docs.rs/futures/latest/futures/stream/index.html)
     /// and sends every `Action` it returns through the `Store`.
+    #[inline(always)]
     fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
         self.task(stream).detach()
     }
 }
 
 #[doc(hidden)]
-// Nested tuples are used by the [`scope`] function
+// Nested tuples are used by `Effects::scope`
 impl<Action, Parent> Effects for (Parent, Marker<Action>)
 where
     Parent: Effects,
@@ -73,7 +75,7 @@ where
 }
 
 #[doc(hidden)]
-// `Parent` for `Effect::scope` tuples
+// `Parent` for `Effects::scope` tuples
 impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
