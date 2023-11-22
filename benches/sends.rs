@@ -1,8 +1,11 @@
-#![allow(dead_code)]
-
+use divan::{bench as benchmark, main as run_benchmarks};
 use futures::{future, stream, StreamExt};
 
 use composable::{Effects, Reducer, Store};
+
+fn main() {
+    run_benchmarks();
+}
 
 struct State(usize);
 #[derive(Clone, Debug)]
@@ -49,9 +52,9 @@ mod one_hundred_thousand {
     #[allow(unused_imports)]
     use super::*;
 
-    #[divan::bench]
+    #[benchmark]
     fn external_sends() {
-        let store = Store::new(State(0));
+        let store = Store::with_initial(State(0));
         for _ in 0..N {
             store.send(std::hint::black_box(Action::A));
         }
@@ -60,34 +63,30 @@ mod one_hundred_thousand {
         assert_eq!(n, N);
     }
 
-    #[divan::bench]
+    #[benchmark]
     fn internal_sends() {
-        let store = Store::new(State(0));
+        let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::B));
 
         let n = store.into_inner().0;
         assert_eq!(n, N);
     }
 
-    #[divan::bench]
+    #[benchmark]
     fn task_sends_batched() {
-        let store = Store::new(State(0));
+        let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::C));
 
         let n = store.into_inner().0;
         assert_eq!(n, N);
     }
 
-    #[divan::bench]
+    #[benchmark]
     fn task_sends() {
-        let store = Store::new(State(0));
+        let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::D));
 
         let n = store.into_inner().0;
         assert_eq!(n, N);
     }
-}
-
-fn main() {
-    divan::main();
 }

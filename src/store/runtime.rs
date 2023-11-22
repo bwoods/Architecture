@@ -13,7 +13,7 @@ use crate::reducer::Reducer;
 use crate::store::Store;
 
 impl<State: Reducer> Store<State> {
-    pub(crate) fn runtime<F>(named: String, with: F) -> Self
+    pub(crate) fn runtime<F>(with: F) -> Self
     where
         F: (FnOnce() -> State) + Send + 'static,
         <State as Reducer>::Action: Send + 'static,
@@ -23,7 +23,7 @@ impl<State: Reducer> Store<State> {
         let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
 
         let handle = std::thread::Builder::new()
-            .name(named)
+            .name(std::any::type_name::<State>().into())
             .spawn(move || {
                 let mut executor = LocalPool::new();
                 let spawner = executor.spawner();
@@ -137,7 +137,7 @@ pub mod tests {
     ///
     fn test_action_ordering_guarantees() {
         let characters = Arc::new(Mutex::new(Default::default()));
-        let store = Store::new(State {
+        let store = Store::with_initial(State {
             characters: characters.clone(),
         });
 
@@ -165,9 +165,10 @@ pub mod tests {
     #[test]
     #[cfg(not(miri))]
     #[timeout(1000)]
-    /// ## Note
+    /// # Note
     /// If this test **timeout**s, the [`join`][std::thread::JoinHandle::join] in [`Store::into_inner`] is hanging
     fn test_into_inner_returns() {
+        #[derive(Default)]
         struct State;
 
         #[derive(Debug)]
@@ -185,7 +186,7 @@ pub mod tests {
             }
         }
 
-        let store = Store::new(State);
+        let store = Store::<State>::default();
         store.into_inner();
     }
 }
