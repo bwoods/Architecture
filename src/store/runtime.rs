@@ -1,9 +1,11 @@
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
+use std::thread::Thread;
 
-use flume::unbounded;
+use flume::{unbounded, WeakSender};
 use futures::executor::LocalPool;
+use futures::task::LocalSpawnExt;
 
 use crate::dependency::with_dependency;
 use crate::effects::Executor as EffectsExecutor;
@@ -17,24 +19,38 @@ impl<State: Reducer> Store<State> {
         <State as Reducer>::Action: Send,
     {
         let (sender, receiver) = unbounded();
-        let actions = sender.downgrade();
+        let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
 
         let handle = std::thread::Builder::new()
             .name(name)
             .spawn(move || {
                 let mut executor = LocalPool::new();
-                let runtime = EffectsExecutor::new(&executor, actions);
+                let spawner = executor.spawner();
+
+                let runtime = EffectsExecutor::new(spawner.clone(), actions);
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
                 with_dependency(runtime, || {
                     executor.run_until(async {
-                        for action in receiver {
-                            state.reduce(action, effects.clone());
+                        while let Ok(result) = receiver.recv_async().await {
+                            match result {
+                                Ok(action) => {
+                                    // println!("action: {action:?}");
+                                    state.reduce(action, effects.clone());
 
-                            // this inner loop ensures all internal effects are exhausted
-                            // before returning to polling external actions (above)
-                            while let Some(action) = effects.borrow_mut().pop_front() {
-                                state.reduce(action, effects.clone());
+                                    while let Some(action) = effects.borrow_mut().pop_front() {
+                                        state.reduce(action, effects.clone());
+                                    }
+                                }
+                                Err(parked) => {
+                                    spawner
+                                        // unpark a thread that is waiting for the store to shutdown;
+                                        // use a future so that it happens after other (waiting) futures
+                                        .spawn_local(async move {
+                                            parked.unpark();
+                                        })
+                                        .expect("unpark");
+                                }
                             }
                         }
                     });
@@ -52,6 +68,7 @@ impl<State: Reducer> Store<State> {
 pub mod tests {
     use std::sync::{Arc, Mutex};
 
+    #[cfg(not(miri))]
     use ntest_timeout::timeout;
 
     use crate::effects::Effects;
@@ -72,7 +89,7 @@ pub mod tests {
     impl Reducer for State {
         type Action = Action;
 
-        fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
+        fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
             use Action::*;
 
             match action {
@@ -106,12 +123,8 @@ pub mod tests {
     ///
     /// ## Note:
     ///
-    /// - Enabling flume’s [eventual-fairness] feature **will break** the `Selector`
-    ///   behavior that we rely upon.
     /// - Normal tests should use [`clock`]s and a [`TestStore`] rather than the brute-force
     ///   loop and thread manipulations used here.
-    ///
-    /// [eventual-fairness]: https://docs.rs/flume/latest/flume/select/struct.Selector.html#method.wait
     ///
     fn test_action_ordering_guarantees() {
         let characters = Arc::new(Mutex::new(Default::default()));
@@ -141,17 +154,20 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(not(miri))]
     #[timeout(1000)]
     /// ## Note
     /// If this test **timeout**s, the [`join`][std::thread::JoinHandle::join] in [`Store::into_inner`] is hanging
     fn test_into_inner_returns() {
         struct State;
+
+        #[derive(Debug)]
         enum Action {}
 
         impl Reducer for State {
             type Action = Action;
 
-            fn reduce(&mut self, _action: Self::Action, _effects: impl Effects<Action = Action>) {}
+            fn reduce(&mut self, _action: Action, _effects: impl Effects<Action = Action>) {}
         }
 
         let store = Store::new(State);

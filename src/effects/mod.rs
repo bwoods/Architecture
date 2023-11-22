@@ -2,9 +2,10 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Rc;
+use std::thread::Thread;
 
 use flume::WeakSender;
-use futures::executor::{LocalPool, LocalSpawner};
+use futures::executor::LocalSpawner;
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
 use futures::{future, Future, FutureExt, Stream, StreamExt};
@@ -26,7 +27,7 @@ pub trait Effects: Clone {
     /// A [`Task`] represents asynchronous work that will then [`send`][`Store::send`] zero or more
     /// actions back into the [`Store`] as it runs.
     ///
-    /// Use this method if yuu need to ability to [`cancel`][Task::cancel] the [`Task`]
+    /// Use this method if you need to ability to [`cancel`][Task::cancel] the [`Task`]
     /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
     /// should be preferred.
     fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
@@ -82,18 +83,22 @@ impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        let executor = ambience::thread::get::<Executor<Action>>().unwrap();
+        let handle = ambience::thread::get::<Executor<Result<Action, Thread>>>()
+            .ok()
+            .and_then(|executor| {
+                match executor.actions.upgrade() {
+                    None => None,
+                    Some(sender) => {
+                        let stream =
+                            stream.then(move |action| sender.clone().into_send_async(Ok(action)));
+                        let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
 
-        match executor.actions.upgrade() {
-            None => Task(None),
-            Some(sender) => {
-                let stream = stream.then(move |action| sender.clone().into_send_async(action));
-                let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
+                        executor.spawner.spawn_local_with_handle(future).ok()
+                    }
+                }
+            });
 
-                // may return a `Task(None)` while the `Store` is shutting down
-                Task(executor.spawner.spawn_local_with_handle(future).ok())
-            }
-        }
+        Task(handle) // may return a `Task(None)` while the `Store` is shutting down
     }
 }
 
@@ -125,10 +130,7 @@ pub(crate) struct Executor<Action> {
 }
 
 impl<Action> Executor<Action> {
-    pub(crate) fn new(executor: &LocalPool, actions: WeakSender<Action>) -> Self {
-        Self {
-            spawner: executor.spawner(),
-            actions,
-        }
+    pub(crate) fn new(spawner: LocalSpawner, actions: WeakSender<Action>) -> Self {
+        Self { spawner, actions }
     }
 }
