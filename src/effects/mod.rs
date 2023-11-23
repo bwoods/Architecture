@@ -10,6 +10,8 @@ use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
 use futures::{future, Future, FutureExt, Stream, StreamExt};
 
+use crate::dependencies::Dependency;
+
 #[doc = include_str!("README.md")]
 pub trait Effects: Clone {
     type Action;
@@ -90,8 +92,7 @@ impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        let handle = ambience::thread::get::<Executor<Result<Action, Thread>>>()
-            .ok()
+        let handle = Dependency::<Executor<Result<Action, Thread>>>::new() //
             .and_then(|executor| {
                 match executor.actions.upgrade() {
                     None => None,

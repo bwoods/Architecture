@@ -5,9 +5,8 @@ pub use effects::{Effects, Task};
 pub use reducer::Reducer;
 pub use store::{testing::TestStore, Store};
 
-pub use dependency::{with_dependencies, with_dependency};
+pub mod dependencies;
 
-mod dependency;
 mod effects;
 mod reducer;
 mod store;

@@ -1,17 +1,20 @@
-mod guard;
+pub use values::{Dependency, DependencyKey, DependencyValues};
 
-/// Inject dependencies for the supplied closure
-pub fn with_dependencies<Tuple, F, R>(with: Tuple, f: F) -> R
+mod guard;
+mod values;
+
+/// Supply a tuple of dependencies for the supplied closure
+pub fn with_dependencies<T, F, R>(with: T, f: F) -> R
 where
-    Tuple: DependencyValues,
+    T: Tuple,
     F: FnOnce() -> R,
 {
     let _guards = with.guards();
     f()
 }
 
-/// A convenience…
-pub(crate) fn with_dependency<T, F, R>(with: T, f: F) -> R
+/// Supply a single dependency for the supplied closure
+pub fn with_dependency<T, F, R>(with: T, f: F) -> R
 where
     T: 'static,
     F: FnOnce() -> R,
@@ -19,7 +22,7 @@ where
     with_dependencies((with,), f)
 }
 
-pub trait DependencyValues {
+pub trait Tuple {
     #[doc(hidden)]
     type Output;
 
@@ -32,7 +35,7 @@ macro_rules! tuple_impl {
         #[doc(hidden)]
         #[allow(dead_code)]
         #[allow(non_snake_case)]
-        impl<$($val: 'static),+> DependencyValues for ( $($val,)+ ) {
+        impl<$($val: 'static),+> Tuple for ( $($val,)+ ) {
             type Output = ( $(guard::Guard<$val>,)+ );
 
             fn guards(self) -> Self::Output {
