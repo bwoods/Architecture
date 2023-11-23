@@ -5,26 +5,32 @@ use std::rc::Rc;
 
 use crate::reducer::Reducer;
 
-pub struct Store<State: Reducer>
+#[doc = include_str!("README.md")]
+pub struct TestStore<State: Reducer>
 where
     <State as Reducer>::Action: Debug,
 {
     state: Option<State>, // `Option` so that `into_inner` does not break `Drop`
     effects: Rc<RefCell<VecDeque<<State as Reducer>::Action>>>,
-    // TODO: actions: Sender<Action>
+    // TODO: actions: Sender<Action> (for async Effects)
 }
 
-impl<State: Reducer> Store<State>
+impl<State: Reducer> TestStore<State>
 where
     <State as Reducer>::Action: Debug,
 {
-    pub fn new(initial: State) -> Self {
-        let effects = Rc::new(RefCell::new(VecDeque::new()));
-
+    pub fn with_initial(state: State) -> Self {
         Self {
-            state: Some(initial),
-            effects,
+            state: Some(state),
+            effects: Rc::new(RefCell::new(VecDeque::new())),
         }
+    }
+
+    pub fn new<F>(with: F) -> Self
+    where
+        F: (FnOnce() -> State),
+    {
+        Self::with_initial(with())
     }
 
     #[track_caller]
@@ -72,12 +78,22 @@ where
         assert_eq!(self.state, expected);
     }
 
-    pub fn into_inner(mut self) -> State {
-        self.state.take().unwrap()
+    pub fn into_inner(mut self) -> <State as Reducer>::Output {
+        self.state.take().unwrap().into_inner()
     }
 }
 
-impl<State: Reducer> Drop for Store<State>
+impl<State: Reducer> Default for TestStore<State>
+where
+    State: Default,
+    <State as Reducer>::Action: Debug,
+{
+    fn default() -> Self {
+        Self::new(|| State::default())
+    }
+}
+
+impl<State: Reducer> Drop for TestStore<State>
 where
     <State as Reducer>::Action: Debug,
 {
@@ -89,63 +105,4 @@ where
             self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
         );
     }
-}
-
-#[test]
-fn test_test_store() {
-    use crate::effects::Effects;
-
-    #[derive(Clone, Debug, Default, PartialEq)]
-    struct State {
-        n: usize,
-    }
-
-    #[derive(Debug, PartialEq)]
-    enum Action {
-        Increment,
-        Decrement,
-    }
-
-    use Action::*;
-    impl Reducer for State {
-        type Action = Action;
-
-        // This reducer ensures the value is always an even number
-        fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
-            match action {
-                Increment => {
-                    self.n += 1;
-                    if self.n % 2 == 1 {
-                        effects.send(Increment);
-                    }
-                }
-                Decrement => {
-                    self.n -= 1;
-                    if self.n % 2 == 1 {
-                        effects.send(Decrement);
-                    }
-                }
-            }
-        }
-
-        type Output = Self;
-
-        fn into_inner(self) -> Self::Output {
-            self
-        }
-    }
-
-    let mut store = Store::new(State::default());
-
-    store.send(Increment, |state| state.n = 1);
-    store.recv(Increment, |state| state.n = 2);
-
-    store.send(Increment, |state| state.n = 3);
-    store.recv(Increment, |state| state.n = 4);
-
-    store.send(Decrement, |state| state.n = 3);
-    store.recv(Decrement, |state| state.n = 2);
-
-    let result = store.into_inner();
-    assert_eq!(result.n, 2);
 }

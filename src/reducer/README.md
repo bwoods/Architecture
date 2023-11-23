@@ -1,4 +1,4 @@
-This trait to represents the domain, logic and behavior for a feature. The domain is specified by a `State` and the `Actions` which act upon it.
+This trait represents the domain, logic and behavior for a feature. The domain is specified by a `State` and the `Actions` which act upon it.
 
 ```rust
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -14,6 +14,10 @@ enum Action {
 ```
 
 The logic of the feature is performed by mutating its current state with actions. This is most easily done by implementing the [`Reducer`] trait directly on it’s `State`.
+
+
+
+## Example
 
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
@@ -32,6 +36,7 @@ The logic of the feature is performed by mutating its current state with actions
 use Action::*;
 impl Reducer for State {
     type Action = Action;
+    type Output = usize;
 
     fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
         match action {
@@ -43,12 +48,10 @@ impl Reducer for State {
             }
         }
     }
-#
-#   type Output = usize;
-#
-#   fn into_inner(self) -> Self::Output {
-#       self.n
-#   }
+  
+    fn into_inner(self) -> Self::Output {
+        self.n
+    }
 }
 ```
 
@@ -80,25 +83,25 @@ impl Reducer for State {
             Increment => {
                 self.n += 1;
                 if self.n % 2 == 1 {
-                    effects.send(Increment);
+                    effects.send(Increment); // ⬅︎
                 }
             }
             Decrement => {
                 self.n -= 1;
                 if self.n % 2 == 1 {
-                    effects.send(Decrement);
+                    effects.send(Decrement); // ⬅︎
                 }
             }
         }
     }
-#
-#   type Output = usize;
-#
-#   fn into_inner(self) -> Self::Output {
-#       self.n
-#   }
+
+    type Output = usize;
+ 
+    fn into_inner(self) -> Self::Output {
+        self.n
+    }
 }
 ```
 
-- See [`TestStore`] for a more complete test of this example.
+- See [`TestStore`][`crate::TestStore`] for a more complete test of this example.
 - See [`Effects`] for all of the effects that can be used within a `Reducer`.

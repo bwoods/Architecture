@@ -10,30 +10,34 @@ use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
 use futures::{future, Future, FutureExt, Stream, StreamExt};
 
+#[doc = include_str!("README.md")]
 pub trait Effects: Clone {
     type Action;
 
-    /// An effect that immediately sends an action through the `Store`.
+    /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s
+    /// [`Reducer`][`crate::Reducer`].
     fn send(&self, action: Self::Action);
 
-    #[inline(always)]
-    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
-    where
-        Self::Action: From<ChildAction>,
-    {
-        (self.clone(), Marker)
-    }
+    // #[inline(always)]
+    // /// Reduces the `Effects` to one that sends child actions.
+    // fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
+    // where
+    //     Self::Action: From<ChildAction>,
+    // {
+    //     (self.clone(), Marker)
+    // }
 
-    /// A [`Task`] represents asynchronous work that will then [`send`][`Store::send`] zero or more
-    /// actions back into the [`Store`] as it runs.
+    /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
+    /// zero or more [`Action`][`Self::Action`]s back into the `Store`’s [`Reducer`][`crate::Reducer`]
+    /// as it runs.
     ///
-    /// Use this method if you need to ability to [`cancel`][Task::cancel] the [`Task`]
+    /// Use this method if you need to ability to [`cancel`][Task::cancel] the task
     /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
     /// should be preferred.
     fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
 
-    /// An effect that runs a [`future`][`std::future`] and, if it returns an `Action`,
-    /// sends it through the `Store`.
+    /// An effect that runs a [`Future`][`std::future`] and, if it returns an
+    /// [`Action`][`Self::Action`], sends it through the `Store`’s [`Reducer`][`crate::Reducer`].
     #[inline]
     fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
     where
@@ -46,8 +50,9 @@ pub trait Effects: Clone {
         self.task(stream).detach()
     }
 
-    /// An effect that runs a [`stream`](https://docs.rs/futures/latest/futures/stream/index.html)
-    /// and sends every `Action` it returns through the `Store`.
+    /// An effect that runs a [`Stream`](https://docs.rs/futures/latest/futures/stream/index.html)
+    /// and sends every [`Action`][`Self::Action`] it returns through the `Store`’s
+    /// [`Reducer`][`crate::Reducer`].
     #[inline(always)]
     fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
         self.task(stream).detach()
@@ -113,14 +118,14 @@ impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
 pub struct Task(Option<RemoteHandle<()>>);
 
 impl Task {
-    /// Detaches the task; leaving its [`future`][`std::future`] running in the background.
+    /// Detaches the task; leaving its [`Future`][`std::future`] running in the background.
     pub fn detach(self) {
         if let Some(handle) = self.0 {
             handle.forget()
         }
     }
 
-    /// Cancels the task; meaning its [`future`][`std::future`] won’t be polled again.
+    /// Cancels the task; meaning its [`Future`][`std::future`] won’t be polled again.
     pub fn cancel(self) {
         drop(self)
     }

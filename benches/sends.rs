@@ -26,23 +26,24 @@ impl Reducer for State {
         match action {
             A => self.0 += std::hint::black_box(1),
             B => {
-                for _ in 0..N {
+                for _ in 0..std::hint::black_box(N) {
                     effects.send(std::hint::black_box(A))
                 }
             }
-            C => effects.stream(stream::repeat(std::hint::black_box(A)).take(N)),
+            C => effects
+                .stream(stream::repeat(std::hint::black_box(A)).take(std::hint::black_box(N))),
             D => {
-                for _ in 0..N {
+                for _ in 0..std::hint::black_box(N) {
                     effects.future(future::ready(Some(std::hint::black_box(A))))
                 }
             }
         }
     }
 
-    type Output = Self;
+    type Output = usize;
 
     fn into_inner(self) -> Self::Output {
-        self
+        self.0
     }
 }
 
@@ -59,7 +60,7 @@ mod one_hundred_thousand {
             store.send(std::hint::black_box(Action::A));
         }
 
-        let n = store.into_inner().0;
+        let n = store.into_inner();
         assert_eq!(n, N);
     }
 
@@ -68,7 +69,7 @@ mod one_hundred_thousand {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::B));
 
-        let n = store.into_inner().0;
+        let n = store.into_inner();
         assert_eq!(n, N);
     }
 
@@ -77,7 +78,7 @@ mod one_hundred_thousand {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::C));
 
-        let n = store.into_inner().0;
+        let n = store.into_inner();
         assert_eq!(n, N);
     }
 
@@ -86,7 +87,7 @@ mod one_hundred_thousand {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::D));
 
-        let n = store.into_inner().0;
+        let n = store.into_inner();
         assert_eq!(n, N);
     }
 }
