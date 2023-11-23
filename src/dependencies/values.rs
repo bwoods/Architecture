@@ -18,9 +18,8 @@ impl DependencyValues {
         Guard::clone_from(value)
     }
 
-    #[inline(always)]
-    /// Can be used to [`assert!`][`std::assert`] (or [`debug_assert!`][`std::debug_assert`]) that a dependency has been set
-    /// rather that waiting for a runtime failure.
+    /// Can be used to [`assert!`][`std::assert`] (or [`debug_assert!`][`std::debug_assert`])
+    /// that a dependency has been set rather that waiting for a runtime failure.
     pub fn contains<T: 'static>() -> bool {
         Guard::<T>::exists()
     }
@@ -87,8 +86,7 @@ impl<T: 'static> Dependency<T> {
     where
         P: FnOnce(&T) -> bool,
     {
-        self.inner
-            .as_deref()
+        self.as_deref()
             .filter(|rr| predicate(*rr))
             .and(self.as_deref())
     }
@@ -98,10 +96,7 @@ impl<T: 'static> Dependency<T> {
     where
         F: FnOnce(&T),
     {
-        self.inner
-            .as_deref()
-            .inspect(|rr| f(*rr))
-            .and(self.as_deref())
+        self.as_deref().inspect(|rr| f(*rr)).and(self.as_deref())
     }
 
     #[inline(always)]
@@ -219,15 +214,9 @@ impl<T: 'static> Dependency<T> {
     }
 }
 
-///
-pub trait DependencyKey {
-    fn live() -> &'static Self;
-}
-
 impl<T: DependencyKey> Deref for Dependency<T> {
     type Target = T;
 
-    //noinspection RsUnreachableCode
     #[track_caller]
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
@@ -239,7 +228,15 @@ impl<T: DependencyKey> Deref for Dependency<T> {
                 );
             }
 
-            T::live()
+            let leaked: &T = Box::leak(Box::new(T::live()));
+
+            // Unfortunately, this means that anyone creating a Dependency<&T> (note the ref)
+            // will always get the .live() version of DependencyKey<T>, if any — unwittingly
+            // bypassing every dependency override in scope.
+            let guard = Guard::<&T>::new(leaked);
+            std::mem::forget(guard);
+
+            Rc::make_mut(&mut Guard::<&T>::get().unwrap())
         })
     }
 }
@@ -256,4 +253,9 @@ impl<T: DependencyKey> Borrow<T> for Dependency<T> {
     fn borrow(&self) -> &T {
         self.deref()
     }
+}
+
+///
+pub trait DependencyKey {
+    fn live() -> Self;
 }

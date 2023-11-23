@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
-use ambience::thread::{AmbientGuard, get, has, set, set_rc};
+use ambience::thread::{get, has, set, set_rc, AmbientGuard as Inner};
 
 pub struct Guard<T: 'static> {
-    _inner: AmbientGuard<T>,
+    _inner: Inner<T>,
 }
 
 impl<T: 'static> Guard<T> {
