@@ -12,10 +12,10 @@ pub struct Dependency<T: 'static> {
     inner: OnceCell<Rc<T>>,
 }
 
-impl<T: 'static> Default for Dependency<T> {
-    #[inline]
+impl<T> Default for Dependency<T> {
     fn default() -> Self {
-        let cell = OnceCell::default();
+        let cell = OnceCell::new();
+
         if let Some(inner) = Guard::get() {
             let result = cell.set(inner);
             debug_assert!(result.is_ok());
@@ -25,11 +25,11 @@ impl<T: 'static> Default for Dependency<T> {
     }
 }
 
-/// - `Dependency` implements very similar methods to [`Option`][`std::option`], as a dependency
-///    is effectively *optionally* present.
-/// - However, a `Dependency` on a [`DefaultDependency`] also implements [`Deref`], [`AsRef`] and [`Borrow`].
-///   As [`DefaultDependency`]s are **always** present.
-impl<T: 'static> Dependency<T> {
+/// - `Dependency` implements very similar methods to [`Option`][`std::option`], as dependencies
+///    are *optionally* present.
+/// - However, a `Dependency` on a [`DefaultDependency`] also implements [`Deref`], [`AsRef`] and [`Borrow`]  
+///   as default dependencies are registered as needed.
+impl<T> Dependency<T> {
     #[inline]
     pub fn new() -> Self {
         Self::default()
@@ -208,9 +208,13 @@ impl<T: DefaultDependency> Deref for Dependency<T> {
     fn deref(&self) -> &Self::Target {
         self.as_deref().unwrap_or_else(|| {
             if cfg!(test) {
+                let detailed_explanation = r#" 
+DefaultDependency types are not allowed to use their default implementation within units tests.
+Either register the dependency on the TestStore or use with_dependency within the test itself."#;
                 panic!(
-                    "A .live() DependencyKey was requested during a test: {}",
-                    std::any::type_name::<T>()
+                    "Dependency<{0}> was constructed during a test, but {0} was not registered.{1}",
+                    std::any::type_name::<T>(),
+                    detailed_explanation
                 );
             }
 
