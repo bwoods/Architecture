@@ -220,24 +220,40 @@ impl<T: DependencyKey> Deref for Dependency<T> {
     #[track_caller]
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
-        self.as_deref().unwrap_or_else(|| {
-            if cfg!(test) {
-                panic!(
-                    "A .live() DependencyKey was requested during a test: {}",
-                    std::any::type_name::<T>()
-                );
-            }
+        self.as_deref()
+            .or_else(|| {
+                // This exact instance of Dependency registered the .live dependency in a
+                // previous call to this method (see the `.unwrap_or_else` block below)
+                // but, because we can not update `self.inner` here, this same instance
+                // will have to do this lookup everytime.
+                Some(Rc::make_mut(&mut Guard::<&T>::get().unwrap()))
 
-            let leaked: &T = Box::leak(Box::new(T::live()));
+                //  Note that wrapping `inner` in a RefCell to allow an update breaks
+                // `Dependency::as_deref()` because the compiler then considers the reference
+                //  to be coming from a temporary.
 
-            // Unfortunately, this means that anyone creating a Dependency<&T> (note the ref)
-            // will always get the .live() version of DependencyKey<T>, if any — unwittingly
-            // bypassing every dependency override in scope.
-            let guard = Guard::<&T>::new(leaked);
-            std::mem::forget(guard);
+                // In practice, this only really affects uses of Dependency as struct field;
+                // those created as variables or via `with_dependency` will be refreshed on
+                // the very next call.
+            })
+            .unwrap_or_else(|| {
+                if cfg!(test) {
+                    panic!(
+                        "A .live() DependencyKey was requested during a test: {}",
+                        std::any::type_name::<T>()
+                    );
+                }
 
-            Rc::make_mut(&mut Guard::<&T>::get().unwrap())
-        })
+                let leaked: &T = Box::leak(Box::new(T::live()));
+
+                // Unfortunately, this means that anyone creating a Dependency<&T> (note the ref)
+                // will always get the .live() version of DependencyKey<T>, if any — unwittingly
+                // bypassing every dependency override in scope.
+                let guard = Guard::<&T>::new(leaked);
+                std::mem::forget(guard);
+
+                Rc::make_mut(&mut Guard::<&T>::get().unwrap())
+            })
     }
 }
 
