@@ -1,9 +1,9 @@
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 
-pub use effects::{Effects, Task};
+pub use effects::{Actions, Async, Effects, Task};
 pub use reducer::Reducer;
-pub use store::{Store, testing::TestStore};
+pub use store::{testing::TestStore, Store, StoreOf};
 
 pub mod dependencies;
 
