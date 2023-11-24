@@ -1,4 +1,5 @@
 use std::borrow::Borrow;
+use std::cell::OnceCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -8,15 +9,19 @@ use crate::dependencies::guard::Guard;
 
 ///
 pub struct Dependency<T: 'static> {
-    inner: Option<Rc<T>>,
+    inner: OnceCell<Rc<T>>,
 }
 
 impl<T: 'static> Default for Dependency<T> {
     #[inline]
     fn default() -> Self {
-        Self {
-            inner: Guard::get(),
+        let cell = OnceCell::default();
+        if let Some(inner) = Guard::get() {
+            let result = cell.set(inner);
+            debug_assert!(result.is_ok());
         }
+
+        Self { inner: cell }
     }
 }
 
@@ -31,7 +36,7 @@ impl<T: 'static> Dependency<T> {
     }
 
     fn as_deref(&self) -> Option<&T> {
-        self.inner.as_deref()
+        self.inner.get().map(|inner| inner.deref())
     }
 
     #[inline(always)]
@@ -81,13 +86,13 @@ impl<T: 'static> Dependency<T> {
     }
 
     #[inline(always)]
-    pub const fn is_none(&self) -> bool {
-        self.inner.is_none()
+    pub fn is_none(&self) -> bool {
+        self.inner.get().is_none()
     }
 
     #[inline(always)]
-    pub const fn is_some(&self) -> bool {
-        self.inner.is_some()
+    pub fn is_some(&self) -> bool {
+        self.inner.get().is_some()
     }
 
     #[inline(always)]
@@ -201,39 +206,21 @@ impl<T: DefaultDependency> Deref for Dependency<T> {
     #[track_caller]
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
-        self.as_deref()
-            .or_else(|| {
-                // This exact instance of Dependency registered the .live dependency in a
-                // previous call to this method (see the `.unwrap_or_else` block below)
-                // but, because we can not update `self.inner` here, this same instance
-                // will have to do this lookup everytime.
-                Some(Rc::make_mut(&mut Guard::<&T>::get().unwrap()))
+        self.as_deref().unwrap_or_else(|| {
+            if cfg!(test) {
+                panic!(
+                    "A .live() DependencyKey was requested during a test: {}",
+                    std::any::type_name::<T>()
+                );
+            }
 
-                //  Note that wrapping `inner` in a RefCell to allow an update breaks
-                // `Dependency::as_deref()` because the compiler then considers the reference
-                //  to be coming from a temporary.
+            let guard = Guard::new(T::default());
+            std::mem::forget(guard);
 
-                // In practice, this only really affects uses of Dependency as struct fields;
-                // those created as functions variables will be refreshed on the very next call.
-            })
-            .unwrap_or_else(|| {
-                if cfg!(test) {
-                    panic!(
-                        "A .live() DependencyKey was requested during a test: {}",
-                        std::any::type_name::<T>()
-                    );
-                }
-
-                let leaked: &T = Box::leak(Box::new(T::default()));
-
-                // Unfortunately, this means that anyone creating a Dependency<&T> (note the ref)
-                // will always get the .live() version of DependencyKey<T>, if any — unwittingly
-                // bypassing every dependency override in scope.
-                let guard = Guard::<&T>::new(leaked);
-                std::mem::forget(guard);
-
-                Rc::make_mut(&mut Guard::<&T>::get().unwrap())
-            })
+            let result = self.inner.set(Guard::get().unwrap());
+            debug_assert!(result.is_ok());
+            self.as_deref().unwrap()
+        })
     }
 }
 
