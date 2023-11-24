@@ -5,10 +5,10 @@ use std::rc::Rc;
 use std::thread::Thread;
 
 use flume::WeakSender;
+use futures::{future, Future, FutureExt, Stream, StreamExt};
 use futures::executor::LocalSpawner;
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
-use futures::{future, Future, FutureExt, Stream, StreamExt};
 
 use crate::dependencies::Dependency;
 

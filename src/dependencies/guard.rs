@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use ambience::thread::{get, has, set, set_rc, AmbientGuard as Inner};
+use ambience::thread::{AmbientGuard as Inner, get, has, set, set_rc};
 
 pub struct Guard<T: 'static> {
     _inner: Inner<T>,

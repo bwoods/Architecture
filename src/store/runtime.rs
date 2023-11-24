@@ -7,8 +7,8 @@ use flume::{unbounded, WeakSender};
 use futures::executor::LocalPool;
 use futures::task::LocalSpawnExt;
 
-use crate::effects::Executor as EffectsExecutor;
 use crate::dependencies::with_dependency;
+use crate::effects::Executor;
 use crate::reducer::Reducer;
 use crate::store::Store;
 
@@ -25,15 +25,14 @@ impl<State: Reducer> Store<State> {
         let handle = std::thread::Builder::new()
             .name(std::any::type_name::<State>().into())
             .spawn(move || {
-                let mut executor = LocalPool::new();
-                let spawner = executor.spawner();
+                let mut task_pool = LocalPool::new();
+                let spawner = task_pool.spawner();
 
                 let mut state = with();
-                let runtime = EffectsExecutor::new(spawner.clone(), actions);
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
-                with_dependency(runtime, || {
-                    executor.run_until(async {
+                with_dependency(Executor::new(spawner.clone(), actions), || {
+                    task_pool.run_until(async {
                         while let Ok(result) = receiver.recv_async().await {
                             match result {
                                 Ok(action) => {
