@@ -1,4 +1,4 @@
-The state container fot the application.
+The state container for the application.
 
  
 

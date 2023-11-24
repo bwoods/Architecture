@@ -1,8 +1,8 @@
 # A Composable Architecture
 
-The Swift Composable Architecture library improved upon previous Redux-inspired patterns by leveraging the capabilies of the Swift language to acheive better **Type Safety**, **Ergonomics** and **Performance**.
+The Swift Composable Architecture library improved upon previous Redux-inspired patterns by leveraging the capabilities of the Swift language to achieve better **Type Safety**, **Ergonomics** and **Performance**.
 
-This crate attempts to do the same to The Swift Composable Architecture by leveraing the capabilities of the Rust language and ecosystem.
+This crate attempts to do the same to the Swift Composable Architecture itself by further leveraging the capabilities of the Rust language and ecosystem.
 
 <details>
 <summary><strong>What is the Swift Composable Architecture?</strong></summary>
@@ -69,4 +69,5 @@ compoable = "x.y"
 
 - `spin`: use spinlocks when passing data between threads; which may be more performant for certain platforms or extreme workloads.
 
-  In fact the feature mainly exists to quickly test that doing so does not improve an application’s throiughput as the overhead of `send` is so low.
+  In fact, the feature primarily exists to quickly test that doing so does not improve an application’s throughput as the overhead of `send` is so low.
+

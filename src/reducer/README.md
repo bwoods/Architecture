@@ -107,3 +107,4 @@ impl Reducer for State {
 
 - See [`TestStore`][`crate::TestStore`] for a more complete test of this example.
 - See [`Effects`] for all of the effects that can be used within a `Reducer`.
+

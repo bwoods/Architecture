@@ -1,7 +1,15 @@
 use std::borrow::Borrow;
 use std::ops::Deref;
 
-/// Used to return either a dependency’s reference or a separate owned value.
+/// Used to return a reference to a dependency or a separate owned value.
+///
+/// Used by:
+/// - [`unwrap_or`][`super::Dependency::unwrap_or`]
+/// - [`unwrap_or_else`][`super::Dependency::unwrap_or_else`]
+/// - [`unwrap_or_default`][`super::Dependency::unwrap_or_default`]
+/// - [`or`][`super::Dependency::or`]
+/// - [`or_else`][`super::Dependency::or_else`]
+/// - [`xor`][`super::Dependency::xor`]
 pub enum Ref<'a, T: 'a> {
     Borrowed(&'a T),
     Owned(T),

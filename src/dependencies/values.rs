@@ -24,11 +24,17 @@ impl<T> Default for Dependency<T> {
     }
 }
 
-/// - The methods of `Dependency` are very similar to those of [`std::option::Option`][`std::option`],
-///   as dependencies are *optionally* present.
-/// - However, a `Dependency` on a type with a [`DependencyDefault`] also implements the traits
-///   [`Deref`], [`AsRef`] and [`Borrow`]. If a value has not been explicitly registered for it
-///   the `Dependency` will [`deref`][`Dependency::deref`] to this default value.
+/// - The methods of `Dependency` are very similar to those of [`std::option::Option`], as
+///   dependencies are *optionally* present.
+/// - However, a `Dependency` on a type with a [`DependencyDefault`] also implements the
+///   [`AsRef`], [`Deref`] and [`Borrow`] traits. Event if a value has not been explicitly
+///   registered for it, the `Dependency` will still be able to [`as_ref`], [`deref`] and
+///   [`borrow`] this default value.
+///
+///  [`std::option::Option`]: std::option
+///  [`as_ref`]: Dependency::as_ref
+///  [`deref`]: Dependency::deref
+///  [`borrow`]: Dependency::borrow
 impl<T> Dependency<T> {
     #[inline]
     /// Creates a optional reference to the dependency of type `T`.
@@ -45,7 +51,7 @@ impl<T> Dependency<T> {
     #[inline(always)]
     /// Returns `true` if the dependency is a [`Some`] and the value inside of it matches a predicate.
     pub fn is_some_and(&self, f: impl FnOnce(&T) -> bool) -> bool {
-        self.as_deref().filter(|rr| f(*rr)).is_some()
+        self.as_deref().filter(|inner| f(*inner)).is_some()
     }
 
     #[inline(always)]
@@ -130,7 +136,9 @@ impl<T> Dependency<T> {
     where
         F: FnOnce(&T),
     {
-        self.as_deref().inspect(|rr| f(*rr)).and(self.as_deref())
+        self.as_deref()
+            .inspect(|inner| f(*inner))
+            .and(self.as_deref())
     }
 
     #[inline(always)]
@@ -174,10 +182,13 @@ impl<T> Dependency<T> {
     #[inline]
     /// Converts into a [`Option<&T>`].
     ///
+    /// # Note
     /// This is the preferred method for producing an [`Option`] to use with the
-    /// [the question mark operator][`?`].
+    /// [question mark operator][`?`].[^try]
     ///
     /// [`?`]: https://doc.rust-lang.org/nightly/core/option/index.html#the-question-mark-operator-
+    /// [^try]: Once the [Try trait](https://github.com/rust-lang/rust/issues/84277) is stabilized
+    ///         it will be implemented for `Dependency`.
     pub fn as_deref(&self) -> Option<&T> {
         self.inner.get().map(|inner| inner.deref())
     }
@@ -203,19 +214,18 @@ impl<T> Dependency<T> {
         P: FnOnce(&T) -> bool,
     {
         self.as_deref()
-            .filter(|rr| predicate(*rr))
+            .filter(|inner| predicate(*inner))
             .and(self.as_deref())
     }
 
     #[inline(always)]
-    /// Returns the dependency if it contains a value, otherwise returns `rhs`.
+    /// Returns the dependency if it is [`Some`], otherwise returns `rhs`.
     pub fn or(&self, rhs: Option<T>) -> Option<Ref<'_, T>> {
         self.as_deref().map(Ref::Borrowed).or(rhs.map(Ref::Owned))
     }
 
     #[inline(always)]
-    /// Returns the dependency if it contains a value, otherwise calls `f` and
-    /// returns the result.
+    /// Returns the dependency if it is [`Some`], otherwise calls `f` and returns the result.
     pub fn or_else<F>(&self, f: F) -> Option<Ref<'_, T>>
     where
         F: FnOnce() -> Option<T>,
@@ -226,8 +236,11 @@ impl<T> Dependency<T> {
     }
 
     #[inline(always)]
-    /// Returns [`Some`] if exactly one of the dependency or `rhs` is [`Some`],
-    /// otherwise returns [`None`].
+    /// Returns [`Some`] if only one of
+    /// - the dependency, or
+    /// - `rhs`
+    ///
+    /// is [`Some`], otherwise returns [`None`].
     pub fn xor(&self, rhs: Option<T>) -> Option<Ref<'_, T>> {
         self.as_deref().map(Ref::Borrowed).xor(rhs.map(Ref::Owned))
     }

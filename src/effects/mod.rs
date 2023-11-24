@@ -5,10 +5,10 @@ use std::rc::Rc;
 use std::thread::Thread;
 
 use flume::WeakSender;
-use futures::{future, Future, FutureExt, Stream, StreamExt};
 use futures::executor::LocalSpawner;
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
+use futures::{future, Future, FutureExt, Stream, StreamExt};
 
 use crate::dependencies::Dependency;
 
@@ -21,7 +21,7 @@ pub trait Effects: Clone {
     fn send(&self, action: Self::Action);
 
     // #[inline(always)]
-    // /// Reduces the `Effects` to one that sends child actions.
+    // /// Scopes the `Effects` to one that sends child actions.
     // fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
     // where
     //     Self::Action: From<ChildAction>,
@@ -110,11 +110,11 @@ impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     }
 }
 
-/// Asynchronous work being performed by a [`Store`][`crate::Store`].
+/// Asynchronous work being performed by a `Store`.
 ///
-/// A `Store` uses a [Local Async Executor][Why] to run its `Task`s.
+/// A [`Store`][`crate::Store`] uses a [Local Async Executor] to run its `Task`s.
 ///
-/// [Why]: https://maciej.codes/2022-06-09-local-async.html
+/// [Local Async Executor]: https://maciej.codes/2022-06-09-local-async.html
 #[must_use = "dropping a Task cancels the underlying future"]
 pub struct Task(Option<RemoteHandle<()>>);
 

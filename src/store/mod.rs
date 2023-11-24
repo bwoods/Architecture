@@ -40,6 +40,9 @@ impl<State: Reducer> Store<State> {
         Store::runtime(with)
     }
 
+    /// Calls the `Store`’s [`Reducer`][`crate::Reducer`] with `action`.
+    ///
+    /// Takes an [`Into<Action>`] so that both child and parent `Action`s may be sent easily.
     pub fn send(&self, action: impl Into<<State as Reducer>::Action>) {
         self.sender.send(Ok(action.into())).expect("Store::send")
     }
