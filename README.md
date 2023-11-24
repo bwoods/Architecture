@@ -1,6 +1,6 @@
 # A Composable Architecture
 
-The Swift Composable Architecture library improved upon previous Redux-inspired patterns by leveraging the capabilies of the Swift language to acheive better **Type Safety**, **Ergonomics**, and **Performance**.
+The Swift Composable Architecture library improved upon previous Redux-inspired patterns by leveraging the capabilies of the Swift language to acheive better **Type Safety**, **Ergonomics** and **Performance**.
 
 This crate attempts to do the same to The Swift Composable Architecture by leveraing the capabilities of the Rust language and ecosystem.
 
