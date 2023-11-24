@@ -3,9 +3,8 @@ use std::cell::OnceCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
-use maybe_owned::MaybeOwned;
-
 use crate::dependencies::guard::Guard;
+use crate::dependencies::refs::Ref;
 
 /// A wrapper type for accessing dependencies
 pub struct Dependency<T: 'static> {
@@ -87,32 +86,32 @@ impl<T> Dependency<T> {
 
     #[inline(always)]
     /// Returns the dependency [`Some`] value or a provided default.
-    pub fn unwrap_or(&self, default: T) -> MaybeOwned<'_, T> {
+    pub fn unwrap_or(&self, default: T) -> Ref<'_, T> {
         self.as_deref()
-            .map(MaybeOwned::Borrowed)
-            .unwrap_or(MaybeOwned::Owned(default))
+            .map(Ref::Borrowed)
+            .unwrap_or(Ref::Owned(default))
     }
 
     #[inline(always)]
     /// Returns the dependency [`Some`] value or computes it from a closure.
-    pub fn unwrap_or_else<F>(&self, f: F) -> MaybeOwned<'_, T>
+    pub fn unwrap_or_else<F>(&self, f: F) -> Ref<'_, T>
     where
         F: FnOnce() -> T,
     {
         self.as_deref()
-            .map(MaybeOwned::Borrowed)
-            .unwrap_or_else(|| MaybeOwned::Owned(f()))
+            .map(Ref::Borrowed)
+            .unwrap_or_else(|| Ref::Owned(f()))
     }
 
     #[inline(always)]
     /// Returns the dependency [`Some`] value or a default.
-    pub fn unwrap_or_default(&self) -> MaybeOwned<'_, T>
+    pub fn unwrap_or_default(&self) -> Ref<'_, T>
     where
         T: Default,
     {
         self.as_deref()
-            .map(MaybeOwned::Borrowed)
-            .unwrap_or_else(|| MaybeOwned::Owned(T::default()))
+            .map(Ref::Borrowed)
+            .unwrap_or_else(|| Ref::Owned(T::default()))
     }
 
     #[inline(always)]
@@ -175,8 +174,8 @@ impl<T> Dependency<T> {
     #[inline]
     /// Converts into a [`Option<&T>`].
     ///
-    /// This method can be convenient to produce an [`Option`]
-    /// to use with [the question mark operator][`?`].
+    /// This is the preferred method for producing an [`Option`] to use with the
+    /// [the question mark operator][`?`].
     ///
     /// [`?`]: https://doc.rust-lang.org/nightly/core/option/index.html#the-question-mark-operator-
     pub fn as_deref(&self) -> Option<&T> {
@@ -210,31 +209,27 @@ impl<T> Dependency<T> {
 
     #[inline(always)]
     /// Returns the dependency if it contains a value, otherwise returns `rhs`.
-    pub fn or(&self, rhs: Option<T>) -> Option<MaybeOwned<'_, T>> {
-        self.as_deref()
-            .map(MaybeOwned::Borrowed)
-            .or(rhs.map(MaybeOwned::Owned))
+    pub fn or(&self, rhs: Option<T>) -> Option<Ref<'_, T>> {
+        self.as_deref().map(Ref::Borrowed).or(rhs.map(Ref::Owned))
     }
 
     #[inline(always)]
     /// Returns the dependency if it contains a value, otherwise calls `f` and
     /// returns the result.
-    pub fn or_else<F>(&self, f: F) -> Option<MaybeOwned<'_, T>>
+    pub fn or_else<F>(&self, f: F) -> Option<Ref<'_, T>>
     where
         F: FnOnce() -> Option<T>,
     {
         self.as_deref()
-            .map(MaybeOwned::Borrowed)
-            .or_else(|| f().map(MaybeOwned::Owned))
+            .map(Ref::Borrowed)
+            .or_else(|| f().map(Ref::Owned))
     }
 
     #[inline(always)]
     /// Returns [`Some`] if exactly one of the dependency or `rhs` is [`Some`],
     /// otherwise returns [`None`].
-    pub fn xor(&self, rhs: Option<T>) -> Option<MaybeOwned<'_, T>> {
-        self.as_deref()
-            .map(MaybeOwned::Borrowed)
-            .xor(rhs.map(MaybeOwned::Owned))
+    pub fn xor(&self, rhs: Option<T>) -> Option<Ref<'_, T>> {
+        self.as_deref().map(Ref::Borrowed).xor(rhs.map(Ref::Owned))
     }
 
     #[inline(always)]

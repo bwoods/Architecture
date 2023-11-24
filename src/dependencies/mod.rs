@@ -1,11 +1,15 @@
 #![doc = include_str!("README.md")]
 
+pub use refs::Ref;
 pub use values::{Dependency, DependencyDefault};
 
 mod guard;
+mod refs;
 mod values;
 
 /// Supply a tuple of dependencies for the supplied closure
+///
+/// For a single value [`with_dependency`] may be used instead.
 pub fn with_dependencies<T, F, R>(with: T, f: F) -> R
 where
     T: Tuple,
