@@ -1,4 +1,4 @@
-This trait represents the domain, logic and behavior for a feature. The domain is specified by a `State` and the `Actions` which act upon it.
+This trait represents the domain, logic and behavior for a feature; specified by a `State` and the `Actions` which act upon it.
 
 ```rust
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -55,9 +55,11 @@ impl Reducer for State {
 }
 ```
 
-The `reduce` method’s first responsibility is to mutate the feature’s current state given an action. Its second responsibility is to trigger effects that feed their actions back into the system. Currently `Feature` does not need to run any effects so `effects` goes unused.
+The `reduce` method’s first responsibility is to mutate the feature’s current state given an action. Its second responsibility is to trigger effects that feed their actions back into the system. Currently `reduce` does not need to run any effects so `_effects` goes unused.
 
-If the action does need side effects, then more would need to be done. For example, if the feature always maintained an even number for its `State`, then each `Increment` and `Decrement` would need an effect to follow:
+If the action does need side effects, then more would need to be done. For example, if `reduce` always maintained an even number for the `State`, then each `Increment` and `Decrement` would need an effect to follow:[^actually…]
+
+[^actually…]: <small>Granted, real code could just adjust the values by two. It *is* a contrived example to show how to use `effects`, after all.</small>
 
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]

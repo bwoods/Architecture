@@ -129,7 +129,7 @@ pub mod tests {
     /// Certain domains rely upon a chain of internal effects being uninterruptible by any
     /// additional external actions. This test helps ensure that guarantee.
     ///
-    /// ## Note:
+    /// # Note:
     ///
     /// - Normal tests should use [`clock`]s and a [`TestStore`] rather than the brute-force
     ///   loop and thread manipulations used here.

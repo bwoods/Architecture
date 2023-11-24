@@ -6,25 +6,6 @@ use maybe_owned::MaybeOwned;
 
 use crate::dependencies::guard::Guard;
 
-/// …
-pub struct DependencyValues {}
-
-impl DependencyValues {
-    pub fn set<T: 'static>(&self, value: T) -> Guard<T> {
-        Guard::new(value)
-    }
-
-    pub fn clone_from<T: 'static>(value: Rc<T>) -> Guard<T> {
-        Guard::clone_from(value)
-    }
-
-    /// Can be used to [`assert!`][`std::assert`] (or [`debug_assert!`][`std::debug_assert`])
-    /// that a dependency has been set rather that waiting for a runtime failure.
-    pub fn contains<T: 'static>() -> bool {
-        Guard::<T>::exists()
-    }
-}
-
 ///
 pub struct Dependency<T: 'static> {
     inner: Option<Rc<T>>,
@@ -39,10 +20,10 @@ impl<T: 'static> Default for Dependency<T> {
     }
 }
 
-/// - Dependency implements most of the methods of [`Option`][`std::option`], as each dependency
-///   is effectively *optionally* present.
-/// - See [`DependencyKey`] for registering dependencies that are always present; allow you to
-///   [`AsRef`],[`Deref`] or [`Borrow`] their values freely.
+/// - `Dependency` implements very similar methods to [`Option`][`std::option`], as a dependency
+///    is effectively *optionally* present.
+/// - However, a `Dependency` on a [`DefaultDependency`] also implements [`Deref`], [`AsRef`] and [`Borrow`].
+///   As [`DefaultDependency`]s are **always** present.
 impl<T: 'static> Dependency<T> {
     #[inline]
     pub fn new() -> Self {
@@ -214,7 +195,7 @@ impl<T: 'static> Dependency<T> {
     }
 }
 
-impl<T: DependencyKey> Deref for Dependency<T> {
+impl<T: DefaultDependency> Deref for Dependency<T> {
     type Target = T;
 
     #[track_caller]
@@ -232,9 +213,8 @@ impl<T: DependencyKey> Deref for Dependency<T> {
                 // `Dependency::as_deref()` because the compiler then considers the reference
                 //  to be coming from a temporary.
 
-                // In practice, this only really affects uses of Dependency as struct field;
-                // those created as variables or via `with_dependency` will be refreshed on
-                // the very next call.
+                // In practice, this only really affects uses of Dependency as struct fields;
+                // those created as functions variables will be refreshed on the very next call.
             })
             .unwrap_or_else(|| {
                 if cfg!(test) {
@@ -244,7 +224,7 @@ impl<T: DependencyKey> Deref for Dependency<T> {
                     );
                 }
 
-                let leaked: &T = Box::leak(Box::new(T::live()));
+                let leaked: &T = Box::leak(Box::new(T::default()));
 
                 // Unfortunately, this means that anyone creating a Dependency<&T> (note the ref)
                 // will always get the .live() version of DependencyKey<T>, if any — unwittingly
@@ -257,21 +237,36 @@ impl<T: DependencyKey> Deref for Dependency<T> {
     }
 }
 
-impl<T: DependencyKey> AsRef<T> for Dependency<T> {
+impl<T: DefaultDependency> AsRef<T> for Dependency<T> {
     #[inline(always)]
     fn as_ref(&self) -> &T {
         self.deref()
     }
 }
 
-impl<T: DependencyKey> Borrow<T> for Dependency<T> {
+impl<T: DefaultDependency> Borrow<T> for Dependency<T> {
     #[inline(always)]
     fn borrow(&self) -> &T {
         self.deref()
     }
 }
 
+/// A dependency with a default value.
 ///
-pub trait DependencyKey {
-    fn live() -> Self;
-}
+/// There may be many different versions of dependencies for testingm but there is often just
+/// a single default implementation for use in the the actual application.
+///
+/// Implementing this trait for a type ensures that a [`Dependency`] on it will always have
+/// a value. If the `DefaultDependency` has not been [overridden][`super::with_dependencies`]
+/// this default value will be returned.
+///
+/// <div class="warning">
+/// Failing to override a default used in a unit test <em>will fail the test</em>
+/// as tests are <u>required</u> to explicitly supply all of their dependencies.
+/// </div>
+///
+/// # Note
+/// `DefaultDependency`s are only created as needed. When its first [`Dependency`] is
+///  created, [`default`][`Default::default`] will be called once and the returned value will
+///  be cached.
+pub trait DefaultDependency: Default {}

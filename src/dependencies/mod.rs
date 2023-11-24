@@ -1,4 +1,4 @@
-pub use values::{Dependency, DependencyKey, DependencyValues};
+pub use values::{DefaultDependency, Dependency};
 
 mod guard;
 mod values;
@@ -13,7 +13,9 @@ where
     f()
 }
 
-/// Supply a single dependency for the supplied closure
+/// Supply a single dependency for the supplied closure.
+///
+/// A convenience function that just forwards to [`with_dependencies`].
 pub fn with_dependency<T, F, R>(with: T, f: F) -> R
 where
     T: 'static,
@@ -22,6 +24,9 @@ where
     with_dependencies((with,), f)
 }
 
+/// A [`tuple`] of up to twenty-five values.
+///
+/// Used by [`with_dependencies`] to set the current [`Dependency`] values for its closure.
 pub trait Tuple {
     #[doc(hidden)]
     type Output;

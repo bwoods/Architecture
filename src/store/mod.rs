@@ -47,7 +47,7 @@ impl<State: Reducer> Store<State> {
     /// Stops the `Store`’s runtime and returns its current `state` value.  
     ///
     /// # Note
-    /// Caution should be exercised when using this method in applications that utilize
+    /// Care should be exercised when using this method in applications that utilize
     /// asynchronous [`Effects`][`crate::effects::Effects`]. `into_inner` makes a “best effort”
     /// to wait until any pending tasks are completed but it is not guaranteed.
     pub fn into_inner(self) -> <State as Reducer>::Output {
