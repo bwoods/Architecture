@@ -1,4 +1,6 @@
-pub use values::{DefaultDependency, Dependency};
+#![doc = include_str!("README.md")]
+
+pub use values::{Dependency, DependencyDefault};
 
 mod guard;
 mod values;
@@ -24,6 +26,7 @@ where
     with_dependencies((with,), f)
 }
 
+#[doc(hidden)]
 /// A [`tuple`] of up to twenty-five values.
 ///
 /// Used by [`with_dependencies`] to set the current [`Dependency`] values for its closure.
@@ -76,4 +79,4 @@ tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V }
 tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V W }
 tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V W X }
 tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V W X Y }
-// up to 25 dependencies supported
+// up to 25 dependencies are supported
