@@ -1,3 +1,4 @@
+use futures::executor::block_on;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::fmt::Debug;
@@ -48,10 +49,12 @@ where
             self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
         );
 
-        self.state
-            .as_mut()
-            .unwrap()
-            .reduce(action, self.effects.clone());
+        block_on(
+            self.state
+                .as_mut()
+                .unwrap()
+                .reduce(action, self.effects.clone()),
+        );
         assert_eq!(self.state, expected);
     }
 
@@ -71,10 +74,12 @@ where
             .expect("no action received");
         assert_eq!(received, action);
 
-        self.state
-            .as_mut()
-            .unwrap()
-            .reduce(action, self.effects.clone());
+        block_on(
+            self.state
+                .as_mut()
+                .unwrap()
+                .reduce(action, self.effects.clone()),
+        );
         assert_eq!(self.state, expected);
     }
 

@@ -38,7 +38,7 @@ impl Reducer for State {
     type Action = Action;
     type Output = usize;
 
-    fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
+    async fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
         match action {
             Increment => {
                 self.n += 1;
@@ -78,9 +78,10 @@ If the action does need side effects, then more would need to be done. For examp
 use Action::*;
 impl Reducer for State {
     type Action = Action;
+    type Output = usize;
 
     // This reducer ensures the value is always an even number
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+    async fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
         match action {
             Increment => {
                 self.n += 1;
@@ -96,8 +97,6 @@ impl Reducer for State {
             }
         }
     }
-
-    type Output = usize;
  
     fn into_inner(self) -> Self::Output {
         self.n

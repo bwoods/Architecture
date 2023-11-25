@@ -1,4 +1,4 @@
-use std::future::Future;
+use futures::future::Future;
 
 use crate::effects::Effects;
 
@@ -8,19 +8,11 @@ pub trait Reducer {
     type Action;
 
     #[allow(unused_variables)]
-    /// …
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {}
-
-    #[inline(always)]
-    fn reduce_async(
+    fn reduce(
         &mut self,
         action: Self::Action,
         effects: impl Effects<Action = Self::Action>,
-    ) -> impl Future<Output = ()> {
-        async {
-            self.reduce(action, effects);
-        }
-    }
+    ) -> impl Future<Output = ()>;
 
     /// …
     type Output;

@@ -34,6 +34,7 @@ lto = "thin"
 inherits = "release"
 codegen-units = 1
 incremental = false
+panic = "abort"
 debug = false
 strip = true
 lto = "fat"

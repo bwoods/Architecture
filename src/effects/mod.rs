@@ -13,7 +13,7 @@ use futures::{future, Future, FutureExt, Stream, StreamExt};
 use crate::dependencies::Dependency;
 
 #[doc = include_str!("README.md")]
-pub trait Effects: Clone + 'static {
+pub trait Effects: Clone {
     type Action;
 
     /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s
@@ -22,7 +22,7 @@ pub trait Effects: Clone + 'static {
 
     #[inline(always)]
     /// Scopes the `Effects` to one that sends child actions.
-    fn scope<ChildAction: 'static>(&self) -> impl Effects<Action = ChildAction>
+    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
     where
         Self::Action: From<ChildAction>,
     {
@@ -63,7 +63,7 @@ pub trait Effects: Clone + 'static {
 
 #[doc(hidden)]
 // Nested tuples are used by `Effects::scope`
-impl<Action: 'static, Parent> Effects for (Parent, Marker<Action>)
+impl<Action, Parent> Effects for (Parent, Marker<Action>)
 where
     Parent: Effects,
     <Parent as Effects>::Action: From<Action>,

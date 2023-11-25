@@ -20,7 +20,7 @@ impl Reducer for State {
     type Action = Action;
 
     #[inline(never)]
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+    async fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
         use Action::*;
 
         match action {
