@@ -36,10 +36,15 @@ impl<State: Reducer> Store<State> {
                         while let Ok(result) = receiver.recv_async().await {
                             match result {
                                 Ok(action) => {
-                                    state.reduce(action, effects.clone());
+                                    state.reduce_async(action, effects.clone()).await;
 
-                                    while let Some(action) = effects.borrow_mut().pop_front() {
-                                        state.reduce(action, effects.clone());
+                                    // wrapping the `borrow_mut` in a closure to ensure the borrow
+                                    // is dropped before the `await` that follows
+                                    let next = || effects.borrow_mut().pop_front();
+
+                                    // see: https://rust-lang.github.io/rust-clippy/master/index.html#await_holding_refcell_ref
+                                    while let Some(action) = next() {
+                                        state.reduce_async(action, effects.clone()).await;
                                     }
                                 }
                                 Err(parked) => {
