@@ -1,9 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+Please keep one empty line before and after all headers. (This is required for `git` to produce a conflict when a release is made while a PR is open and the PR's changelog entry would go into the wrong section).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)/[Common Changelog](https://common-changelog.org),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+And please only add new entries to the top of this list, right below the `# Unreleased` header.
+
+> The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)/[Common Changelog](https://common-changelog.org),
+> and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
 
