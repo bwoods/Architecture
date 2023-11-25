@@ -18,7 +18,7 @@ pub trait Effects: Clone {
 
     /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s
     /// [`Reducer`][`crate::Reducer`].
-    fn send(&self, action: Self::Action);
+    fn send(&self, action: impl Into<Self::Action>);
 
     #[inline(always)]
     /// Scopes the `Effects` to one that sends child actions.
@@ -71,7 +71,7 @@ where
     type Action = Action;
 
     #[inline(always)]
-    fn send(&self, action: Action) {
+    fn send(&self, action: impl Into<Self::Action>) {
         self.0.send(action.into());
     }
 
@@ -87,8 +87,8 @@ impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
     #[inline(always)]
-    fn send(&self, action: Action) {
-        self.borrow_mut().push_back(action);
+    fn send(&self, action: impl Into<Self::Action>) {
+        self.borrow_mut().push_back(action.into());
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
@@ -102,9 +102,9 @@ impl<Action: 'static> Effects for WeakSender<Result<Action, Thread>> {
     type Action = Action;
 
     #[inline(always)]
-    fn send(&self, action: Action) {
+    fn send(&self, action: impl Into<Self::Action>) {
         self.upgrade()
-            .and_then(|sender| sender.send(Ok(action)).ok());
+            .and_then(|sender| sender.send(Ok(action.into())).ok());
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
