@@ -26,7 +26,7 @@ impl Reducer for State {
     type Output = usize;
 
     // This reducer ensures the value is always an even number
-    async fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
         match action {
             Increment => {
                 self.n += 1;

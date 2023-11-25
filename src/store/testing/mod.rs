@@ -53,7 +53,7 @@ where
             self.state
                 .as_mut()
                 .unwrap()
-                .reduce(action, self.effects.clone()),
+                .reduce_async(action, self.effects.clone()),
         );
         assert_eq!(self.state, expected);
     }
@@ -78,7 +78,7 @@ where
             self.state
                 .as_mut()
                 .unwrap()
-                .reduce(action, self.effects.clone()),
+                .reduce_async(action, self.effects.clone()),
         );
         assert_eq!(self.state, expected);
     }

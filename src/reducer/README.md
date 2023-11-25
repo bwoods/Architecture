@@ -1,4 +1,4 @@
-This trait represents the domain, logic and behavior for a feature; specified by a `State` and the `Actions` which act upon it.
+`Reducer`s  are responsible for updating a `Store`’s  `state` in response to its `Action`s.
 
 ```rust
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -38,7 +38,7 @@ impl Reducer for State {
     type Action = Action;
     type Output = usize;
 
-    async fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
+    fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
         match action {
             Increment => {
                 self.n += 1;
@@ -81,7 +81,7 @@ impl Reducer for State {
     type Output = usize;
 
     // This reducer ensures the value is always an even number
-    async fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
         match action {
             Increment => {
                 self.n += 1;
