@@ -21,7 +21,7 @@ impl<T> Deref for Ref<'_, T> {
     fn deref(&self) -> &Self::Target {
         match self {
             Ref::Borrowed(reference) => reference,
-            Ref::Owned(value) => &value,
+            Ref::Owned(value) => value,
         }
     }
 }

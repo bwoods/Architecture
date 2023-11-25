@@ -13,33 +13,60 @@ use futures::{future, Future, FutureExt, Stream, StreamExt};
 use crate::dependencies::Dependency;
 
 #[doc = include_str!("README.md")]
-pub trait Effects: Actions + Async + Clone + 'static {
+pub trait Effects: Clone {
     type Action;
+
+    /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s
+    /// [`Reducer`][`crate::Reducer`].
+    fn send(&self, action: Self::Action);
 
     #[inline(always)]
     /// Scopes the `Effects` to one that sends child actions.
-    fn scope<ChildAction: 'static>(&self) -> impl Effects<Action = ChildAction>
+    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
     where
-        <Self as Async>::Action: From<ChildAction>,
-        <Self as Actions>::Action: From<ChildAction>,
+        Self::Action: From<ChildAction>,
     {
         (self.clone(), Marker)
     }
-}
 
-impl<T> Effects for T
-where
-    T: Actions + Async + Clone + 'static,
-{
-    type Action = <Self as Actions>::Action;
+    /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
+    /// zero or more [`Action`][`Self::Action`]s back into the `Store`’s [`Reducer`][`crate::Reducer`]
+    /// as it runs.
+    ///
+    /// Use this method if you need to ability to [`cancel`][Task::cancel] the task
+    /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
+    /// should be preferred.
+    fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
+
+    /// An effect that runs a [`Future`][`std::future`] and, if it returns an
+    /// [`Action`][`Self::Action`], sends it through the `Store`’s [`Reducer`][`crate::Reducer`].
+    #[inline]
+    fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
+    where
+        Self::Action: 'static,
+    {
+        let stream = future
+            .into_stream()
+            .map(future::ready)
+            .filter_map(|option| option);
+        self.task(stream).detach()
+    }
+
+    /// An effect that runs a [`Stream`](https://docs.rs/futures/latest/futures/stream/index.html)
+    /// and sends every [`Action`][`Self::Action`] it returns through the `Store`’s
+    /// [`Reducer`][`crate::Reducer`].
+    #[inline(always)]
+    fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
+        self.task(stream).detach()
+    }
 }
 
 #[doc(hidden)]
 // Nested tuples are used by `Effects::scope`
-impl<Action, Parent> Actions for (Parent, Marker<Action>)
+impl<Action, Parent> Effects for (Parent, Marker<Action>)
 where
     Parent: Effects,
-    <Parent as Actions>::Action: From<Action>,
+    <Parent as Effects>::Action: From<Action>,
 {
     type Action = Action;
 
@@ -47,16 +74,6 @@ where
     fn send(&self, action: Action) {
         self.0.send(action.into());
     }
-}
-
-#[doc(hidden)]
-// Nested tuples are used by `Effects::scope`
-impl<Action, Parent> Async for (Parent, Marker<Action>)
-where
-    Parent: Effects,
-    <Parent as Async>::Action: From<Action>,
-{
-    type Action = Action;
 
     #[inline(always)]
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
@@ -66,37 +83,51 @@ where
 
 #[doc(hidden)]
 // `Parent` for `Effects::scope` tuples
-impl<Action: 'static> Actions for Rc<RefCell<VecDeque<Action>>> {
+impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
     #[inline(always)]
     fn send(&self, action: Action) {
         self.borrow_mut().push_back(action);
     }
+
+    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
+        async_task(stream)
+    }
 }
 
 #[doc(hidden)]
-// `Parent` for `Effects::scope` tuples
-impl<Action: 'static> Async for Rc<RefCell<VecDeque<Action>>> {
+// `Parent` for `StoreOf::scope` tuples
+impl<Action: 'static> Effects for WeakSender<Result<Action, Thread>> {
     type Action = Action;
 
-    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        let handle = Dependency::<Executor<Result<Action, Thread>>>::new() //
-            .and_then(|executor| {
-                match executor.actions.upgrade() {
-                    None => None,
-                    Some(sender) => {
-                        let stream =
-                            stream.then(move |action| sender.clone().into_send_async(Ok(action)));
-                        let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
-
-                        executor.spawner.spawn_local_with_handle(future).ok()
-                    }
-                }
-            });
-
-        Task(handle) // may return a `Task(None)` while the `Store` is shutting down
+    #[inline(always)]
+    fn send(&self, action: Action) {
+        self.upgrade()
+            .and_then(|sender| sender.send(Ok(action)).ok());
     }
+
+    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
+        async_task(stream)
+    }
+}
+
+fn async_task<Action: 'static, S: Stream<Item = Action> + 'static>(stream: S) -> Task {
+    let handle = Dependency::<Executor<Result<Action, Thread>>>::new() //
+        .and_then(|executor| {
+            match executor.actions.upgrade() {
+                None => None,
+                Some(sender) => {
+                    let stream =
+                        stream.then(move |action| sender.clone().into_send_async(Ok(action)));
+                    let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
+
+                    executor.spawner.spawn_local_with_handle(future).ok()
+                }
+            }
+        });
+
+    Task(handle) // may return a `Task(None)` while the `Store` is shutting down
 }
 
 /// Asynchronous work being performed by a `Store`.
@@ -129,48 +160,5 @@ pub(crate) struct Executor<Action> {
 impl<Action> Executor<Action> {
     pub(crate) fn new(spawner: LocalSpawner, actions: WeakSender<Action>) -> Self {
         Self { spawner, actions }
-    }
-}
-
-pub trait Actions {
-    type Action;
-
-    /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s
-    /// [`Reducer`][`crate::Reducer`].
-    fn send(&self, action: Self::Action);
-}
-
-pub trait Async {
-    type Action;
-
-    /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
-    /// zero or more [`Action`][`Self::Action`]s back into the `Store`’s [`Reducer`][`crate::Reducer`]
-    /// as it runs.
-    ///
-    /// Use this method if you need to ability to [`cancel`][Task::cancel] the task
-    /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
-    /// should be preferred.
-    fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
-
-    /// An effect that runs a [`Future`][`std::future`] and, if it returns an
-    /// [`Action`][`Self::Action`], sends it through the `Store`’s [`Reducer`][`crate::Reducer`].
-    #[inline]
-    fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
-    where
-        Self::Action: 'static,
-    {
-        let stream = future
-            .into_stream()
-            .map(future::ready)
-            .filter_map(|option| option);
-        self.task(stream).detach()
-    }
-
-    /// An effect that runs a [`Stream`](https://docs.rs/futures/latest/futures/stream/index.html)
-    /// and sends every [`Action`][`Self::Action`] it returns through the `Store`’s
-    /// [`Reducer`][`crate::Reducer`].
-    #[inline(always)]
-    fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
-        self.task(stream).detach()
     }
 }
