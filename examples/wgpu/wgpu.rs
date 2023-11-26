@@ -1,11 +1,12 @@
+pub use ::wgpu::Instance;
+pub use ::wgpu::Surface;
+
 #[derive(Debug)]
 pub struct State {
     surface: wgpu::Surface<'static>,
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
     queue: wgpu::Queue,
-    width: u32,
-    height: u32,
 }
 
 impl<'a> State {
@@ -63,15 +64,12 @@ impl<'a> State {
             config,
             device,
             queue,
-            width,
-            height,
         }
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
-
+        self.config.width = width;
+        self.config.height = height;
         self.surface.configure(&self.device, &self.config);
     }
 
