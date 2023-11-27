@@ -95,6 +95,11 @@ pub mod tests {
 
     impl Reducer for State {
         type Action = Action;
+        type Output = Self;
+
+        fn into_inner(self) -> Self::Output {
+            self
+        }
 
         fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
             use Action::*;
@@ -112,12 +117,6 @@ pub mod tests {
                     }
                 }
             }
-        }
-
-        type Output = Self;
-
-        fn into_inner(self) -> Self::Output {
-            self
         }
     }
 
@@ -182,14 +181,13 @@ pub mod tests {
 
         impl Reducer for State {
             type Action = Action;
-
-            fn reduce(&mut self, _action: Action, _effects: impl Effects<Action = Action>) {}
-
             type Output = Self;
 
             fn into_inner(self) -> Self::Output {
                 self
             }
+
+            fn reduce(&mut self, _action: Action, _effects: impl Effects<Action = Action>) {}
         }
 
         let store = Store::<State>::default();

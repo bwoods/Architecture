@@ -19,7 +19,7 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
     let data = if let Data::Struct(data) = input.data {
         data
     } else {
-        panic!("The Reducers derive macro as for structs (with named fields)");
+        panic!("The Reducers derive macro is for structs (with named fields)");
     };
 
     let child_reducers =
@@ -33,27 +33,24 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl Reducer for #parent_reducer
+        impl composable::Reducer for #parent_reducer
             where self::Action: Clone
         {
             type Action = self::Action;
-
-            fn run_reducers(
-                &mut self,
-                action: Self::Action,
-                effects: impl Effects<Action = Self::Action>,
-            ) -> impl std::future::Future<Output = ()> {
-                async move {
-                    self.reduce_first(action.clone(), effects.clone()).await;
-                     #(
-                        #child_reducers
-                    ),*
-                }
-            }
-
             type Output = ();
 
             fn into_inner(self) -> Self::Output { }
+
+            async fn reduce_async(
+                &mut self,
+                action: Self::Action,
+                effects: impl composable::Effects<Action = Self::Action>,
+            ) {
+                self.reduce_async(action.clone(), effects.clone()).await;
+                 #(
+                    #child_reducers
+                )*
+            }
         }
     };
 

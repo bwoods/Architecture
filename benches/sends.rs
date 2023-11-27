@@ -8,6 +8,7 @@ fn main() {
 }
 
 struct State(usize);
+
 #[derive(Clone, Debug)]
 enum Action {
     A,
@@ -18,6 +19,11 @@ enum Action {
 
 impl Reducer for State {
     type Action = Action;
+    type Output = usize;
+
+    fn into_inner(self) -> Self::Output {
+        self.0
+    }
 
     #[inline(never)]
     fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
@@ -38,12 +44,6 @@ impl Reducer for State {
                 }
             }
         }
-    }
-
-    type Output = usize;
-
-    fn into_inner(self) -> Self::Output {
-        self.0
     }
 }
 

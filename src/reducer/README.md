@@ -37,6 +37,10 @@ use Action::*;
 impl Reducer for State {
     type Action = Action;
     type Output = usize;
+  
+    fn into_inner(self) -> Self::Output {
+        self.n
+    }
 
     fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
         match action {
@@ -47,10 +51,6 @@ impl Reducer for State {
                 self.n -= 1;
             }
         }
-    }
-  
-    fn into_inner(self) -> Self::Output {
-        self.n
     }
 }
 ```
@@ -79,6 +79,10 @@ use Action::*;
 impl Reducer for State {
     type Action = Action;
     type Output = usize;
+ 
+    fn into_inner(self) -> Self::Output {
+        self.n
+    }
 
     // This reducer ensures the value is always an even number
     fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
@@ -96,10 +100,6 @@ impl Reducer for State {
                 }
             }
         }
-    }
- 
-    fn into_inner(self) -> Self::Output {
-        self.n
     }
 }
 ```

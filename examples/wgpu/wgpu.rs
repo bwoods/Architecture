@@ -1,21 +1,53 @@
-pub use ::wgpu::Instance;
-pub use ::wgpu::Surface;
+pub use ::wgpu::{Instance, Surface};
+use ::winit::window::Window;
+
+use composable::*;
+
+#[derive(Debug, Default)]
+pub struct State {
+    inner: Option<Inner>,
+}
+
+#[derive(Clone, Debug)]
+pub enum Action {
+    Setup(&'static Window),
+}
+
+impl Reducer for State {
+    type Action = Action;
+    type Output = ();
+
+    fn into_inner(self) -> Self::Output {}
+
+    async fn reduce_async(
+        &mut self,
+        action: Self::Action,
+        _effects: impl Effects<Action = Self::Action>,
+    ) {
+        match action {
+            Action::Setup(window) => self.set(window).await,
+        }
+    }
+
+    // fn into_inner(self) -> Self::Output {}
+}
 
 #[derive(Debug)]
-pub struct State {
-    surface: wgpu::Surface<'static>,
+struct Inner {
+    surface: Surface<'static>,
+
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
     queue: wgpu::Queue,
 }
 
 impl<'a> State {
-    pub async fn new(
-        instance: wgpu::Instance,
-        surface: wgpu::Surface<'static>,
-        width: u32,
-        height: u32,
-    ) -> Self {
+    pub async fn set(&mut self, window: &'static Window) {
+        let instance = wgpu::Instance::default();
+        let surface = surface_from(&instance, window);
+
+        let (width, height) = window.inner_size().into();
+
         let adapter =
             instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -59,35 +91,40 @@ impl<'a> State {
 
         surface.configure(&device, &config);
 
-        State {
+        let inner = Inner {
             surface,
             config,
             device,
             queue,
-        }
+        };
+
+        self.inner.replace(inner);
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        self.config.width = width;
-        self.config.height = height;
-        self.surface.configure(&self.device, &self.config);
+        if let Some(inner) = self.inner.as_mut() {
+            inner.config.width = width;
+            inner.config.height = height;
+            inner.surface.configure(&inner.device, &inner.config);
+        }
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        if let Some(inner) = self.inner.as_mut() {
+            let output = inner.surface.get_current_texture()?;
+            let view = output
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("encoder"),
-            });
+            let mut encoder =
+                inner
+                    .device
+                    .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                        label: Some("encoder"),
+                    });
 
-        {
-            let _render_pass =
-                encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            {
+                let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("pass"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &view,
@@ -106,11 +143,36 @@ impl<'a> State {
                     occlusion_query_set: None,
                     timestamp_writes: None,
                 });
+            }
+
+            inner.queue.submit(std::iter::once(encoder.finish()));
+            output.present();
         }
 
-        self.queue.submit(std::iter::once(encoder.finish()));
-        output.present();
-
         Ok(())
+    }
+}
+
+/// Given that [`create_surface`] has this warning
+///
+/// > # Panics
+/// > - On macOS/Metal: will panic if not called on the main thread.
+///
+/// We work around this limitation when `#[cfg(target_os = "macos")]` rather than complicate
+/// the logic for _all_ platforms.
+///
+/// [`create_surface`]: wgpu::Instance::create_surface
+fn surface_from(instance: &Instance, window: &'static Window) -> Surface<'static> {
+    #[cfg(target_os = "macos")]
+    {
+        let queue = dispatch::Queue::main();
+        queue.exec_sync(|| {
+            return instance.create_surface(window).unwrap();
+        })
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        return instance.create_surface(window).unwrap();
     }
 }

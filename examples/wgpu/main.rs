@@ -2,66 +2,66 @@ use winit::dpi::LogicalSize;
 use winit::dpi::Position::Logical;
 use winit::error::EventLoopError;
 use winit::event::{Event, StartCause, WindowEvent};
-use winit::event_loop::{ControlFlow, EventLoop, EventLoopProxy};
-use winit::window::WindowBuilder;
+use winit::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
+use winit::window::{Window, WindowBuilder};
+
+#[allow(unused)]
+#[cfg(target_os = "macos")]
+use winit::platform::macos::{EventLoopBuilderExtMacOS, WindowExtMacOS};
+#[cfg(target_os = "windows")]
+use winit::platform::windows::{EventLoopBuilderExtWindows, WindowExtWindows};
 
 use composable::*;
 
+mod menu;
 mod wgpu;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Reducers)]
 struct State {
-    wgpu: Option<wgpu::State>,
+    menu: menu::State,
+    wgpu: wgpu::State,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, From, TryInto)]
 enum Action {
     Render,
-    Resize {
-        width: u32,
-        height: u32,
-    },
+    Resize { width: u32, height: u32 },
     Shutdown(EventLoopProxy<()>),
-    Setup {
-        instance: wgpu::Instance,
-        surface: wgpu::Surface<'static>,
-        width: u32,
-        height: u32,
-    },
+    Setup(&'static Window),
+    Menu(menu::Action),
+    Wgpu(wgpu::Action),
 }
 
-impl Reducer for State {
-    type Action = Action;
-
-    #[allow(clippy::option_map_unit_fn)]
-    async fn reduce_async(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
+impl State {
+    async fn reduce_async(&mut self, action: Action, effects: impl Effects<Action = Action>) {
         use Action::*;
 
         match action {
             Render => {
-                self.wgpu.as_mut().map(|state| state.render());
+                self.wgpu.render().ok();
             }
             Resize { width, height } => {
-                self.wgpu.as_mut().map(|state| state.resize(width, height));
+                self.wgpu.resize(width, height);
             }
             Shutdown(proxy) => {
-                self.wgpu.take(); // tear down the wgpu::State
                 proxy.send_event(()).ok();
             }
-            #[rustfmt::skip]
-            Setup { instance, surface, width, height } => {
-                self.wgpu = Some(wgpu::State::new(instance, surface, width, height).await);
+            Setup(window) => {
+                // effects.send(menu::Action::Setup(window));
+                effects.send(wgpu::Action::Setup(window));
             }
+            _ => {}
         }
     }
-
-    type Output = ();
-
-    fn into_inner(self) -> Self::Output {}
 }
 
 fn main() -> Result<(), EventLoopError> {
-    let event_loop = EventLoop::new().unwrap();
+    let mut event_loop_builder = EventLoopBuilder::new();
+
+    // #[cfg(target_os = "macos")]
+    // event_loop_builder.with_default_menu(false);
+
+    let event_loop = event_loop_builder.build().unwrap();
     let event_loop_proxy = event_loop.create_proxy();
 
     event_loop.set_control_flow(ControlFlow::Wait); // turn off polling
@@ -90,20 +90,7 @@ fn main() -> Result<(), EventLoopError> {
 
         match event {
             Event::NewEvents(StartCause::Init) => {
-                // let window = window.take().unwrap();
-                let (width, height) = window.inner_size().into();
-
-                let instance = wgpu::Instance::default();
-                let surface = instance.create_surface(window).unwrap();
-                // note: “On macOS/Metal: will panic if not called on the main thread.”
-                //        So we the surface here…
-
-                store.send(Setup {
-                    instance,
-                    surface,
-                    width,
-                    height,
-                });
+                store.send(Setup(window));
             }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
