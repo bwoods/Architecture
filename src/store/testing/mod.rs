@@ -13,7 +13,6 @@ where
 {
     state: Option<State>, // `Option` so that `into_inner` does not break `Drop`
     effects: Rc<RefCell<VecDeque<<State as Reducer>::Action>>>,
-    // TODO: actions: Sender<Action> (for async Effects)
 }
 
 impl<State: Reducer> TestStore<State>

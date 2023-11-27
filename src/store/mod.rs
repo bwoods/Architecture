@@ -44,7 +44,7 @@ impl<State: Reducer> Store<State> {
     ///
     /// Takes an [`Into<Action>`] so that both child and parent `Action`s may be sent easily.
     pub fn send(&self, action: impl Into<<State as Reducer>::Action>) {
-        self.sender.send(Ok(action.into())).expect("Store::send")
+        self.sender.send(Ok(action.into())).expect("send")
     }
 
     /// Stops the `Store`’s runtime and returns its current `state` value.  
@@ -56,7 +56,7 @@ impl<State: Reducer> Store<State> {
     pub fn into_inner(self) -> <State as Reducer>::Output {
         self.sender
             .send(Err(std::thread::current()))
-            .expect("Store::into_inner");
+            .expect("into_inner");
         std::thread::park(); // waiting for any async tasks to finish up
 
         drop(self.sender); // ends the runtime’s (outer) while-let

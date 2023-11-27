@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
-use std::thread::Thread;
+use std::thread::{Builder, Thread};
 
 use flume::{unbounded, WeakSender};
 use futures::executor::LocalPool;
@@ -22,7 +22,7 @@ impl<State: Reducer> Store<State> {
         let (sender, receiver) = unbounded();
         let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
 
-        let handle = std::thread::Builder::new()
+        let handle = Builder::new()
             .name(std::any::type_name::<State>().into())
             .spawn(move || {
                 let mut task_pool = LocalPool::new();
@@ -170,7 +170,9 @@ pub mod tests {
     #[cfg(not(miri))]
     #[timeout(1000)]
     /// # Note
-    /// If this test **timeout**s, the [`join`][std::thread::JoinHandle::join] in [`Store::into_inner`] is hanging
+    /// If this test **timeout**s, the [`join`] in [`Store::into_inner`] is hanging
+    ///
+    /// [`join`]: std::thread::JoinHandle::join
     fn test_into_inner_returns() {
         #[derive(Default)]
         struct State;
