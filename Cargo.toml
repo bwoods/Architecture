@@ -16,6 +16,8 @@ futures = { version = "0.3.29", features = ["executor"] }
 flume = { git = "https://github.com/bwoods/flume.git", features = ["async"], default-features = false }
 ambience = "0.2.1"
 
+derive_reducers = { path = "src/reducer/derive_reducers" }
+
 [dependencies.derive_more]
 version = "0.99.17"
 features = ["from", "try_into", "as_ref", "as_mut"]
@@ -37,7 +39,6 @@ lto = "thin"
 inherits = "release"
 codegen-units = 1
 incremental = false
-panic = "abort"
 debug = false
 strip = true
 lto = "fat"
