@@ -13,7 +13,7 @@ spin = ["flume/spin"]
 
 [dependencies]
 futures = { version = "0.3.29", features = ["executor"] }
-flume = { git = "https://github.com/bwoods/flume.git", features = ["async"], default-features = false }
+flume = { git = "https://github.com/zesterer/flume.git", features = ["async"], default-features = false }
 ambience = "0.2.1"
 
 derive_reducers = { path = "src/reducer/derive_reducers" }
@@ -33,6 +33,9 @@ muda = "0.11.2"
 
 [target.'cfg(target_os = "macos")'.dependencies.dispatch]
 version = "0.2.0"
+
+[target.'cfg(target_os = "windows")'.dependencies.windows-sys]
+version = "0.52.0"
 
 
 [profile.release]

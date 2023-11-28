@@ -6,6 +6,7 @@ use crate::reducer::Reducer;
 
 mod runtime;
 
+mod blocking;
 pub(crate) mod testing;
 
 #[doc = include_str!("README.md")]
@@ -38,6 +39,14 @@ impl<State: Reducer> Store<State> {
         <State as Reducer>::Output: Send + 'static,
     {
         Store::runtime(with)
+    }
+
+    /// …
+    pub fn blocking<F>(with: F) -> blocking::Store<State>
+    where
+        F: (FnOnce() -> State) + 'static,
+    {
+        blocking::Store::with_initial(with())
     }
 
     /// Calls the `Store`’s [`Reducer`][`crate::Reducer`] with `action`.

@@ -19,7 +19,7 @@ The API has diverged to better reflect the different strengths (and weaknesses) 
 
 - **State management**
 
-  Managing … Rust’s restrictions on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability):
+  Using `State`s and `Reducer`s to manage Rust’s restrictions on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability)…
 
 - **Composition**
 - **Side effects**
@@ -42,9 +42,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 # Why use Composable?
 
-…
-
-
+A composable architecture is based around
 
 > ### Note
 >
@@ -55,6 +53,24 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 
 
+As for *this crate* specifically. Features include:
+
+- **Small**
+
+  The crate is under 2000 lines of code, with minimal dependancies.
+
+- **Fast**
+
+  `Store::send` is less that 50 ns. `Effects` are 5–10× faster.
+
+- **Reliable**
+
+  No unsafe code. 
+
+
+
+Furthermore, the optional `async` handling is done without dependence on a runtime. A `Store` runs its `Reducer` entirely within a single thread. At the same time, `Effects` make it easy for an application to run code, concurrently or in parallel, that feeds its results back into the appropriate `Reducer`.
+
 
 
 ## Usage
@@ -62,8 +78,10 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 To use Composable, place the following line under the `[dependencies]` section in your `Cargo.toml`:
 
 ```toml
-compoable = "x.y"
+composable = "x.y"
 ```
+
+
 
 ### Optional Features
 

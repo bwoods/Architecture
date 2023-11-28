@@ -22,15 +22,14 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
         panic!("The Reducers derive macro is for structs (with named fields)");
     };
 
-    let child_reducers =
-        data.fields.iter().map(|field| {
-            let name = &field.ident;
-            quote! {
-                if let Ok(action) = action.clone().try_into() {
-                    self.#name.reduce_async(action, effects.scope()).await;
-                }
+    let child_reducers = data.fields.iter().map(|field| {
+        let name = &field.ident;
+        quote! {
+            if let Ok(action) = action.clone().try_into() {
+                self.#name.reduce_async(action, effects.scope()).await;
             }
-        });
+        }
+    });
 
     let expanded = quote! {
         impl composable::Reducer for #parent_reducer
