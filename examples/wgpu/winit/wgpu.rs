@@ -105,12 +105,8 @@ impl State {
             });
 
         {
-            let white = wgpu::Color {
-                r: 1.0,
-                g: 1.0,
-                b: 1.0,
-                a: 1.0,
-            };
+            #[rustfmt::skip]
+            let white = wgpu::Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
 
             let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("pass"),

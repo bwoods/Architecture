@@ -11,10 +11,10 @@ mod menu;
 mod wgpu;
 
 pub struct State {
-    window: &'static Window,
-
     menu: menu::State,
     wgpu: wgpu::State,
+
+    window: Box<Window>, // must be dropped after wgpu
 }
 
 #[derive(Clone, Debug)]
@@ -48,7 +48,7 @@ impl State {
         let mut menu = menu::State::new(&mut event_loop_builder);
 
         let event_loop = event_loop_builder.build().unwrap();
-        let window: &'static _ = Box::leak(Box::new(
+        let window = Box::new(
             WindowBuilder::new()
                 .with_title("")
                 .with_theme(None) // None → current
@@ -63,11 +63,15 @@ impl State {
                 })
                 .build(&event_loop)
                 .unwrap(),
-        ));
+        );
 
         menu.attach_to(&window);
 
-        let wgpu = block_on(wgpu::State::new(&window));
+        let raw = Box::<Window>::into_raw(window);
+        let window: &'static _ = unsafe { raw.as_ref() }.unwrap();
+        let wgpu = block_on(wgpu::State::new(window));
+
+        let window = unsafe { Box::from_raw(raw) };
         let state = Self { window, menu, wgpu };
 
         (state, event_loop)
