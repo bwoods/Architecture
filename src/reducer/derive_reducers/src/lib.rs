@@ -12,7 +12,7 @@ use syn::{parse_macro_input, Data, DeriveInput};
 /// - The parent type’s `Action` must be `Clone`.
 ///
 /// If any of these requirement are not met the macro will issue a compilation error.
-#[proc_macro_derive(RecursiveReducer)]
+#[proc_macro_derive(RecursiveReducer, attributes(not_a_reducer))]
 pub fn derive_reducers(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let parent_reducer = input.ident;
@@ -23,14 +23,18 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
         panic!("The Reducers derive macro is for structs (with named fields)");
     };
 
-    let child_reducers = data.fields.iter().map(|field| {
-        let name = &field.ident;
-        quote! {
-            if let Ok(action) = action.clone().try_into() {
-                self.#name.reduce_async(action, effects.scope()).await;
+    #[rustfmt::skip]
+    let child_reducers = data.fields.iter().filter(|field| {
+            field.attrs.iter().all(|attr| !attr.path().is_ident("not_a_reducer"))
+        })
+        .map(|field| {
+            let name = &field.ident;
+            quote! {
+                if let Ok(action) = action.clone().try_into() {
+                    self.#name.reduce(action, effects.scope());
+                }
             }
-        }
-    });
+        });
 
     let expanded = quote! {
         impl composable::Reducer for #parent_reducer
@@ -41,12 +45,13 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
 
             fn into_inner(self) -> Self::Output { }
 
-            async fn reduce_async(
+            fn reduce(
                 &mut self,
                 action: Self::Action,
                 effects: impl composable::Effects<Action = Self::Action>,
             ) {
-                self.reduce_async(action.clone(), effects.clone()).await;
+                Self::reduce(self, action.clone(), effects.clone());
+
                  #(
                     #child_reducers
                 )*

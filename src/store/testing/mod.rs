@@ -3,8 +3,6 @@ use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use futures::executor::block_on;
-
 use crate::reducer::Reducer;
 
 #[doc = include_str!("README.md")]
@@ -49,12 +47,10 @@ where
             self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
         );
 
-        block_on(
-            self.state
-                .as_mut()
-                .unwrap()
-                .reduce_async(action, self.effects.clone()),
-        );
+        self.state
+            .as_mut()
+            .unwrap()
+            .reduce(action, self.effects.clone());
         assert_eq!(self.state, expected);
     }
 
@@ -74,12 +70,10 @@ where
             .expect("no action received");
         assert_eq!(received, action);
 
-        block_on(
-            self.state
-                .as_mut()
-                .unwrap()
-                .reduce_async(action, self.effects.clone()),
-        );
+        self.state
+            .as_mut()
+            .unwrap()
+            .reduce(action, self.effects.clone());
         assert_eq!(self.state, expected);
     }
 

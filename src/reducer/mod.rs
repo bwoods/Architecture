@@ -1,6 +1,4 @@
-use futures::future::Future;
-
-use crate::effects::Effects;
+use crate::Effects;
 
 #[doc = include_str!("README.md")]
 pub trait Reducer {
@@ -34,22 +32,6 @@ pub trait Reducer {
     /// Additional `Action`s that need to be performed as a side-effect of an `Action` should be
     /// [invoked][`crate::Effects`] on `effects`.
     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {}
-
-    /// Updates the `Reducer`’s state in response to the action received.
-    /// - Implement `reduce_async` for `Reducer`s that need to call `async` functions.
-    /// - Only one of [`reduce`][`Reducer::reduce`] and [`reduce_async`][`Reducer::reduce_async`]
-    ///   should be implemented for a given type.
-    ///
-    /// Additional `Action`s that need to be performed as a side-effect of an `Action` should be
-    /// [invoked][`crate::Effects`] on `effects`.
-    #[inline(always)]
-    fn reduce_async(
-        &mut self,
-        action: Self::Action,
-        effects: impl Effects<Action = Self::Action>,
-    ) -> impl Future<Output = ()> {
-        async { self.reduce(action, effects) }
-    }
 }
 
 impl<T: Reducer> Reducer for Option<T> {
@@ -64,16 +46,6 @@ impl<T: Reducer> Reducer for Option<T> {
     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
         if let Some(state) = self {
             state.reduce(action, effects)
-        }
-    }
-
-    async fn reduce_async(
-        &mut self,
-        action: Self::Action,
-        effects: impl Effects<Action = Self::Action>,
-    ) {
-        if let Some(state) = self {
-            state.reduce_async(action, effects).await
         }
     }
 }

@@ -9,27 +9,26 @@ mod menu;
 
 mod wgpu;
 
+#[derive(RecursiveReducer)]
 pub struct State {
-    #[allow(dead_code)]
     menu: menu::State,
     wgpu: wgpu::State,
 
+    #[not_a_reducer]
     window: Box<Window>, // must be dropped after wgpu
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, From, TryInto)]
 pub enum Action {
     Render,
     Resize { width: u32, height: u32 },
+
+    Menu(menu::Action),
+    WGpu(wgpu::Action),
 }
 
-impl Reducer for State {
-    type Action = Action;
-    type Output = ();
-
-    fn into_inner(self) -> Self::Output {}
-
-    fn reduce(&mut self, action: Self::Action, _effects: impl Effects<Action = Self::Action>) {
+impl State {
+    fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
         match action {
             Action::Render => {
                 self.wgpu.render().ok();
@@ -38,11 +37,11 @@ impl Reducer for State {
                 self.wgpu.resize(width, height);
                 self.window.request_redraw();
             }
+            Action::Menu(_) => {}
+            Action::WGpu(_) => {}
         }
     }
-}
 
-impl State {
     pub(crate) fn new() -> (Self, EventLoop<()>) {
         let mut event_loop_builder = EventLoopBuilder::new();
         let mut menu = menu::State::new(&mut event_loop_builder);

@@ -2,7 +2,7 @@ use std::thread::{JoinHandle, Thread};
 
 use flume::Sender;
 
-use crate::reducer::Reducer;
+use crate::Reducer;
 
 mod runtime;
 

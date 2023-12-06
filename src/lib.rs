@@ -2,6 +2,8 @@
 #![feature(doc_auto_cfg)] // show features flags in documentation
 #![forbid(unsafe_code)]
 
+#[doc(inline)]
+pub use derive_more::{From, TryInto};
 pub use derive_reducers::RecursiveReducer;
 
 pub use effects::{Effects, Task};
