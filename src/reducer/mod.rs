@@ -55,6 +55,12 @@ pub trait Reducer {
 impl<T: Reducer> Reducer for Option<T> {
     type Action = T::Action;
 
+    type Output = Option<T::Output>;
+
+    fn into_inner(self) -> Self::Output {
+        self.map(|state| state.into_inner())
+    }
+
     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
         if let Some(state) = self {
             state.reduce(action, effects)
@@ -69,11 +75,5 @@ impl<T: Reducer> Reducer for Option<T> {
         if let Some(state) = self {
             state.reduce_async(action, effects).await
         }
-    }
-
-    type Output = Option<T::Output>;
-
-    fn into_inner(self) -> Self::Output {
-        self.map(|state| state.into_inner())
     }
 }

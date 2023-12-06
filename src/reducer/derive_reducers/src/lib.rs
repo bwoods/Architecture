@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput};
 
@@ -11,7 +12,7 @@ use syn::{parse_macro_input, Data, DeriveInput};
 /// - The parent type’s `Action` must be `Clone`.
 ///
 /// If any of these requirement are not met the macro will issue a compilation error.
-#[proc_macro_derive(Reducers)]
+#[proc_macro_derive(RecursiveReducer)]
 pub fn derive_reducers(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let parent_reducer = input.ident;

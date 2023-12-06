@@ -1,5 +1,4 @@
 use futures::executor::block_on;
-
 use winit::dpi::{LogicalSize, Position::Logical};
 use winit::event_loop::{EventLoop, EventLoopBuilder};
 use winit::window::{Window, WindowBuilder};
@@ -11,6 +10,7 @@ mod menu;
 mod wgpu;
 
 pub struct State {
+    #[allow(dead_code)]
     menu: menu::State,
     wgpu: wgpu::State,
 

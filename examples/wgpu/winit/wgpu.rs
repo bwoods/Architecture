@@ -20,11 +20,7 @@ impl Reducer for State {
 
     fn into_inner(self) -> Self::Output {}
 
-    async fn reduce_async(
-        &mut self,
-        action: Self::Action,
-        _effects: impl Effects<Action = Self::Action>,
-    ) {
+    fn reduce(&mut self, action: Self::Action, _effects: impl Effects<Action = Self::Action>) {
         match action {}
     }
 }
@@ -108,25 +104,30 @@ impl State {
                 label: Some("encoder"),
             });
 
-        {
-            #[rustfmt::skip]
-            let white = wgpu::Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
+        #[rustfmt::skip]
+        let white = wgpu::Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
 
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(white),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
-        }
+        let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(white),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            occlusion_query_set: None,
+            timestamp_writes: None,
+        });
+
+        // render_pass.set_pipeline(&self.pipeline);
+        // render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+        // render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+        //
+        // render_pass.draw_indexed(0..num_indices, 0, 0..1);
+        drop(render_pass);
 
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();

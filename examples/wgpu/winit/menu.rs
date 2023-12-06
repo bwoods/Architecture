@@ -1,15 +1,12 @@
-use muda::{Menu, PredefinedMenuItem, Submenu};
-
-use winit::event_loop::EventLoopBuilder;
-use winit::window::Window;
-
+use muda::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 #[cfg(target_os = "macos")]
 use muda::AboutMetadata;
-
+use winit::event_loop::EventLoopBuilder;
 #[cfg(target_os = "macos")]
 use winit::platform::macos::EventLoopBuilderExtMacOS;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::EventLoopBuilderExtWindows;
+use winit::window::Window;
 
 use composable::*;
 
@@ -43,7 +40,7 @@ impl State {
         {
             let menu_bar = menu_bar.clone();
             event_loop_builder.with_msg_hook(move |msg| {
-                use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
+                use windows_sys::Win32::UI::WindowsAndMessaging::{MSG, TranslateAcceleratorW};
                 unsafe {
                     let msg = msg as *const MSG;
                     let translated = TranslateAcceleratorW((*msg).hwnd, menu_bar.haccel(), msg);
@@ -58,7 +55,7 @@ impl State {
         }
     }
 
-    // Note: `_window` is needed when `cfg(target_os = "windows")`
+    // Note: `_window` is only needed when `cfg(target_os = "windows")`
     pub fn attach_to(&mut self, _window: &Window) {
         #[cfg(target_os = "macos")]
         {
@@ -92,17 +89,22 @@ impl State {
                 &PredefinedMenuItem::minimize(None),
                 &PredefinedMenuItem::maximize(None),
                 &PredefinedMenuItem::separator(),
-                &PredefinedMenuItem::close_window(Some("Close")),
-                &PredefinedMenuItem::separator(),
                 &PredefinedMenuItem::fullscreen(None),
                 &PredefinedMenuItem::separator(),
                 &PredefinedMenuItem::bring_all_to_front(None),
-                &PredefinedMenuItem::separator(),
+                // &PredefinedMenuItem::separator(),
             ])
             .unwrap();
 
         #[cfg(target_os = "windows")]
         {
+            windows
+                .append_items(&[
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::close_window(Some("Exit")),
+                ])
+                .unwrap();
+
             use winit::raw_window_handle::*;
             if let RawWindowHandle::Win32(handle) = _window.window_handle().unwrap().as_raw() {
                 self.menu_bar.init_for_hwnd(handle.hwnd.get()).ok();
@@ -111,10 +113,17 @@ impl State {
 
         #[cfg(target_os = "macos")]
         {
+            let help = Submenu::new("Help", true);
+            self.menu_bar.append_items(&[&help]).unwrap();
+
+            let top = MenuItem::new("Share Ideas and Feedback…", true, None);
+            help.append_items(&[&top]).unwrap();
+
             self.menu_bar.init_for_nsapp();
             windows.set_as_windows_menu_for_nsapp();
+            help.set_as_help_menu_for_nsapp();
         }
 
-        self.windows = Some(windows);
+        self.windows = Some(windows); // must be after winit has been started
     }
 }

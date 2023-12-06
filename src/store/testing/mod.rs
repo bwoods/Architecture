@@ -1,8 +1,9 @@
-use futures::executor::block_on;
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::rc::Rc;
+
+use futures::executor::block_on;
 
 use crate::reducer::Reducer;
 

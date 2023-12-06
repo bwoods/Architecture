@@ -1,10 +1,8 @@
 #![doc = include_str!("../README.md")]
-#![feature(doc_auto_cfg)]
+#![feature(doc_auto_cfg)] // show features flags in documentation
 #![forbid(unsafe_code)]
 
-#[doc(inline)]
-pub use derive_more::{AsMut, AsRef, From, TryInto};
-pub use derive_reducers::Reducers;
+pub use derive_reducers::RecursiveReducer;
 
 pub use effects::{Effects, Task};
 pub use reducer::Reducer;

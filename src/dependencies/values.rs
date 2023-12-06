@@ -312,7 +312,7 @@ impl<T: DependencyDefault> Borrow<T> for Dependency<T> {
 /// a single default implementation for use in the the actual application.
 ///
 /// Implementing this trait for a type ensures that a [`Dependency`] on it will always have
-/// a value. If the `DependencyDefault` has not been [overridden][`super::with_dependencies`]
+/// a value. If the `DependencyDefault` value has not been [overridden][`super::with_dependencies`]
 /// it will be returned.
 ///
 /// <div class="warning">
