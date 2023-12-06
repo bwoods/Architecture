@@ -6,6 +6,7 @@ use crate::reducer::Reducer;
 
 mod runtime;
 
+#[cfg(feature = "blocking")]
 mod blocking;
 pub(crate) mod testing;
 
@@ -41,14 +42,6 @@ impl<State: Reducer> Store<State> {
         Store::runtime(with)
     }
 
-    /// …
-    pub fn blocking<F>(with: F) -> blocking::Store<State>
-    where
-        F: (FnOnce() -> State) + 'static,
-    {
-        blocking::Store::with_initial(with())
-    }
-
     /// Calls the `Store`’s [`Reducer`][`crate::Reducer`] with `action`.
     ///
     /// Takes an [`Into<Action>`] so that both child and parent `Action`s may be sent easily.
@@ -70,6 +63,22 @@ impl<State: Reducer> Store<State> {
 
         drop(self.sender); // ends the runtime’s (outer) while-let
         self.handle.join().unwrap()
+    }
+
+    #[cfg(feature = "blocking")]
+    /// Creates a special “blocking” `Store` that does *not* isolate its actions on it own thread.
+    /// This lack of isolation has consequences.
+    ///   - This `Store`’s `send` requires a mutable `self` (exclusive access) to send actions
+    ///     through the reducer.
+    ///   - This `Store`’s reducer will block the calling thread for as long as actions are running
+    ///     whenever it receives a `send`.
+    ///   - As there is no dedicated thread, no progress will be made on `async` work unless there
+    ///     are a continuous stream of actions flowing through the `Store`.
+    ///
+    ///  The main use of this constructor is for interfacing with libraries that require that they
+    ///  are always called in the main thread.
+    pub fn blocking(state: State) -> blocking::Store<State> {
+        blocking::Store::with_initial(state)
     }
 }
 

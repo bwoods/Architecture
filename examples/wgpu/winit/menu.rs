@@ -1,12 +1,15 @@
-use muda::{AboutMetadata, Menu, PredefinedMenuItem, Submenu};
+use muda::{Menu, PredefinedMenuItem, Submenu};
 
 use winit::event_loop::EventLoopBuilder;
 use winit::window::Window;
 
 #[cfg(target_os = "macos")]
+use muda::AboutMetadata;
+
+#[cfg(target_os = "macos")]
 use winit::platform::macos::EventLoopBuilderExtMacOS;
 #[cfg(target_os = "windows")]
-use winit::platform::windows::{EventLoopBuilderExtWindows, WindowExtWindows};
+use winit::platform::windows::EventLoopBuilderExtWindows;
 
 use composable::*;
 
@@ -102,7 +105,7 @@ impl State {
         {
             use winit::raw_window_handle::*;
             if let RawWindowHandle::Win32(handle) = _window.window_handle().unwrap().as_raw() {
-                self.menu_bar.init_for_hwnd(handle.hwnd.get());
+                self.menu_bar.init_for_hwnd(handle.hwnd.get()).ok();
             }
         }
 

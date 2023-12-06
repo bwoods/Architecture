@@ -7,7 +7,7 @@ mod winit;
 
 fn main() -> Result<(), EventLoopError> {
     let (state, event_loop) = winit::State::new();
-    let mut store = Store::blocking(|| state);
+    let mut store = Store::blocking(state);
 
     event_loop.set_control_flow(ControlFlow::Wait); // turn off polling
     event_loop.run(move |event, target| {

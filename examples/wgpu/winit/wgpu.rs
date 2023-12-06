@@ -87,6 +87,10 @@ impl State {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
+        if width * height == 0 {
+            return;
+        }
+
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.device, &self.config);

@@ -10,6 +10,7 @@ include = ["LICENSE-APACHE.md", "LICENSE-MIT.md"]
 
 [features]
 spin = ["flume/spin"]
+blocking = []
 
 [dependencies]
 futures = { version = "0.3.29", features = ["executor"] }
@@ -60,3 +61,8 @@ opt-level = 3
 [[bench]]
 name = "sends"
 harness = false
+
+
+[[example]]
+name = "wgpu"
+required-features = ["blocking"]

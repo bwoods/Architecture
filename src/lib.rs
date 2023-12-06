@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+#![feature(doc_auto_cfg)]
 #![forbid(unsafe_code)]
 
 #[doc(inline)]
