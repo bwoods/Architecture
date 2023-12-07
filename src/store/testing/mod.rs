@@ -50,7 +50,7 @@ where
         self.state
             .as_mut()
             .unwrap()
-            .reduce(action, self.effects.clone());
+            .reduce(action, Rc::downgrade(&self.effects));
         assert_eq!(self.state, expected);
     }
 
@@ -73,7 +73,7 @@ where
         self.state
             .as_mut()
             .unwrap()
-            .reduce(action, self.effects.clone());
+            .reduce(action, Rc::downgrade(&self.effects));
         assert_eq!(self.state, expected);
     }
 

@@ -29,7 +29,8 @@ impl<State: Reducer> Store<State> {
         <State as Reducer>::Action: 'static,
     {
         self.pool.run_until(async {
-            self.state.reduce(action.into(), self.effects.clone());
+            self.state
+                .reduce(action.into(), Rc::downgrade(&self.effects));
 
             // wrapping the `borrow_mut` in a closure to ensure the borrow
             // is dropped before the `await` that follows
@@ -38,7 +39,7 @@ impl<State: Reducer> Store<State> {
             // see:
             //  https://rust-lang.github.io/rust-clippy/master/index.html#await_holding_refcell_ref
             while let Some(action) = next() {
-                self.state.reduce(action, self.effects.clone());
+                self.state.reduce(action, Rc::downgrade(&self.effects));
             }
         });
     }

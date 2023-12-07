@@ -3,7 +3,7 @@
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
-use std::rc::Rc;
+use std::rc::Weak;
 use std::thread::Thread;
 
 use flume::WeakSender;
@@ -87,12 +87,14 @@ where
 
 #[doc(hidden)]
 // `Parent` for `Effects::scope` tuples
-impl<Action: 'static> Effects for Rc<RefCell<VecDeque<Action>>> {
+impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
     #[inline(always)]
     fn send(&self, action: impl Into<Self::Action>) {
-        self.borrow_mut().push_back(action.into());
+        if let Some(actions) = self.upgrade() {
+            actions.borrow_mut().push_back(action.into())
+        }
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
