@@ -25,9 +25,9 @@ pub struct State {
     #[not_a_reducer]
     window: Window,
 
-    #[borrows(window)]
+    #[borrows(window)] // ⬅︎ THIS is what makes this struct “self referential”
     #[not_covariant] // do not bother generating a `borrow` method for this
-    wgpu: wgpu::State<'this>, // 'this lifetime generated/replaced by `ouroboros` at compile-time
+    wgpu: wgpu::State<'this>, // lifetime generated/replaced by `ouroboros` macro
     menu: menu::State,
 }
 
@@ -49,7 +49,7 @@ impl RecursiveReducer for State {
         use Action::*;
 
         match action {
-            Redraw => self.with_window(|window| window.request_redraw()),
+            Redraw => self.borrow_window().request_redraw(),
             Render => effects.send(wgpu::Action::Render),
             Resize { width, height } => {
                 effects.send(wgpu::Action::Resize { width, height });
@@ -62,7 +62,7 @@ impl RecursiveReducer for State {
                     ..
                 } => {
                     // call back out to the `event_loop` in main to exit
-                    self.with_proxy(|proxy| proxy.send_event(()).ok());
+                    self.borrow_proxy().send_event(()).ok();
                 }
                 Event::WindowEvent {
                     event: WindowEvent::Resized(size),

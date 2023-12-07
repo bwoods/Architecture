@@ -90,6 +90,7 @@ pub fn derive_reducers_for_ouroboros(input: TokenStream) -> TokenStream {
         })
         .map(|field| {
             let method = syn::Ident::new(
+                // piece together the ouroboros-constructed mutable accessor method name
                 &format!("with_{}_mut", field.ident.as_ref().unwrap()),
                 proc_macro2::Span::call_site(),
             );
