@@ -11,7 +11,9 @@ use std::ops::Deref;
 /// - [`or_else`][`super::Dependency::or_else`]
 /// - [`xor`][`super::Dependency::xor`]
 pub enum Ref<'a, T: 'a> {
+    /// a reference of type T
     Borrowed(&'a T),
+    /// a value of type T
     Owned(T),
 }
 

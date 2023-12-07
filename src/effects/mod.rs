@@ -18,6 +18,7 @@ use crate::dependencies::Dependency;
 ///
 /// See [the module level documentation](self) for more.
 pub trait Effects: Clone {
+    /// The `Action` type sent by this `Effects`.
     type Action;
 
     /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s

@@ -1,4 +1,4 @@
-…
+A state container for the application testing.
 
 
 

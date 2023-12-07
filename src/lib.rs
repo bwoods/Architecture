@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![feature(doc_auto_cfg)] // show features flags in documentation
 #![forbid(unsafe_code)]
+#![deny(missing_docs)]
 
 #[doc(no_inline)]
 pub use derive_macros::*;
@@ -17,7 +18,11 @@ pub use store::{testing::TestStore, Store};
 /// `Reducer` signatures.
 pub trait Effects<Action>: effects::Effects<Action = Action> {}
 
-#[doc(hidden)]
+/// Until actual [trait aliases] are stabilized this work-around allows the trait shown above
+/// to be used anywhere that the [original trait] can.
+///
+/// [trait aliases]: https://github.com/rust-lang/rust/issues/63063
+/// [original trait]: crate::effects::Effects
 impl<T, Action> Effects<Action> for T where T: effects::Effects<Action = Action> {}
 
 pub mod dependencies;
