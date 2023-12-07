@@ -23,7 +23,7 @@ impl Reducer for State<'_> {
 
     fn into_inner(self) -> Self::Output {}
 
-    fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
+    fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
         match action {
             Action::Resize { width, height } => {
                 self.resize(width, height);

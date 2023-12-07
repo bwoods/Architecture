@@ -30,7 +30,7 @@ impl Reducer for State {
     }
 
     // This reducer ensures the value is always an even number
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+    fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
         match action {
             Increment => {
                 self.n += 1;

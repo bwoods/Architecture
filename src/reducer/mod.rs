@@ -30,8 +30,8 @@ pub trait Reducer {
     /// Updates the `Reducer`’s state in response to the action received.
     ///
     /// Additional `Action`s that need to be performed as a side-effect of an `Action` should be
-    /// [invoked][`crate::Effects`] on `effects`.
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {}
+    /// [invoked][`crate::effects::Effects`] on `effects`.
+    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {}
 }
 
 impl<T: Reducer> Reducer for Option<T> {
@@ -43,7 +43,7 @@ impl<T: Reducer> Reducer for Option<T> {
         self.map(|state| state.into_inner())
     }
 
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>) {
+    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
         if let Some(state) = self {
             state.reduce(action, effects)
         }

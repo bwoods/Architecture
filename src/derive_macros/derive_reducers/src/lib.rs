@@ -42,7 +42,7 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
             fn reduce(
                 &mut self,
                 action: Self::Action,
-                effects: impl composable::Effects<Action = Self::Action>,
+                effects: impl composable::Effects<Self::Action>,
             ) {
                 <Self as RecursiveReducer>::reduce(self, action.clone(), effects.clone());
 
@@ -116,7 +116,7 @@ pub fn derive_reducers_for_ouroboros(input: TokenStream) -> TokenStream {
             fn reduce(
                 &mut self,
                 action: Self::Action,
-                effects: impl composable::Effects<Action = Self::Action>,
+                effects: impl composable::Effects<Self::Action>,
             ) {
                 <Self as RecursiveReducer>::reduce(self, action.clone(), effects.clone());
                  #(

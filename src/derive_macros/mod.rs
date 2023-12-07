@@ -16,5 +16,5 @@ pub trait RecursiveReducer {
 
     /// This `reduce` should perform any actions that are needed _before_ the macro recurses
     /// into the other reducers.
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action = Self::Action>);
+    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>);
 }

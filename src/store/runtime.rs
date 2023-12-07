@@ -78,7 +78,7 @@ pub mod tests {
     #[cfg(not(miri))]
     use ntest_timeout::timeout;
 
-    use crate::effects::Effects;
+    use crate::Effects;
 
     use super::*;
 
@@ -101,7 +101,7 @@ pub mod tests {
             self
         }
 
-        fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
             use Action::*;
 
             match action {
@@ -187,7 +187,7 @@ pub mod tests {
                 self
             }
 
-            fn reduce(&mut self, _action: Action, _effects: impl Effects<Action = Action>) {}
+            fn reduce(&mut self, _action: Action, _effects: impl Effects<Action>) {}
         }
 
         let store = Store::<State>::default();

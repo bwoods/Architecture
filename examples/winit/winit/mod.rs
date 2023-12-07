@@ -45,7 +45,7 @@ pub enum Action {
 impl RecursiveReducer for State {
     type Action = Action;
 
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+    fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
         use Action::*;
 
         match action {

@@ -1,3 +1,5 @@
+#![doc = include_str!("README.md")]
+
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
@@ -12,7 +14,9 @@ use futures::{future, Future, FutureExt, Stream, StreamExt};
 
 use crate::dependencies::Dependency;
 
-#[doc = include_str!("README.md")]
+/// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
+///
+/// See [the module level documentation](self) for more.
 pub trait Effects: Clone {
     type Action;
 
@@ -130,6 +134,7 @@ fn async_task<Action: 'static, S: Stream<Item = Action> + 'static>(stream: S) ->
     Task(handle) // may return a `Task(None)` while the `Store` is shutting down
 }
 
+#[doc(hidden)]
 /// Asynchronous work being performed by a `Store`.
 ///
 /// A [`Store`][`crate::Store`] uses a [Local Async Executor] to run its `Task`s.
