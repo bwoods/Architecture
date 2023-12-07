@@ -1,6 +1,6 @@
-use muda::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 #[cfg(target_os = "macos")]
-use muda::AboutMetadata;
+use muda::{AboutMetadata, MenuItem};
+use muda::{Menu, PredefinedMenuItem, Submenu};
 use winit::event_loop::EventLoopBuilder;
 #[cfg(target_os = "macos")]
 use winit::platform::macos::EventLoopBuilderExtMacOS;
@@ -40,7 +40,7 @@ impl State {
         {
             let menu_bar = menu_bar.clone();
             event_loop_builder.with_msg_hook(move |msg| {
-                use windows_sys::Win32::UI::WindowsAndMessaging::{MSG, TranslateAcceleratorW};
+                use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
                 unsafe {
                     let msg = msg as *const MSG;
                     let translated = TranslateAcceleratorW((*msg).hwnd, menu_bar.haccel(), msg);

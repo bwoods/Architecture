@@ -1,7 +1,12 @@
 use futures::executor::block_on;
 use winit::dpi::{LogicalSize, Position::Logical};
-use winit::event_loop::{EventLoop, EventLoopBuilder};
+use winit::event::WindowEvent;
+use winit::event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy};
 use winit::window::{Window, WindowBuilder};
+
+pub use winit::error::EventLoopError;
+pub use winit::event::Event;
+pub use winit::event_loop::ControlFlow;
 
 use composable::*;
 
@@ -16,14 +21,18 @@ pub struct State {
 
     #[not_a_reducer]
     window: Box<Window>, // must be dropped after wgpu
+
+    #[not_a_reducer]
+    proxy: EventLoopProxy<()>,
 }
 
 #[derive(Clone, From, TryInto)]
 pub enum Action {
-    Resize { width: u32, height: u32 },
     Render,
     Redraw,
+    Resize { width: u32, height: u32 },
 
+    Winit(Event<()>),
     Menu(menu::Action),
     Wgpu(wgpu::Action),
 }
@@ -32,19 +41,40 @@ impl RecursiveReducer for State {
     type Action = Action;
 
     fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
+        use Action::*;
+
         match action {
-            Action::Render => {
-                effects.send(wgpu::Action::Render);
-            }
-            Action::Resize { width, height } => {
+            Redraw => self.window.request_redraw(),
+            Render => effects.send(wgpu::Action::Render),
+            Resize { width, height } => {
                 effects.send(wgpu::Action::Resize { width, height });
-                effects.send(Action::Redraw);
+                effects.send(Redraw);
             }
-            Action::Redraw => {
-                self.window.request_redraw();
-            }
-            Action::Menu(_) => {}
-            Action::Wgpu(_) => {}
+
+            Winit(event) => match event {
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } => {
+                    // call back out to the `event_loop` in main to exit
+                    self.proxy.send_event(()).ok();
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::Resized(size),
+                    ..
+                } => {
+                    let (width, height) = size.into();
+                    effects.send(Resize { width, height });
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::RedrawRequested,
+                    ..
+                } => effects.send(Render),
+                _ => {}
+            },
+
+            Menu(_) => {}
+            Wgpu(_) => {}
         }
     }
 }
@@ -55,6 +85,8 @@ impl State {
         let mut menu = menu::State::new(&mut event_loop_builder);
 
         let event_loop = event_loop_builder.build().unwrap();
+        let proxy = event_loop.create_proxy();
+
         let window = Box::new(
             WindowBuilder::new()
                 .with_title("")
@@ -79,7 +111,12 @@ impl State {
         let wgpu = block_on(wgpu::State::new(window));
 
         let window = unsafe { Box::from_raw(raw) };
-        let state = Self { window, menu, wgpu };
+        let state = Self {
+            window,
+            proxy,
+            menu,
+            wgpu,
+        };
 
         (state, event_loop)
     }
