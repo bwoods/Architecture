@@ -1,6 +1,6 @@
 Macros used to ease creation of recursive reducers. 
 
-Reducers that are primarily made up of other reducers can have much of their behavior written by the compiler. Reducing both the amount of work required and the number of bugs that may creep into a complex application.
+`Reducer`s that are primarily made up of other `Reducer`s can have much of their behavior written by the compiler. Reducing both the amount of work required and the number of bugs that may creep into a complex application.
 
 
 

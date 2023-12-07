@@ -1,4 +1,6 @@
 use futures::executor::block_on;
+use ouroboros::self_referencing;
+
 use winit::dpi::{LogicalSize, Position::Logical};
 use winit::event::WindowEvent;
 use winit::event_loop::{EventLoop, EventLoopBuilder, EventLoopProxy};
@@ -14,16 +16,19 @@ mod menu;
 
 mod wgpu;
 
-#[derive(RecursiveReducer)]
+#[derive(SelfReferentialRecursiveReducer)]
+#[self_referencing]
 pub struct State {
-    menu: menu::State,
-    wgpu: wgpu::State,
-
-    #[not_a_reducer]
-    window: Box<Window>, // must be dropped after wgpu
-
     #[not_a_reducer]
     proxy: EventLoopProxy<()>,
+
+    #[not_a_reducer]
+    window: Window,
+
+    #[borrows(window)]
+    #[not_covariant] // do not bother generating a `borrow` method for this
+    wgpu: wgpu::State<'this>, // 'this lifetime generated/replaced by `ouroboros` at compile-time
+    menu: menu::State,
 }
 
 #[derive(Clone, From, TryInto)]
@@ -44,7 +49,7 @@ impl RecursiveReducer for State {
         use Action::*;
 
         match action {
-            Redraw => self.window.request_redraw(),
+            Redraw => self.with_window(|window| window.request_redraw()),
             Render => effects.send(wgpu::Action::Render),
             Resize { width, height } => {
                 effects.send(wgpu::Action::Resize { width, height });
@@ -57,7 +62,7 @@ impl RecursiveReducer for State {
                     ..
                 } => {
                     // call back out to the `event_loop` in main to exit
-                    self.proxy.send_event(()).ok();
+                    self.with_proxy(|proxy| proxy.send_event(()).ok());
                 }
                 Event::WindowEvent {
                     event: WindowEvent::Resized(size),
@@ -80,43 +85,38 @@ impl RecursiveReducer for State {
 }
 
 impl State {
-    pub(crate) fn new() -> (Self, EventLoop<()>) {
+    pub(crate) fn build() -> (Self, EventLoop<()>) {
         let mut event_loop_builder = EventLoopBuilder::new();
         let mut menu = menu::State::new(&mut event_loop_builder);
 
         let event_loop = event_loop_builder.build().unwrap();
         let proxy = event_loop.create_proxy();
 
-        let window = Box::new(
-            WindowBuilder::new()
-                .with_title("")
-                .with_theme(None) // None → current
-                .with_position(Logical(Default::default()))
-                .with_inner_size(LogicalSize {
-                    width: 1366.0,
-                    height: 1024.0,
-                })
-                .with_min_inner_size(LogicalSize {
-                    width: 1024.0,
-                    height: 768.0,
-                })
-                .build(&event_loop)
-                .unwrap(),
-        );
+        let window = WindowBuilder::new()
+            .with_title("")
+            .with_theme(None) // None → current
+            .with_position(Logical(Default::default()))
+            .with_inner_size(LogicalSize {
+                width: 1366.0,
+                height: 1024.0,
+            })
+            .with_min_inner_size(LogicalSize {
+                width: 1024.0,
+                height: 768.0,
+            })
+            .build(&event_loop)
+            .unwrap();
 
         menu.attach_to(&window);
 
-        let raw = Box::<Window>::into_raw(window);
-        let window: &'static _ = unsafe { raw.as_ref() }.unwrap();
-        let wgpu = block_on(wgpu::State::new(window));
-
-        let window = unsafe { Box::from_raw(raw) };
-        let state = Self {
+        // use of the ouroboros crate changes how we build State
+        let state = StateBuilder {
+            wgpu_builder: |window| block_on(wgpu::State::new(window)),
             window,
             proxy,
             menu,
-            wgpu,
-        };
+        }
+        .build();
 
         (state, event_loop)
     }

@@ -3,8 +3,8 @@ use ::winit::window::Window;
 
 use composable::*;
 
-pub struct State {
-    surface: Surface<'static>,
+pub struct State<'window> {
+    surface: Surface<'window>,
 
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
@@ -17,7 +17,7 @@ pub enum Action {
     Render,
 }
 
-impl Reducer for State {
+impl Reducer for State<'_> {
     type Action = Action;
     type Output = ();
 
@@ -35,8 +35,8 @@ impl Reducer for State {
     }
 }
 
-impl State {
-    pub(crate) async fn new(window: &'static Window) -> Self {
+impl<'window> State<'window> {
+    pub(crate) async fn new(window: &'window Window) -> Self {
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).unwrap();
 

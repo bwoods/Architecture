@@ -3,6 +3,9 @@
 pub use derive_more::{From, TryInto};
 pub use derive_reducers::RecursiveReducer;
 
+#[cfg(feature = "ouroboros")]
+pub use derive_reducers::SelfReferentialRecursiveReducer;
+
 use crate::Effects;
 
 /// See the [`RecursiveReducer`][`derive_reducers::RecursiveReducer`] macro for example usage.

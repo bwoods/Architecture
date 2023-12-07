@@ -3,6 +3,9 @@ name = "derive_reducers"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+ouroboros = []
+
 [lib]
 proc-macro = true
 

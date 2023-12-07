@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 
 #[doc(no_inline)]
-pub use derive_macros::{From, RecursiveReducer, TryInto};
+pub use derive_macros::*;
 
 pub use effects::{Effects, Task};
 pub use reducer::Reducer;

@@ -20,15 +20,6 @@ pub trait Effects: Clone {
     /// [`Reducer`][`crate::Reducer`].
     fn send(&self, action: impl Into<Self::Action>);
 
-    #[inline(always)]
-    /// Scopes the `Effects` to one that sends child actions.
-    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
-    where
-        Self::Action: From<ChildAction>,
-    {
-        (self.clone(), Marker)
-    }
-
     /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
     /// zero or more [`Action`][`Self::Action`]s back into the `Store`’s [`Reducer`][`crate::Reducer`]
     /// as it runs.
@@ -58,6 +49,15 @@ pub trait Effects: Clone {
     #[inline(always)]
     fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
         self.task(stream).detach()
+    }
+
+    #[inline(always)]
+    /// Scopes the `Effects` to one that sends child actions.
+    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
+    where
+        Self::Action: From<ChildAction>,
+    {
+        (self.clone(), Marker)
     }
 }
 

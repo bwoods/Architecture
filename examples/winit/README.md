@@ -1,17 +1,22 @@
-# WGPU
+# Winit
 
-Creating a **wgpu** context in a **winit** window.
+Creating a **wgpu** context in a **winit** window with **muda** (native) menus.
 
 
 
 ## Features
 
-- [x] Driving a `Store` from an external event loop
+- [x] Managing all of the construction-order requirements between wgpu, winit and muda.
+  - [x] Including use of the [`ouroboros`](https://docs.rs/ouroboros/latest/ouroboros/index.html) crate the manage the lifetime dependency between a `winit::Window` and its `wgpu::surface`.
+  - This, harder, lifetime model is not yet release, but is assumed to be the new way forward.  
+    Might as well solve it now.
+- [x] Using the `RecursiveReducer` macros to create a combining `Reducer`.
+- [x] Driving a `Store` from an external event loop.
   - [x] Using winit’s `UserEvent` to handle graceful shutdown between the two event loops
-- [x] Mixing `reduce` and `reduce_async`
-- [x] Using direct method calls when `Action`s are not necessary.
-  - See `Render`
-  - See `Resize`
-- [x] Using the `Reducers` macro to create a combing `Reducer`.
-  - [ ] Dispatching a parent event to two (sibling) child `Reducer`s
-    - See `Setup`
+
+- [ ] An example of a multi-`Store` design.
+
+  - [x] The outer `Store` is a `blocking` `Store` to satisfy the various pieces of the three libraries that require being on the main-thread or simply or not `Send`.
+  
+  
+  
