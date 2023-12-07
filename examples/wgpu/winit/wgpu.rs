@@ -12,7 +12,10 @@ pub struct State {
 }
 
 #[derive(Clone, Debug)]
-pub enum Action {}
+pub enum Action {
+    Resize { width: u32, height: u32 },
+    Render,
+}
 
 impl Reducer for State {
     type Action = Action;
@@ -21,7 +24,14 @@ impl Reducer for State {
     fn into_inner(self) -> Self::Output {}
 
     fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
-        match action {}
+        match action {
+            Action::Resize { width, height } => {
+                self.resize(width, height);
+            }
+            Action::Render => {
+                self.render().ok();
+            }
+        }
     }
 }
 
@@ -82,7 +92,7 @@ impl State {
         }
     }
 
-    pub fn resize(&mut self, width: u32, height: u32) {
+    fn resize(&mut self, width: u32, height: u32) {
         if width * height == 0 {
             return;
         }
@@ -92,7 +102,7 @@ impl State {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture

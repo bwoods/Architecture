@@ -1,8 +1,11 @@
+#![forbid(unsafe_code)]
+
 use proc_macro::TokenStream;
 
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput};
 
+#[doc = include_str!("../../README.md")]
 /// Macro used to derive `Reducer` conformance for structs containing child reducers.
 ///
 ///
@@ -31,7 +34,7 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
             let name = &field.ident;
             quote! {
                 if let Ok(action) = action.clone().try_into() {
-                    self.#name.reduce(action, effects.scope());
+                    composable::Reducer::reduce(&mut self.#name, action, effects.scope());
                 }
             }
         });
@@ -40,7 +43,7 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
         impl composable::Reducer for #parent_reducer
             where self::Action: Clone
         {
-            type Action = self::Action;
+            type Action = <Self as RecursiveReducer>::Action;
             type Output = ();
 
             fn into_inner(self) -> Self::Output { }
@@ -50,7 +53,7 @@ pub fn derive_reducers(input: TokenStream) -> TokenStream {
                 action: Self::Action,
                 effects: impl composable::Effects<Action = Self::Action>,
             ) {
-                Self::reduce(self, action.clone(), effects.clone());
+                <Self as RecursiveReducer>::reduce(self, action.clone(), effects.clone());
 
                  #(
                     #child_reducers

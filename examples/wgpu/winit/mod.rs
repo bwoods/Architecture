@@ -20,28 +20,36 @@ pub struct State {
 
 #[derive(Clone, From, TryInto)]
 pub enum Action {
-    Render,
     Resize { width: u32, height: u32 },
+    Render,
+    Redraw,
 
     Menu(menu::Action),
-    WGpu(wgpu::Action),
+    Wgpu(wgpu::Action),
 }
 
-impl State {
-    fn reduce(&mut self, action: Action, _effects: impl Effects<Action = Action>) {
+impl RecursiveReducer for State {
+    type Action = Action;
+
+    fn reduce(&mut self, action: Action, effects: impl Effects<Action = Action>) {
         match action {
             Action::Render => {
-                self.wgpu.render().ok();
+                effects.send(wgpu::Action::Render);
             }
             Action::Resize { width, height } => {
-                self.wgpu.resize(width, height);
+                effects.send(wgpu::Action::Resize { width, height });
+                effects.send(Action::Redraw);
+            }
+            Action::Redraw => {
                 self.window.request_redraw();
             }
             Action::Menu(_) => {}
-            Action::WGpu(_) => {}
+            Action::Wgpu(_) => {}
         }
     }
+}
 
+impl State {
     pub(crate) fn new() -> (Self, EventLoop<()>) {
         let mut event_loop_builder = EventLoopBuilder::new();
         let mut menu = menu::State::new(&mut event_loop_builder);

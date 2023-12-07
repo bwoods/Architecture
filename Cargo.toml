@@ -17,7 +17,7 @@ futures = { version = "0.3.29", features = ["executor"] }
 flume = { git = "https://github.com/zesterer/flume.git", features = ["async"], default-features = false }
 ambience = "0.2.1"
 
-derive_reducers = { path = "src/reducer/derive_reducers" }
+derive_reducers = { path = "src/derive_macros/derive_reducers" }
 
 [dependencies.derive_more]
 version = "1.0.0-beta"
