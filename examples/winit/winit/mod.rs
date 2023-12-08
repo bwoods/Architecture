@@ -1,5 +1,4 @@
 use futures::executor::block_on;
-use ouroboros::self_referencing;
 
 use winit::dpi::{LogicalSize, Position::Logical};
 use winit::event::WindowEvent;
@@ -16,19 +15,15 @@ mod menu;
 
 mod wgpu;
 
-#[derive(SelfReferentialRecursiveReducer)]
-#[self_referencing]
+#[derive(RecursiveReducer)]
 pub struct State {
+    wgpu: wgpu::State,
+    menu: menu::State,
+
     #[not_a_reducer]
     proxy: EventLoopProxy<()>,
-
     #[not_a_reducer]
-    window: Window,
-
-    #[borrows(window)] // ⬅︎ THIS is what makes this struct “self referential”
-    #[not_covariant] // do not bother generating a `borrow` method for this
-    wgpu: wgpu::State<'this>, // lifetime generated/replaced by `ouroboros` macro
-    menu: menu::State,
+    window: Box<Window>, // must `Drop` after wgpu
 }
 
 #[derive(Clone, From, TryInto)]
@@ -49,7 +44,7 @@ impl RecursiveReducer for State {
         use Action::*;
 
         match action {
-            Redraw => self.borrow_window().request_redraw(),
+            Redraw => self.window.request_redraw(),
             Render => effects.send(wgpu::Action::Render),
             Resize { width, height } => {
                 effects.send(wgpu::Action::Resize { width, height });
@@ -62,7 +57,7 @@ impl RecursiveReducer for State {
                     ..
                 } => {
                     // call back out to the `event_loop` in main to exit
-                    self.borrow_proxy().send_event(()).ok();
+                    self.proxy.send_event(()).ok();
                 }
                 Event::WindowEvent {
                     event: WindowEvent::Resized(size),
@@ -92,31 +87,31 @@ impl State {
         let event_loop = event_loop_builder.build().unwrap();
         let proxy = event_loop.create_proxy();
 
-        let window = WindowBuilder::new()
-            .with_title("")
-            .with_theme(None) // None → current
-            .with_position(Logical(Default::default()))
-            .with_inner_size(LogicalSize {
-                width: 1366.0,
-                height: 1024.0,
-            })
-            .with_min_inner_size(LogicalSize {
-                width: 1024.0,
-                height: 768.0,
-            })
-            .build(&event_loop)
-            .unwrap();
+        let window = Box::new(
+            WindowBuilder::new()
+                .with_title("")
+                .with_theme(None) // None → current
+                .with_position(Logical(Default::default()))
+                .with_inner_size(LogicalSize {
+                    width: 1366.0,
+                    height: 1024.0,
+                })
+                .with_min_inner_size(LogicalSize {
+                    width: 1024.0,
+                    height: 768.0,
+                })
+                .build(&event_loop)
+                .unwrap(),
+        );
 
         menu.attach_to(&window);
 
-        // use of the ouroboros crate changes how we build State
-        let state = StateBuilder {
-            wgpu_builder: |window| block_on(wgpu::State::new(window)),
-            window,
-            proxy,
+        let state = State {
+            wgpu: block_on(wgpu::State::new(&window)),
             menu,
-        }
-        .build();
+            proxy,
+            window,
+        };
 
         (state, event_loop)
     }
