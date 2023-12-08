@@ -4,7 +4,7 @@ use ::winit::window::Window;
 use composable::*;
 
 pub struct State {
-    surface: Surface<'static>,
+    surface: Surface,
 
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
@@ -38,7 +38,7 @@ impl Reducer for State {
 impl State {
     pub(crate) async fn new(window: &Window) -> Self {
         let instance = wgpu::Instance::default();
-        let surface = unsafe { instance.create_surface_from_raw(window) }.unwrap();
+        let surface = unsafe { instance.create_surface(window) }.unwrap();
 
         let (width, height) = window.inner_size().into();
 
