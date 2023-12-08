@@ -18,10 +18,11 @@ pub use store::{testing::TestStore, Store};
 /// `Reducer` signatures.
 pub trait Effects<Action>: effects::Effects<Action = Action> {}
 
-/// Until actual [trait aliases] are stabilized this work-around allows the trait shown above
+/// Until actual [trait aliases] are stabilized this [work around] allows the trait shown above
 /// to be used anywhere that the [original trait] can.
 ///
 /// [trait aliases]: https://github.com/rust-lang/rust/issues/63063
+/// [work around]: https://github.com/rust-lang/rust/issues/41517#issuecomment-1100644808
 /// [original trait]: crate::effects::Effects
 impl<T, Action> Effects<Action> for T where T: effects::Effects<Action = Action> {}
 

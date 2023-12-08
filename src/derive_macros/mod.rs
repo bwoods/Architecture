@@ -1,5 +1,6 @@
 #![doc = include_str!("README.md")]
 
+#[doc(no_inline)]
 pub use derive_more::{From, TryInto};
 pub use derive_reducers::RecursiveReducer;
 
