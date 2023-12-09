@@ -16,6 +16,7 @@ pub use derive_more::{From, TryInto};
 /// struct A;
 /// struct B;
 ///
+/// #[derive(Clone)]
 /// enum Action { /* … */ }
 ///
 /// impl Reducer for A {
@@ -49,9 +50,8 @@ pub use derive_more::{From, TryInto};
 /// #
 /// # use composable::*;
 /// #
-/// # enum Action {
-/// #     // …
-/// # }
+/// # #[derive(Clone)]
+/// # enum Action { /* … */ }
 /// #
 /// # impl Reducer for A {
 /// #     type Action = Action;
@@ -59,9 +59,7 @@ pub use derive_more::{From, TryInto};
 /// #     
 /// #     fn into_inner(self) -> Self::Output {}
 /// #     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action>) {
-/// #         match action {
-/// #             // …
-/// #         }
+///         match action { /* … */ }
 /// #     }
 /// # }
 /// #
@@ -71,16 +69,22 @@ pub use derive_more::{From, TryInto};
 /// #     
 /// #     fn into_inner(self) -> Self::Output {}
 /// #     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action>) {
-/// #         match action {
-/// #             // …
-/// #         }
+///         match action { /* … */ }
 /// #     }
 /// # }
-/// #    
+/// #
 /// #[derive(RecursiveReducer)]
 /// enum Either {
 ///     A(A),
 ///     B(B),
+/// }
+///
+/// impl RecursiveReducer for Either {
+///     type Action = Action;
+///
+///     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
+///         // …
+///     }
 /// }
 ///
 /// let store = Store::with_initial(Either::A(A));

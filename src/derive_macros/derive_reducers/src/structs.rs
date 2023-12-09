@@ -8,14 +8,13 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
         .fields
         .iter()
         .filter(|field| {
-            field.attrs.iter().all(|attr| {
-                // reduce(none)
-                !attr.path().is_ident("not_a_reducer")
-            })
+            field
+                .attrs
+                .iter()
+                .all(|attr| !attr.path().is_ident("not_a_reducer"))
         })
         .map(|field| {
             let name = &field.ident;
-            // reduce(with_getter)
             quote! {
                 if let Ok(action) = action.clone().try_into() {
                     composable::Reducer::reduce(&mut self.#name, action, effects.scope());
@@ -26,7 +25,7 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
     let expanded = quote! {
         #[automatically_derived]
         impl composable::Reducer for #identifier
-            where self::Action: Clone
+            where <Self as RecursiveReducer>::Action: Clone
         {
             type Action = <Self as RecursiveReducer>::Action;
             type Output = ();
@@ -39,6 +38,7 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
                 effects: impl composable::Effects<Self::Action>,
             ) {
                 <Self as RecursiveReducer>::reduce(self, action.clone(), effects.clone());
+
                 #( #child_reducers )*
             }
         }
