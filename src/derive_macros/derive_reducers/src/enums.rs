@@ -16,7 +16,11 @@ pub fn derive_macro(identifier: Ident, data: DataEnum) -> TokenStream {
         .map(|variant| {
             let name = &variant.ident;
             quote! {
-                #identifier::#name(state) => composable::Reducer::reduce(state, action, effects.scope()),
+                #identifier::#name(state) => {
+                    if let Ok(action) = action.clone().try_into() {
+                        composable::Reducer::reduce(state, action, effects.scope());
+                    }
+                }
             }
         });
 

@@ -1,101 +1,244 @@
-#![doc = include_str!("README.md")]
+//! Derive macros used to ease the creation of recursive reducers.
+//!
+//! - [`RecursiveReducer`]  
+//!   `#[derive(RecursiveReducer)]` on a `enum` or `struct` that contains other [`Reducer`]
+//!   types will derive a [`Reducer`] implementation for it.
+//! - [`TryInto`]  
+//!   `#[derive(TryInto)]` on a `Action` whose variants contain another [`Reducer`]’s `Action`s
+//!   allows an attempted conversion to…
+//! - [`From`]  
+//!   `#[derive(TryInto)]` on a `Action` whose variants contain another [`Reducer`]’s `Action`s
+//!   allows an attempted conversion from…
+//!
+//! These macros produce efficient implementations of the [`Reducer`], [`std::convert::TryInto`]
+//! and [`std::convert::From`] traits so that they do not have to be implemented manually.
+//!
+//! ##### Automatic Derived Reducers
+//!
+//! Two other types are valid [`Reducer`]s whenever they contain a [`Reducer`].
+//! - [`Option`]  
+//! - [`Box`]  
+//!
+//! This does not require the [`RecursiveReducer`] and automatically applies.
+//!
+//! [`RecursiveReducer`]: derive_reducers::RecursiveReducer
+//! [`Reducer`]: crate::Reducer
+//! [`TryInto`]: #reexports
+//! [`From`]: #reexports
+//!
+//! # Composite Reducers
+//!
+//! A `RecursiveReducer` **`struct`** represents a parent-child relationship between `Reducer`s.
+//! This is the most common use of `RecursiveReducer` in large applications and forms the core
+//! “Composability” of the Composable Architecture.
+//!
+//! The application is broken up into different `mod`ules representing the different Domains or
+//! Features of the application; each with its own `Action`s and `State`.
+//!
+//! These `Reducer`s are then collected into various composite `Reducer`s that contain and
+//! coordinate between them.  
+//!
+//! Each composite `Reducer` is written with the knowledge of its own `Action`s and the `Action`s
+//! of its immediate children. The `Action`s of its parent is unknown to it and (by convention) it
+//! does not traffic in the `Action`s of its grandchildren.
+//!
+//! Deciding which Domains needs to be coordinated between, and thus should be siblings under a
+//! parent Feature, is the art of designing the application with an architecture like this one.
+//!
+//! Even though the application `struct` recursively contains the `State`s of all of it Features
+//! it usually does not end up being very “tall.”
+//!
+//! See [Unidirectional Event Architecture][crate] for more.
+//!
+//! ```rust
+//! mod A {
+//! #   use composable::*;
+//!     #[derive(Default)]
+//!     pub struct State;
+//!
+//!     #[derive(Clone)] // ⒈
+//!     pub enum Action { /* … */ }
+//!
+//!     impl Reducer for State {
+//!         type Action = Action;
+//!         type Output = ();
+//!         
+//!         fn into_inner(self) {}
+//!         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!             match action { /* … */ }
+//!         }
+//!     }
+//! }
+//!
+//! mod B {
+//! #   use composable::*;
+//!     #[derive(Default)]
+//!     pub struct State;
+//!
+//!     #[derive(Clone)] // ⒈
+//!     pub enum Action { /* … */ }
+//!
+//!     impl Reducer for State {
+//!         type Action = Action;
+//!         type Output = ();
+//!         
+//!         fn into_inner(self) {}
+//!         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!             match action { /* … */ }
+//!         }
+//!     }
+//! }
+//!
+//! # use composable::*;
+//! #[derive(Default, RecursiveReducer)] // ⒉
+//! struct State {
+//!     a: A::State,
+//!     b: B::State,
+//! #
+//! #   #[not_a_reducer]
+//! #   c: Vec<u32>,
+//! }
+//!
+//! #[derive(Clone, From, TryInto)] // ⒊
+//! enum Action {
+//!     SomeAction, // parent actions
+//!     SomeOtherAction,
+//!
+//!     A(A::Action), // ⒋
+//!     B(B::Action),
+//! }
+//!
+//! impl RecursiveReducer for State { // ⒌
+//!     type Action = Action;
+//!
+//!     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!         match action {
+//!             Action::SomeAction => { /* … */ }
+//!             Action::SomeOtherAction => { /* … */ }
+//!
+//!             // in this example, the parent reducer has
+//!             // no explicit handling of any child actions
+//!             _ => {}
+//!         }
+//!     }
+//! }
+//!
+//! # let store = Store::with_initial(State::default());
+//! ```
+//! 1. Now that `Action`s are being passed to multiple `Reducers` they must be `Clone`.
+//! 2. The `RecursiveReducer` derive macro constructs a recursive `Reducer` from the `struct`.
+//! 3. The `From` and `TryInfo` derive macros ensure that conversions work, when they should,
+//!    between parent and child `Action`s. These conversions utilize #4…
+//! 4. The parent has one (and only one) `Action` for the `Action`s of each of its children.
+//! 5. Finally, an implementation of the `RecursiveReducer` trait containing the parent’s `reduce`
+//!    method. `RecursiveReducer::reduce` is run before the `Reducer::reduce` methods of its
+//!    fields. Resulting in:
+//!
+//!    - `self.reduce()`, then
+//!    - `self.a.reduce()`, then
+//!    - `self.b.reduce()`.
+//!
+//! ### Ignoring fields
+//!
+//! Compound `Reducer`s often contain fields other than the child `Reducer`s. After all, it has
+//! its own `Reducer` and that `Reducer` may need its own state.
+//!
+//! The `RecursiveReducer` macro comes with an associated attribute that allows it to ignore
+//! `struct` members that should not ne made part of the `Reducer` recursion.
+//!
+//! ```ignore
+//! struct State {
+//!     a: A::State,
+//!     b: B::State,
+//!
+//!     #[not_a_reducer]
+//!     c: Vec<u32>,
+//! }
+//! ```
+//!
+//! # Alternate Reducers
+//!
+//! A `RecursiveReducer` **`enum`** represents a
+//!
+//! **Alternate `Reducer`s** are less common than **Composite `Reducer`s** so a more concrete example may
+//! help…
+//!
+//! ```
+//! # mod authenticated {
+//! #    #[derive(Clone)]
+//! #    pub enum Action {}
+//! #    pub struct State {}
+//! #
+//! #    use composable::*;
+//! #    impl Reducer for State {
+//! #        type Action = Action;
+//! #        type Output = ();
+//! #        fn into_inner(self) {}
+//! #        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {}
+//! #    }
+//! # }
+//! #
+//! # mod unauthenticated {
+//! #    #[derive(Clone)]
+//! #    pub enum Action {}
+//! #    pub struct State {}
+//! #
+//! #    use composable::*;
+//! #    impl Reducer for State {
+//! #        type Action = Action;
+//! #        type Output = ();
+//! #        fn into_inner(self) {}
+//! #        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {}
+//! #    }
+//! # }
+//! # use composable::*;
+//! #[derive(RecursiveReducer)]
+//! enum State {
+//!     LoggedIn(authenticated::State),
+//!     LoggedOut(unauthenticated::State),
+//! }
+//!
+//! #[derive(Clone, From, TryInto)]
+//! enum Action {
+//!     LoggedIn(authenticated::Action),
+//!     LoggedOut(unauthenticated::Action),
+//! }
+//!
+//! impl RecursiveReducer for State {
+//!     type Action = Action;
+//!
+//!     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!         // logic independent of the user’s authentication
+//!     }
+//! }
+//! ```
+//!
+//! ---
+//! <br />
+//!
+//! Now, the [automatic derive reducer] behavior of [`Option`] is eay to described.
+//! It behaves is as if it were:
+//!
+//! ```ignore FIXME: the macro can't handle generics
+//! # use composable::*;
+//! #[derive(RecursiveReducer)]
+//! enum Option<T: Reducer> {
+//!     #[not_a_reducer]
+//!     None,
+//!     Some(T),
+//! }
+//! #
+//! # impl<T: Reducer> RecursiveReducer for Option<T> {
+//! #     type Action = T::Action;
+//! #     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {}
+//! # }
+//! ```
+//!
+//! [automatic derive reducer]: #automatic-derived-reducers
 
 #[doc(no_inline)]
 pub use derive_more::{From, TryInto};
 
-/// Macros used to ease creation of recursive reducers.
-///
-/// `Reducer`s that are primarily made up of other `Reducer`s can have much of their behavior
-/// written by the compiler. Reducing both the amount of work required and the number of bugs
-/// that may creep into a complex application.
-///
-/// Given two preexisting `Reducer`s, `A` and `B`,
-///
-/// ```rust
-/// # use composable::*;
-/// struct A;
-/// struct B;
-///
-/// #[derive(Clone)]
-/// enum Action { /* … */ }
-///
-/// impl Reducer for A {
-///     type Action = Action;
-///     type Output = ();
-///     
-///     fn into_inner(self) -> Self::Output {}
-///     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action>) {
-///         match action { /* … */ }
-///     }
-/// }
-///
-/// impl Reducer for B {
-///     type Action = Action;
-///     type Output = ();
-///     
-///     fn into_inner(self) -> Self::Output {}
-///     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action>) {
-///         match action { /* … */ }
-///     }
-/// }
-/// ```
-///
-/// ## `enum` Example
-///
-/// A `RecursiveReducer` `enum` can be used to model `Reducer` alternatives.
-///
-/// ```rust
-/// # struct A;
-/// # struct B;
-/// #
-/// # use composable::*;
-/// #
-/// # #[derive(Clone)]
-/// # enum Action { /* … */ }
-/// #
-/// # impl Reducer for A {
-/// #     type Action = Action;
-/// #     type Output = ();
-/// #     
-/// #     fn into_inner(self) -> Self::Output {}
-/// #     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action>) {
-///         match action { /* … */ }
-/// #     }
-/// # }
-/// #
-/// # impl Reducer for B {
-/// #     type Action = Action;
-/// #     type Output = ();
-/// #     
-/// #     fn into_inner(self) -> Self::Output {}
-/// #     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Action>) {
-///         match action { /* … */ }
-/// #     }
-/// # }
-/// #
-/// #[derive(RecursiveReducer)]
-/// enum Either {
-///     A(A),
-///     B(B),
-/// }
-///
-/// impl RecursiveReducer for Either {
-///     type Action = Action;
-///
-///     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
-///         // …
-///     }
-/// }
-///
-/// let store = Store::with_initial(Either::A(A));
-/// ```
-///
-/// ## `struct` Example
-///
-/// A `RecursiveReducer` `struct` represents a parent-child relationship between `Reducer`s.
-/// This is the most common use of `RecursiveReducer` in large applications. It forms the core
-/// “Compatibility” of the Composbale Architecture.
-///
 pub use derive_reducers::RecursiveReducer;
 
 #[cfg(feature = "ouroboros")]

@@ -21,7 +21,7 @@ impl Reducer for State {
     type Action = Action;
     type Output = ();
 
-    fn into_inner(self) -> Self::Output {}
+    fn into_inner(self) {}
 
     fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
         match action {
