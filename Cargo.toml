@@ -15,6 +15,7 @@ blocking = []
 [dependencies]
 derive_reducers = { path = "src/derive_macros/derive_reducers" }
 derive_more = { version = "1.0.0-beta", features = ["from", "try_into"], default-features = false }
+
 flume = { git = "https://github.com/zesterer/flume.git", features = ["async"], default-features = false }
 futures = { version = "0.3.29", features = ["executor"] }
 ambience = "0.2.1"

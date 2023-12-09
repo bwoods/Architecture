@@ -1,18 +1,9 @@
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{parse_macro_input, Data, DeriveInput};
+use syn::{DataStruct, Ident};
 
-pub fn derive_macro(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let parent_reducer = input.ident;
-
-    let data = if let Data::Struct(data) = input.data {
-        data
-    } else {
-        panic!("No struct fields found");
-    };
-
+pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
     let child_reducers = data
         .fields
         .iter()
@@ -34,7 +25,7 @@ pub fn derive_macro(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[automatically_derived]
-        impl composable::Reducer for #parent_reducer
+        impl composable::Reducer for #identifier
             where self::Action: Clone
         {
             type Action = <Self as RecursiveReducer>::Action;

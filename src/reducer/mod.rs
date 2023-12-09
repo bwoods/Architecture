@@ -49,3 +49,18 @@ impl<T: Reducer> Reducer for Option<T> {
         }
     }
 }
+
+impl<T: Reducer> Reducer for Box<T> {
+    type Action = T::Action;
+
+    type Output = T::Output;
+
+    fn into_inner(self) -> Self::Output {
+        (*self).into_inner()
+    }
+
+    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
+        use std::ops::DerefMut;
+        self.deref_mut().reduce(action, effects)
+    }
+}
