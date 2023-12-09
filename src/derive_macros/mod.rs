@@ -19,8 +19,9 @@
 //! - [`Option`]  
 //! - [`Box`]  
 //!
-//! This does not require the [`RecursiveReducer`] and automatically applies.
+//! These do not require the [`RecursiveReducer`] and [automatically apply][auto].
 //!
+//! [auto]: crate::Reducer#foreign-impls
 //! [`RecursiveReducer`]: derive_reducers::RecursiveReducer
 //! [`Reducer`]: crate::Reducer
 //! [`TryInto`]: #reexports
@@ -39,7 +40,7 @@
 //! coordinate between them.  
 //!
 //! Each composite `Reducer` is written with the knowledge of its own `Action`s and the `Action`s
-//! of its immediate children. The `Action`s of its parent is unknown to it and (by convention) it
+//! of its immediate children. The `Action`s of its parent are unknown to it and (by convention) it
 //! does not traffic in the `Action`s of its grandchildren.
 //!
 //! Deciding which Domains needs to be coordinated between, and thus should be siblings under a
@@ -196,6 +197,9 @@
 //! enum State {
 //!     LoggedIn(authenticated::State),
 //!     LoggedOut(unauthenticated::State),
+//! #
+//! #   #[not_a_reducer]
+//! #   Other,
 //! }
 //!
 //! #[derive(Clone, From, TryInto)]
@@ -213,26 +217,24 @@
 //! }
 //! ```
 //!
+//! `authenticated::Action`s will only run when the state is `LoggedIn` and vice-versa..
+//!
 //! ---
 //! <br />
 //!
-//! Now, the [automatic derive reducer] behavior of [`Option`] is eay to described.
+//! Now, the [automatic derive reducer] behavior of [`Option`] is easy to described.
 //! It behaves is as if it were:
 //!
 //! ```ignore FIXME: the macro can't handle generics
-//! # use composable::*;
 //! #[derive(RecursiveReducer)]
 //! enum Option<T: Reducer> {
 //!     #[not_a_reducer]
 //!     None,
 //!     Some(T),
 //! }
-//! #
-//! # impl<T: Reducer> RecursiveReducer for Option<T> {
-//! #     type Action = T::Action;
-//! #     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {}
-//! # }
 //! ```
+//! Although, currently, the `RecursiveReducer` macro does not work with generic parameters on the
+//! type it is attempting to derive the `Reducer` trait for.
 //!
 //! [automatic derive reducer]: #automatic-derived-reducers
 
@@ -240,9 +242,6 @@
 pub use derive_more::{From, TryInto};
 
 pub use derive_reducers::RecursiveReducer;
-
-#[cfg(feature = "ouroboros")]
-pub use derive_reducers::SelfReferentialRecursiveReducer;
 
 use crate::Effects;
 
