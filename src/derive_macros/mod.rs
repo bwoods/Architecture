@@ -225,7 +225,7 @@
 //! Now, the [automatic derive reducer] behavior of [`Option`] is easy to described.
 //! It behaves is as if it were:
 //!
-//! ```ignore FIXME: the macro can't handle generics
+//! ```ignore
 //! #[derive(RecursiveReducer)]
 //! enum Option<T: Reducer> {
 //!     #[not_a_reducer]

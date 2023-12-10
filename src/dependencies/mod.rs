@@ -1,20 +1,17 @@
 #![doc = include_str!("README.md")]
 
-pub use refs::Ref;
+pub use reducers::ReducerDependencies;
 pub use values::{Dependency, DependencyDefault};
 
 mod guard;
+mod reducers;
 mod refs;
 mod values;
 
 /// Supply a tuple of dependencies for the supplied closure
 ///
 /// For a single value [`with_dependency`] may be used instead.
-pub fn with_dependencies<T, F, R>(with: T, f: F) -> R
-where
-    T: Tuple,
-    F: FnOnce() -> R,
-{
+pub fn with_dependencies<T: Tuple, F: FnOnce() -> R, R>(with: T, f: F) -> R {
     let _guards = with.guards();
     f()
 }
@@ -22,11 +19,7 @@ where
 /// Supply a single dependency for the supplied closure.
 ///
 /// A convenience function that just forwards to [`with_dependencies`].
-pub fn with_dependency<T, F, R>(with: T, f: F) -> R
-where
-    T: 'static,
-    F: FnOnce() -> R,
-{
+pub fn with_dependency<T: 'static, F: FnOnce() -> R, R>(with: T, f: F) -> R {
     with_dependencies((with,), f)
 }
 

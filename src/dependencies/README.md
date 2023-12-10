@@ -4,7 +4,7 @@ Dependencies are the functions that represent resources and effects needed by th
 
 Dependency Injection, Dependency Mocking, and other patterns and frameworks are all designed to avoid the problems that application dependencies cause for testing: reliability and performance both suffer.
 
-This crate attempts make dependency handling; encouraging it use.
+This crate attempts make dependency handling easy; encouraging it use.
 
 <!--
 

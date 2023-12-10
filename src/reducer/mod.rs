@@ -31,7 +31,7 @@ pub trait Reducer {
     ///
     /// Additional `Action`s that need to be performed as a side-effect of an `Action` should be
     /// [invoked][`crate::effects::Effects`] on `effects`.
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {}
+    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>);
 }
 
 impl<T: Reducer> Reducer for Option<T> {
