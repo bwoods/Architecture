@@ -28,9 +28,7 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
             where <Self as RecursiveReducer>::Action: Clone
         {
             type Action = <Self as RecursiveReducer>::Action;
-            type Output = ();
-
-            fn into_inner(self) -> Self::Output { }
+            type Output = Self;
 
             fn reduce(
                 &mut self,

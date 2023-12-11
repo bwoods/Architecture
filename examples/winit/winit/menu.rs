@@ -20,9 +20,7 @@ pub enum Action {}
 
 impl Reducer for State {
     type Action = Action;
-    type Output = ();
-
-    fn into_inner(self) {}
+    type Output = Self;
 
     fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
         match action {}

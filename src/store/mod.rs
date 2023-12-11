@@ -25,7 +25,7 @@ impl<State: Reducer> Store<State> {
     where
         State: Send + 'static,
         <State as Reducer>::Action: Send,
-        <State as Reducer>::Output: Send,
+        <State as Reducer>::Output: Send + From<State>,
     {
         Store::runtime(|| state)
     }
@@ -37,7 +37,7 @@ impl<State: Reducer> Store<State> {
     where
         F: (FnOnce() -> State) + Send + 'static,
         <State as Reducer>::Action: Send + 'static,
-        <State as Reducer>::Output: Send + 'static,
+        <State as Reducer>::Output: Send + From<State> + 'static,
     {
         Store::runtime(with)
     }
@@ -86,7 +86,7 @@ impl<State: Reducer> Default for Store<State>
 where
     State: Default,
     <State as Reducer>::Action: Send + 'static,
-    <State as Reducer>::Output: Send + 'static,
+    <State as Reducer>::Output: Send + From<State> + 'static,
 {
     /// Creates a new `Store` with a default initial state.
     fn default() -> Self {

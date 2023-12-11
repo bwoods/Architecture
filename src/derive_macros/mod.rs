@@ -62,9 +62,8 @@
 //!
 //!     impl Reducer for State {
 //!         type Action = Action;
-//!         type Output = ();
+//!         type Output = Self;
 //!         
-//!         fn into_inner(self) {}
 //!         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
 //!             match action { /* … */ }
 //!         }
@@ -81,9 +80,8 @@
 //!
 //!     impl Reducer for State {
 //!         type Action = Action;
-//!         type Output = ();
-//!         
-//!         fn into_inner(self) {}
+//!         type Output = Self;
+//!
 //!         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
 //!             match action { /* … */ }
 //!         }
@@ -173,8 +171,7 @@
 //! #    use composable::*;
 //! #    impl Reducer for State {
 //! #        type Action = Action;
-//! #        type Output = ();
-//! #        fn into_inner(self) {}
+//! #        type Output = Self;
 //! #        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {}
 //! #    }
 //! # }
@@ -187,8 +184,7 @@
 //! #    use composable::*;
 //! #    impl Reducer for State {
 //! #        type Action = Action;
-//! #        type Output = ();
-//! #        fn into_inner(self) {}
+//! #        type Output = Self;
 //! #        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {}
 //! #    }
 //! # }

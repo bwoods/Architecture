@@ -43,10 +43,6 @@ impl<State: Reducer> Store<State> {
             }
         });
     }
-
-    pub fn into_inner(self) -> <State as Reducer>::Output {
-        self.state.into_inner()
-    }
 }
 
 impl<State: Reducer> Default for Store<State>

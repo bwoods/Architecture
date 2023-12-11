@@ -23,11 +23,7 @@ enum Action {
 use Action::*;
 impl Reducer for State {
     type Action = Action;
-    type Output = usize;
-
-    fn into_inner(self) -> Self::Output {
-        self.n
-    }
+    type Output = Self;
 
     // This reducer ensures the value is always an even number
     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
@@ -59,6 +55,6 @@ store.recv(Increment, |state| state.n = 4);
 store.send(Decrement, |state| state.n = 3);
 store.recv(Decrement, |state| state.n = 2);
 
-let n = store.into_inner();
+let n = store.into_inner().n;
 assert_eq!(n, 2);
 ```

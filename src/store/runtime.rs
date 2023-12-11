@@ -17,7 +17,7 @@ impl<State: Reducer> Store<State> {
     where
         F: (FnOnce() -> State) + Send + 'static,
         <State as Reducer>::Action: Send + 'static,
-        <State as Reducer>::Output: Send + 'static,
+        <State as Reducer>::Output: Send + From<State> + 'static,
     {
         let (sender, receiver) = unbounded();
         let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
@@ -62,7 +62,7 @@ impl<State: Reducer> Store<State> {
                         }
                     });
 
-                    state.into_inner()
+                    state.into()
                 })
             })
             .unwrap();
@@ -96,10 +96,6 @@ pub mod tests {
     impl Reducer for State {
         type Action = Action;
         type Output = Self;
-
-        fn into_inner(self) -> Self::Output {
-            self
-        }
 
         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
             use Action::*;
@@ -182,10 +178,6 @@ pub mod tests {
         impl Reducer for State {
             type Action = Action;
             type Output = Self;
-
-            fn into_inner(self) -> Self::Output {
-                self
-            }
 
             fn reduce(&mut self, _action: Action, _effects: impl Effects<Action>) {}
         }

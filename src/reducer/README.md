@@ -1,4 +1,5 @@
-`Reducer`s  are responsible for updating a `Store`’s  `state` in response to its `Action`s.
+The logic of the feature is performed by mutating its current `State` with `Action`s. 
+
 
 ```rust
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -13,11 +14,8 @@ enum Action {
 }
 ```
 
-The logic of the feature is performed by mutating its current state with actions. This is most easily done by implementing the [`Reducer`] trait directly on it’s `State`.
+This is most easily done by implementing the [`Reducer`] trait directly on it’s `State`.
 
-
-
-## Example
 
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
@@ -37,10 +35,6 @@ use Action::*;
 impl Reducer for State {
     type Action = Action;
     type Output = usize;
-  
-    fn into_inner(self) -> Self::Output {
-        self.n
-    }
 
     fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
         match action {
@@ -55,7 +49,7 @@ impl Reducer for State {
 }
 ```
 
-The `reduce` method’s first responsibility is to mutate the feature’s current state given an action. Its second responsibility is to trigger effects that feed their actions back into the system. Currently `reduce` does not need to run any effects so `_effects` goes unused.
+The `reduce` method’s first responsibility is to mutate the feature’s current state given an `action`. Its second responsibility is to trigger effects that feed their actions back into the system. Currently `reduce` does not need to run any effects so `_effects` goes unused.
 
 If the action does need side effects, then more would need to be done. For example, if `reduce` always maintained an even number for the `State`, then each `Increment` and `Decrement` would need an effect to follow:[^actually…]
 
@@ -79,10 +73,6 @@ use Action::*;
 impl Reducer for State {
     type Action = Action;
     type Output = usize;
- 
-    fn into_inner(self) -> Self::Output {
-        self.n
-    }
 
     // This reducer ensures the value is always an even number
     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {

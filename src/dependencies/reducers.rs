@@ -20,10 +20,6 @@ pub trait ReducerDependencies: Reducer + Sized {
             type Action = R::Action;
             type Output = R::Output;
 
-            fn into_inner(self) -> Self::Output {
-                self.inner.into_inner()
-            }
-
             fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
                 with_dependency(self.dependency.clone(), || {
                     self.inner.reduce(action, effects)
@@ -60,10 +56,6 @@ pub trait ReducerDependencies: Reducer + Sized {
         {
             type Action = R::Action;
             type Output = R::Output;
-
-            fn into_inner(self) -> Self::Output {
-                self.inner.into_inner()
-            }
 
             fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
                 match Dependency::<T>::new().as_deref() {

@@ -84,8 +84,11 @@ where
     }
 
     /// Consumes the `Store` and returns its current `state` value.
-    pub fn into_inner(mut self) -> <State as Reducer>::Output {
-        self.state.take().unwrap().into_inner()
+    pub fn into_inner(mut self) -> <State as Reducer>::Output
+    where
+        State: Into<<State as Reducer>::Output>,
+    {
+        self.state.take().unwrap().into()
     }
 }
 
