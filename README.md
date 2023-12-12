@@ -89,3 +89,9 @@ composable = "x.y"
 
   In fact, the feature primarily exists to quickly test that doing so does not improve an application’s throughput as the overhead of `send` is so low.
 
+- `unreleased`: enable features that are still heavily under development. Unreleased features include:
+  - `views`: immediate-mode user interface elements designed…  
+    See [the module level documentation][views] for more.
+
+  Note that changes to `unreleased`: code will **never** be considered a semver breaking change.
+

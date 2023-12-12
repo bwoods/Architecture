@@ -11,6 +11,9 @@ pub use effects::Task;
 pub use reducer::Reducer;
 pub use store::{testing::TestStore, Store};
 
+#[cfg(all(feature = "views", feature = "unreleased"))]
+pub mod views;
+
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other
 /// `Action`s.
 ///

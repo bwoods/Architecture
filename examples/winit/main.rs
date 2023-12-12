@@ -11,6 +11,7 @@ fn main() -> Result<(), EventLoopError> {
     event_loop.set_control_flow(ControlFlow::Wait); // turn off polling
 
     event_loop.run(move |event, target| match event {
+        Event::DeviceEvent { .. } => {} // ignored
         Event::UserEvent(..) => target.exit(),
         _ => store.send(event),
     })

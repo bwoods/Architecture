@@ -12,9 +12,14 @@ include = ["LICENSE-APACHE.md", "LICENSE-MIT.md"]
 spin = ["flume/spin"]
 blocking = []
 
+unreleased = ["views"]
+views = ["lyon"]
+
+
 [dependencies]
 derive_reducers = { path = "src/derive_macros/derive_reducers" }
 derive_more = { version = "1.0.0-beta", features = ["from", "try_into"], default-features = false }
+lyon = { version = "1.0.1", optional = true }
 
 flume = { git = "https://github.com/zesterer/flume.git", features = ["async"], default-features = false }
 futures = { version = "0.3.29", features = ["executor"] }
@@ -59,4 +64,4 @@ harness = false
 
 [[example]]
 name = "winit"
-required-features = ["blocking"]
+required-features = ["blocking","views"]
