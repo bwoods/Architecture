@@ -1,5 +1,7 @@
 //!
 
+pub mod output;
+
 use lyon::math::{Box2D as Bounds, Point, Size};
 
 /// Represents an individual user interface element and provides modifiers that can be
@@ -40,13 +42,13 @@ pub enum Layer {
     Circle { x: f32, y: f32, r: f32 },
     
     /// Adds the beginning of a path.
-    MoveTo { x: f32, y: f32 },
-    /// Adds a line from the last point.
-    LineTo { x: f32, y: f32 },
+    Move { x: f32, y: f32 },
+    /// Adds a line to `x`, `y` from the last point.
+    Line { x: f32, y: f32 },
     /// Adds a quadratic curve to `x`, `y` from the last point.
-    QuadTo { x1: f32, y1: f32, x: f32, y: f32 },
+    Quadratic { x1: f32, y1: f32, x: f32, y: f32 },
     /// Adds a cubic curve to `x`, `y` from the last point.
-    CubicTo { x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32 },
+    Cubic { x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32 },
     /// Closes the current path.
     Close,
 }
