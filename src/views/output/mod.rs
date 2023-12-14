@@ -5,42 +5,30 @@
 mod gpu;
 mod svg;
 
+const KAPPA: f64 = 0.5519703814011129; // https://spencermortensen.com/articles/least-squares-bezier-circle/
+
 ///
-pub trait Output {
+pub trait Output: Sized {
     /// A default implementation of rectangle drawing.
     fn rectangle(&mut self, x: f32, y: f32, w: f32, h: f32) {
-        let xe = x + w;
-        let ye = y + h;
-
-        self.move_to(x, y);
-        self.line_to(xe, y);
-        self.line_to(xe, ye);
-        self.line_to(x, ye);
-        self.line_to(x, y);
-        self.close();
+        rounded(self, x, y, w, h, 0.0, 0.0, 0.0);
+    }
+    /// A default implementation of rounded rectangle drawing (with circular arcs).
+    fn rounded(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32) {
+        rounded(self, x, y, w, h, rx, ry, (1.0 - KAPPA) as f32);
+    }
+    /// A default implementation of rounded rectangle drawing (with continuous arcs).
+    fn continuous(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32) {
+        rounded(self, x, y, w, h, rx, ry, 0.0);
     }
     /// A default implementation of ellipse drawing.
     fn ellipse(&mut self, x: f32, y: f32, w: f32, h: f32) {
-        // https://spencermortensen.com/articles/least-squares-bezier-circle/
-        const K: f32 = 0.55197036;
-
-        let kw = (w / 2.0) * K; // control-points offset
-        let kh = (h / 2.0) * K;
-        let xm = x + w / 2.0; // middle
-        let ym = y + h / 2.0;
-        let xe = x + w; // end
-        let ye = y + h;
-
-        self.move_to(x, ym);
-        self.cubic_bezier_to(x, ym - kh, xm - kw, y, xm, y);
-        self.cubic_bezier_to(xm + kw, y, xe, ym - kh, xe, ym);
-        self.cubic_bezier_to(xe, ym + kh, xm + kw, ye, xm, ye);
-        self.cubic_bezier_to(xm - kw, ye, x, ym + kh, x, ym);
-        self.close();
+        rounded(self, x, y, w, h, w / 2.0, h / 2.0, (1.0 - KAPPA) as f32);
     }
     /// A default implementation of circle drawing.
-    fn circle(&mut self, x: f32, y: f32, r: f32) {
-        self.ellipse(x, y, r, r)
+    fn circle(&mut self, x: f32, y: f32, radius: f32) {
+        let w = 2.0 * radius;
+        rounded(self, x, y, w, w, radius, radius, (1.0 - KAPPA) as f32);
     }
 
     /// Begins a new path.
@@ -66,4 +54,49 @@ pub trait Output {
 
     /// Closes the current path.
     fn close(&mut self);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn rounded(output: &mut impl Output, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32, k: f32) {
+    let p0 = (x, y + ry);
+    let c0 = (x, y + ry * k);
+    let c1 = (x + rx * k, y);
+    let p1 = (x + rx, y);
+
+    output.move_to(p0.0, p0.1);
+    output.cubic_bezier_to(c0.0, c0.1, c1.0, c1.1, p1.0, p1.1);
+
+    let p2 = (x + w - rx, y);
+    let c2 = (x + w - rx * k, y);
+    let c3 = (x + w, y + ry * k);
+    let p3 = (x + w, y + ry);
+
+    output.move_to(p2.0, p2.1);
+    output.cubic_bezier_to(c2.0, c2.1, c3.0, c3.1, p3.0, p3.1);
+
+    let p4 = (x + w, y + h - ry);
+    let c4 = (x + w, y + h - ry * k);
+    let c5 = (x + w - rx * k, y + h);
+    let p5 = (x + w - rx, y + h);
+
+    output.move_to(p4.0, p4.1);
+    output.cubic_bezier_to(c4.0, c4.1, c5.0, c5.1, p5.0, p5.1);
+
+    let p6 = (x + rx, y + h);
+    let c6 = (x + rx * k, y + h);
+    let c7 = (x, y + h - ry * k);
+    let p7 = (x, y + h - ry);
+
+    output.move_to(p6.0, p6.1);
+    output.cubic_bezier_to(c6.0, c6.1, c7.0, c7.1, p7.0, p7.1);
+
+    output.move_to(p0.0, p0.1);
+    output.close();
+}
+
+#[test]
+#[ignore]
+fn snapshot_testing() {
+
+    // using SVGs instead of PNGs (with inst) ?
 }
