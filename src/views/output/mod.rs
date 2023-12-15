@@ -5,7 +5,16 @@
 mod gpu;
 mod svg;
 
-const KAPPA: f64 = 0.5519703814011129; // https://spencermortensen.com/articles/least-squares-bezier-circle/
+/// [Least-squares approximation of the circle using cubic Bézier curves][site]
+///
+/// > David Ellsworth found the optimal value of c:  
+/// >
+/// > c ≈ 0.5519703814011128603134107  
+/// >
+/// > This is the least-squares approximation to the right circular arc  
+///
+/// [site]: https://spencermortensen.com/articles/least-squares-bezier-circle/
+const KAPPA: f64 = 0.5519703814011129; // rounded to f64
 
 ///
 pub trait Output: Sized {
@@ -57,39 +66,39 @@ pub trait Output: Sized {
 }
 
 #[allow(clippy::too_many_arguments)]
+/// ## Notes
+/// - diagram (Fourth Trial):
+/// https://nacho4d-nacho4d.blogspot.com/2011/05/bezier-paths-rounded-corners-rectangles.html
+/// - compiler explorer: https://godbolt.org/z/WEcv17hvb
 fn rounded(output: &mut impl Output, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32, k: f32) {
     let p0 = (x, y + ry);
     let c0 = (x, y + ry * k);
     let c1 = (x + rx * k, y);
     let p1 = (x + rx, y);
 
-    output.move_to(p0.0, p0.1);
-    output.cubic_bezier_to(c0.0, c0.1, c1.0, c1.1, p1.0, p1.1);
-
     let p2 = (x + w - rx, y);
     let c2 = (x + w - rx * k, y);
     let c3 = (x + w, y + ry * k);
     let p3 = (x + w, y + ry);
-
-    output.move_to(p2.0, p2.1);
-    output.cubic_bezier_to(c2.0, c2.1, c3.0, c3.1, p3.0, p3.1);
 
     let p4 = (x + w, y + h - ry);
     let c4 = (x + w, y + h - ry * k);
     let c5 = (x + w - rx * k, y + h);
     let p5 = (x + w - rx, y + h);
 
-    output.move_to(p4.0, p4.1);
-    output.cubic_bezier_to(c4.0, c4.1, c5.0, c5.1, p5.0, p5.1);
-
     let p6 = (x + rx, y + h);
     let c6 = (x + rx * k, y + h);
     let c7 = (x, y + h - ry * k);
     let p7 = (x, y + h - ry);
 
+    output.move_to(p0.0, p0.1);
+    output.cubic_bezier_to(c0.0, c0.1, c1.0, c1.1, p1.0, p1.1);
+    output.move_to(p2.0, p2.1);
+    output.cubic_bezier_to(c2.0, c2.1, c3.0, c3.1, p3.0, p3.1);
+    output.move_to(p4.0, p4.1);
+    output.cubic_bezier_to(c4.0, c4.1, c5.0, c5.1, p5.0, p5.1);
     output.move_to(p6.0, p6.1);
     output.cubic_bezier_to(c6.0, c6.1, c7.0, c7.1, p7.0, p7.1);
-
     output.move_to(p0.0, p0.1);
     output.close();
 }
@@ -97,6 +106,5 @@ fn rounded(output: &mut impl Output, x: f32, y: f32, w: f32, h: f32, rx: f32, ry
 #[test]
 #[ignore]
 fn snapshot_testing() {
-
     // using SVGs instead of PNGs (with inst) ?
 }
