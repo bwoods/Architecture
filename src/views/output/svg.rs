@@ -6,6 +6,7 @@ use svg::{node::element::path::Data, node::element::Path, Document, Node};
 pub struct Output {
     svg: Document,
     data: Option<Data>,
+    rgba: [u8; 4],
 }
 
 impl Output {
@@ -14,6 +15,7 @@ impl Output {
         Self {
             svg: Document::new().set("viewBox", (0, 0, width, height)),
             data: None,
+            rgba: [0; 4],
         }
     }
 
@@ -24,8 +26,9 @@ impl Output {
 }
 
 impl super::Output for Output {
-    fn move_to(&mut self, x: f32, y: f32) {
+    fn move_to(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
         self.data = Some(Data::new().move_to((x, y)));
+        self.rgba = rgba;
     }
 
     fn line_to(&mut self, x: f32, y: f32) {
@@ -48,8 +51,13 @@ impl super::Output for Output {
 
     fn close(&mut self) {
         if let Some(data) = self.data.take() {
+            let fill = format!(
+                "#{:02x}{:02x}{:02x}{:02x}",
+                self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3]
+            );
+
             self.svg
-                .append(Path::new().set("fill", "black").set("d", data.close()));
+                .append(Path::new().set("fill", fill).set("d", data.close()));
         }
     }
 }
