@@ -112,30 +112,30 @@ fn rounded(output: &mut impl Output, x: f32, y: f32, w: f32, h: f32, rx: f32, ry
 
 #[test]
 fn snapshot_testing() {
-    use insta::assert_debug_snapshot;
+    use insta::assert_snapshot;
 
     let mut output = svg::Output::new(256.0, 256.0);
-    output.circle(16.0, 16.0, 112.0);
+    output.circle(16.0, 16.0, 224.0);
     output.close();
-    assert_debug_snapshot!("circle", output);
+    assert_snapshot!("circle", output.build());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.ellipse(16.0, 16.0, 224.0, 112.0);
     output.close();
-    assert_debug_snapshot!("ellipse", output);
+    assert_snapshot!("ellipse", output.build());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.rectangle(16.0, 16.0, 224.0, 112.0);
     output.close();
-    assert_debug_snapshot!("rectangle", output);
+    assert_snapshot!("rectangle", output.build());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.rounded(16.0, 16.0, 224.0, 112.0, 16.0, 16.0);
     output.close();
-    assert_debug_snapshot!("rounded", output);
+    assert_snapshot!("rounded", output.build());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.continuous(16.0, 16.0, 224.0, 112.0, 16.0, 16.0);
     output.close();
-    assert_debug_snapshot!("continuous", output);
+    assert_snapshot!("continuous", output.build());
 }

@@ -17,6 +17,8 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Changed
 
+- `View` drawing is governed by an `Output` trait; sending geometry to the GPU is now just _one_ of the options available.
+
 ### Fixed
 
 

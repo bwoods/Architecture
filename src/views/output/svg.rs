@@ -1,6 +1,5 @@
-//! SVG `Outout` for `Views`
+//! SVG `Output` for `Views`
 
-use std::fmt::Debug;
 use svg::{node::element::path::Data, node::element::Path, Document, Node};
 
 ///
@@ -10,19 +9,17 @@ pub struct Output {
 }
 
 impl Output {
-    ///
+    /// Creates a Scalable Vector Graphics `Output`.
     pub fn new(width: f32, height: f32) -> Self {
         Self {
             svg: Document::new().set("viewBox", (0, 0, width, height)),
             data: None,
         }
     }
-}
 
-impl Debug for Output {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let svg = self.svg.to_string();
-        f.write_str(&svg)
+    /// Consumes the `Output`` and returns the constructed SVG string.
+    pub fn build(self) -> String {
+        self.svg.to_string()
     }
 }
 
