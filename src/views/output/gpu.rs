@@ -1,4 +1,4 @@
-//! GPU `Output` for `Views`
+//! GPU [`Output`] for `Views`
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -35,15 +35,16 @@ impl<'a> Output<'a> {
     /// construction.
     ///
     /// ```
-    /// # use composable::views::output::gpu::Output;
+    /// # use composable::views::gpu::Output;
     /// let (mut options, mut tessellator, mut storage) = Output::defaults();
     /// let output = Output::new(&options, &mut tessellator, &mut storage);
     ///
-    /// // Then, after drawing all of the views, the triangle data can be
-    /// // retrieved from storage
+    /// // …
     ///
     /// let (vertices, indices) = storage.into_inner();
     /// ```
+    /// Once all the views have been drawn [`Storage::into_inner`] can be used to retrieved the
+    /// indexed-triangle data.
     pub fn defaults() -> (FillOptions, FillTessellator, Storage) {
         let options = FillOptions::default();
         let tessellator = FillTessellator::default();

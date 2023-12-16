@@ -17,7 +17,7 @@ pub mod svg;
 /// [site]: https://spencermortensen.com/articles/least-squares-bezier-circle/
 const KAPPA: f64 = 0.5519703814011129; // rounded to f64
 
-///
+/// A surface, or file format, that views may be rendered to.
 pub trait Output: Sized {
     /// A default implementation of rectangle drawing.
     fn rectangle(&mut self, x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4]) {
@@ -82,6 +82,7 @@ pub trait Output: Sized {
 /// - diagram (Fourth Trial):
 /// https://nacho4d-nacho4d.blogspot.com/2011/05/bezier-paths-rounded-corners-rectangles.html
 /// - compiler explorer: https://godbolt.org/z/WEcv17hvb
+#[inline(never)]
 fn rounded(
     output: &mut impl Output,
     x: f32,

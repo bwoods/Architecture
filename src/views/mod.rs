@@ -2,10 +2,12 @@
 
 use lyon::math::{Box2D as Bounds, Point, Size};
 
-pub mod output;
+mod output;
 
-/// Represents an individual user interface element and provides modifiers that can be
-/// uses to re-configure it.
+// #[doc(inline)]
+pub use output::{gpu, svg, Output};
+
+/// User interface element and modifiers to re-configure it.
 pub trait View: Sized {
     /// The intrinsic size of the `View`
     fn size(&self) -> Size;
@@ -28,9 +30,9 @@ pub enum Event {
 #[rustfmt::skip]
 #[allow(missing_docs)]
 #[derive(Copy, Clone)]
-/// Primitives for [`View`] drawing.
+/// [`View`] drawing.
 /// 
-/// [`View`]s use pass these primitives within their [`draw`] method to render themselves.
+/// [`View`]s use these primitives within their [`draw`] method to render themselves.
 ///
 /// [`draw`]: View::draw
 pub enum Layer {

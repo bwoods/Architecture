@@ -1,6 +1,6 @@
-//! SVG `Output` for `Views`
+//! SVG [`Output`] for `Views`
 
-use svg::{Document, Node, node::element::Path, node::element::path::Data};
+use svg::{node::element::path::Data, node::element::Path, Document, Node};
 
 ///
 pub struct Output {
@@ -19,7 +19,7 @@ impl Output {
         }
     }
 
-    /// Consumes the `Output`` and returns the constructed SVG string.
+    /// Consumes the `Output` and returns the constructed SVG string.
     pub fn into_inner(self) -> String {
         self.svg.to_string()
     }
