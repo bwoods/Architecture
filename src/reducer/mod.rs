@@ -36,7 +36,7 @@ pub trait Reducer {
     ///     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) { /**/ }
     /// }
     ///
-    /// impl std::convert::From<State> for usize {
+    /// impl From<State> for usize {
     ///     fn from(value: State) -> Self {
     ///         Cell::into_inner(Rc::into_inner(value.n).unwrap_or_default())
     ///     }

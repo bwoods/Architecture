@@ -21,10 +21,6 @@ impl Reducer for State {
     type Action = Action;
     type Output = usize;
 
-    fn into_inner(self) -> Self::Output {
-        self.0
-    }
-
     #[inline(never)]
     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
         use Action::*;
@@ -44,6 +40,12 @@ impl Reducer for State {
                 }
             }
         }
+    }
+}
+
+impl From<State> for usize {
+    fn from(value: State) -> Self {
+        value.0
     }
 }
 
