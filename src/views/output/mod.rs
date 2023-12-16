@@ -2,8 +2,8 @@
 //!
 //! [`View`]: super::View
 
-mod gpu;
-mod svg;
+pub mod gpu;
+pub mod svg;
 
 /// [Least-squares approximation of the circle using cubic Bézier curves][site]
 ///
@@ -93,18 +93,42 @@ fn rounded(output: &mut impl Output, x: f32, y: f32, w: f32, h: f32, rx: f32, ry
 
     output.move_to(p0.0, p0.1);
     output.cubic_bezier_to(c0.0, c0.1, c1.0, c1.1, p1.0, p1.1);
-    output.move_to(p2.0, p2.1);
+    output.line_to(p2.0, p2.1);
     output.cubic_bezier_to(c2.0, c2.1, c3.0, c3.1, p3.0, p3.1);
-    output.move_to(p4.0, p4.1);
+    output.line_to(p4.0, p4.1);
     output.cubic_bezier_to(c4.0, c4.1, c5.0, c5.1, p5.0, p5.1);
-    output.move_to(p6.0, p6.1);
+    output.line_to(p6.0, p6.1);
     output.cubic_bezier_to(c6.0, c6.1, c7.0, c7.1, p7.0, p7.1);
-    output.move_to(p0.0, p0.1);
+    output.line_to(p0.0, p0.1);
     output.close();
 }
 
 #[test]
-#[ignore]
 fn snapshot_testing() {
-    // using SVGs instead of PNGs (with inst) ?
+    use insta::assert_debug_snapshot;
+
+    let mut output = svg::Output::new(256.0, 256.0);
+    output.circle(16.0, 16.0, 112.0);
+    output.close();
+    assert_debug_snapshot!("circle", output);
+
+    let mut output = svg::Output::new(256.0, 128.0);
+    output.ellipse(16.0, 16.0, 224.0, 112.0);
+    output.close();
+    assert_debug_snapshot!("ellipse", output);
+
+    let mut output = svg::Output::new(256.0, 128.0);
+    output.rectangle(16.0, 16.0, 224.0, 112.0);
+    output.close();
+    assert_debug_snapshot!("rectangle", output);
+
+    let mut output = svg::Output::new(256.0, 128.0);
+    output.rounded(16.0, 16.0, 224.0, 112.0, 16.0, 16.0);
+    output.close();
+    assert_debug_snapshot!("rounded", output);
+
+    let mut output = svg::Output::new(256.0, 128.0);
+    output.continuous(16.0, 16.0, 224.0, 112.0, 16.0, 16.0);
+    output.close();
+    assert_debug_snapshot!("continuous", output);
 }
