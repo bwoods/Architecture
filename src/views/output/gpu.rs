@@ -1,88 +1,116 @@
 //! GPU `Output` for `Views`
-use lyon::path::builder::PathBuilder;
-use lyon::path::path::{BuilderWithAttributes, Path};
-use lyon::tessellation::{BuffersBuilder, FillOptions, FillTessellator, FillVertex, VertexBuffers};
-use lyon::tessellation::{StrokeOptions, StrokeTessellator, StrokeVertex};
+use std::cell::Cell;
+use std::rc::Rc;
+
+use lyon::path::builder::NoAttributes;
+use lyon::tessellation::{
+    FillBuilder, FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
+    GeometryBuilderError, VertexId,
+};
 
 ///
-pub struct Output {
-    builder: BuilderWithAttributes,
-    rgba: [f32; 4],
+pub struct Output<'a> {
+    builder: NoAttributes<FillBuilder<'a>>,
+    rgba: Rc<Cell<[u8; 4]>>,
 }
 
-impl Output {
+impl<'a> Output<'a> {
     /// Creates an indexed-triangle data `Output`.
-    #[allow(unused_variables)]
-    pub fn new(width: f32, height: f32) -> Self {
+    pub fn new(
+        options: &'a FillOptions,
+        tessellator: &'a mut FillTessellator,
+        storage: &'a mut Storage,
+    ) -> Self {
+        let rgba = Rc::new(Cell::default());
+        storage.rgba = Rc::clone(&rgba);
+
         Self {
-            builder: Path::builder_with_attributes(4),
-            rgba: [0.0; 4],
+            builder: tessellator.builder(options, storage),
+            rgba,
         }
     }
 
-    /// Consumes the `Output`` and returns the constructed geometry
-    /// - vertexes are stored as (x, y, rgba) tuples
-    /// - indicies are stored as 32-bit offsets
-    pub fn build(self) -> (Vec<(f32, f32, u32)>, Vec<u32>) {
-        let mut geometry: VertexBuffers<(f32, f32, u32), u32> = VertexBuffers::new();
+    /// `Output` has multiple dependencies with lifetime constraints. Use [`Output::defaults`]
+    /// to create these dependencies, then pass them directly into [`Output::new`] for easy
+    /// construction.
+    ///
+    /// ```
+    /// # use composable::views::output::gpu::Output;
+    /// let (mut options, mut tessellator, mut storage) = Output::defaults();
+    /// let output = Output::new(&options, &mut tessellator, &mut storage);
+    ///
+    /// // Then, after drawing all of the views, the triangle data can be
+    /// // retrieved from storage
+    ///
+    /// let (vertices, indices) = storage.into_inner();
+    /// ```
+    pub fn defaults() -> (FillOptions, FillTessellator, Storage) {
+        let options = FillOptions::default();
+        let tessellator = FillTessellator::default();
+        let storage = Storage::default();
 
-        let paths = self.builder.build();
-        FillTessellator::new()
-            .tessellate_path(
-                &paths,
-                &FillOptions::default(),
-                &mut BuffersBuilder::new(&mut geometry, |mut v: FillVertex| {
-                    let (x, y) = v.position().into();
-
-                    // rgba information is passed via `interpolated_attributes`
-                    // although we don’t yet take advantage of the interpolation
-                    let interpolated: [f32; 4] = v.interpolated_attributes().try_into().unwrap();
-                    let rgba = u32::from_be_bytes(interpolated.map(|f32| f32 as u8));
-
-                    (x, y, rgba)
-                }),
-            )
-            .unwrap();
-
-        if cfg!(stroke) {
-            // ensure stroke tessellation compiles even though it is not used (yet?)
-            StrokeTessellator::new()
-                .tessellate_path(
-                    &paths,
-                    &StrokeOptions::default(),
-                    &mut BuffersBuilder::new(&mut geometry, |v: StrokeVertex| {
-                        let (x, y) = v.position().into();
-                        (x, y, 0u32) // #black
-                    }),
-                )
-                .unwrap();
-        }
-
-        (geometry.vertices, geometry.indices)
+        (options, tessellator, storage)
     }
 }
 
-impl super::Output for Output {
+impl super::Output for Output<'_> {
     fn move_to(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
-        self.builder.begin((x, y).into(), &self.rgba);
-        self.rgba = rgba.map(|u8| u8 as f32);
+        self.rgba.set(rgba);
+        self.builder.begin((x, y).into());
     }
 
     fn line_to(&mut self, x: f32, y: f32) {
-        self.builder.line_to((x, y).into(), &self.rgba);
+        self.builder.line_to((x, y).into());
     }
 
     fn quadratic_bezier_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
         self.builder
-            .quadratic_bezier_to((x1, y1).into(), (x, y).into(), &self.rgba);
+            .quadratic_bezier_to((x1, y1).into(), (x, y).into());
     }
 
     fn cubic_bezier_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
         self.builder
-            .cubic_bezier_to((x1, y1).into(), (x2, y2).into(), (x, y).into(), &self.rgba);
+            .cubic_bezier_to((x1, y1).into(), (x2, y2).into(), (x, y).into());
     }
 
     fn close(&mut self) {
         self.builder.close();
+    }
+}
+
+///
+#[derive(Default)]
+pub struct Storage {
+    vertices: Vec<(f32, f32, u32)>,
+    indices: Vec<u32>,
+    rgba: Rc<Cell<[u8; 4]>>,
+}
+
+impl Storage {
+    /// Consumes the `Output` and returns the constructed indexed-triangle data.
+    /// - vertices are stored as (x, y, rgba) tuples
+    /// - indices are stored as 32-bit offsets
+    pub fn into_inner(self) -> (Vec<(f32, f32, u32)>, Vec<u32>) {
+        (self.vertices, self.indices)
+    }
+}
+
+#[doc(hidden)]
+impl FillGeometryBuilder for Storage {
+    fn add_fill_vertex(&mut self, vertex: FillVertex) -> Result<VertexId, GeometryBuilderError> {
+        let id = self.vertices.len() as u32;
+        let (x, y) = vertex.position().into();
+        self.vertices
+            .push((x, y, u32::from_be_bytes(self.rgba.get())));
+
+        Ok(id.into())
+    }
+}
+
+#[doc(hidden)]
+impl GeometryBuilder for Storage {
+    fn add_triangle(&mut self, a: VertexId, b: VertexId, c: VertexId) {
+        let triangle: [u32; 3] = [a, b, c].map(|id| id.into());
+        self.indices.extend_from_slice(&triangle);
     }
 }

@@ -1,8 +1,8 @@
 //!
 
-pub mod output;
-
 use lyon::math::{Box2D as Bounds, Point, Size};
+
+pub mod output;
 
 /// Represents an individual user interface element and provides modifiers that can be
 /// uses to re-configure it.

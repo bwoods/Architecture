@@ -1,6 +1,6 @@
 ---
 source: src/views/output/mod.rs
-expression: output.build()
+expression: output.into_inner()
 ---
 <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
 <path d="M16,128 C16,66.17932,66.17932,16,128,16 L128,16 C189.82068,16,240,66.17932,240,128 L240,128 C240,189.82068,189.82068,240,128,240 L128,240 C66.17932,240,16,189.82068,16,128 z" fill="#000000ff"/>

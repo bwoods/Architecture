@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 //! The end result of view drawing.
 //!
 //! [`View`]: super::View
@@ -77,7 +78,6 @@ pub trait Output: Sized {
     fn close(&mut self);
 }
 
-#[allow(clippy::too_many_arguments)]
 /// ## Notes
 /// - diagram (Fourth Trial):
 /// https://nacho4d-nacho4d.blogspot.com/2011/05/bezier-paths-rounded-corners-rectangles.html
@@ -134,25 +134,25 @@ fn snapshot_testing() {
     let mut output = svg::Output::new(256.0, 256.0);
     output.circle(16.0, 16.0, 224.0, black);
     output.close();
-    assert_snapshot!("circle", output.build());
+    assert_snapshot!("circle", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.ellipse(16.0, 16.0, 224.0, 112.0, black);
     output.close();
-    assert_snapshot!("ellipse", output.build());
+    assert_snapshot!("ellipse", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.rectangle(16.0, 16.0, 224.0, 112.0, black);
     output.close();
-    assert_snapshot!("rectangle", output.build());
+    assert_snapshot!("rectangle", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.rounded(16.0, 16.0, 224.0, 112.0, 16.0, 16.0, black);
     output.close();
-    assert_snapshot!("rounded", output.build());
+    assert_snapshot!("rounded", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
     output.continuous(16.0, 16.0, 224.0, 112.0, 16.0, 16.0, black);
     output.close();
-    assert_snapshot!("continuous", output.build());
+    assert_snapshot!("continuous", output.into_inner());
 }
