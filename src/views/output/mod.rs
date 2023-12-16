@@ -24,10 +24,17 @@ pub trait Output: Sized {
     }
     /// A default implementation of rounded rectangle drawing (with circular arcs).
     fn rounded(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32) {
+        let rx = rx.min(w / 2.0);
+        let ry = ry.min(h / 2.0);
         rounded(self, x, y, w, h, rx, ry, (1.0 - KAPPA) as f32);
     }
     /// A default implementation of rounded rectangle drawing (with continuous arcs).
     fn continuous(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32) {
+        // continuous corners are much smaller than circular ones; scale them up a bit
+        let c = std::f32::consts::E;
+
+        let rx = (rx * c).min(w / 2.0);
+        let ry = (ry * c).min(h / 2.0);
         rounded(self, x, y, w, h, rx, ry, 0.0);
     }
     /// A default implementation of ellipse drawing.
@@ -35,9 +42,9 @@ pub trait Output: Sized {
         rounded(self, x, y, w, h, w / 2.0, h / 2.0, (1.0 - KAPPA) as f32);
     }
     /// A default implementation of circle drawing.
-    fn circle(&mut self, x: f32, y: f32, radius: f32) {
-        let w = 2.0 * radius;
-        rounded(self, x, y, w, w, radius, radius, (1.0 - KAPPA) as f32);
+    fn circle(&mut self, x: f32, y: f32, diameter: f32) {
+        let r = diameter / 2.0;
+        rounded(self, x, y, diameter, diameter, r, r, (1.0 - KAPPA) as f32);
     }
 
     /// Begins a new path.
