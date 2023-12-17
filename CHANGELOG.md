@@ -18,8 +18,12 @@ And please only add new entries to the top of this list, right below the `# Unre
 ### Changed
 
 - `View` drawing is governed by an `Output` trait; sending geometry to the GPU is now just _one_ of the options available.
+- The [Inter font](https://rsms.me/inter/) has been updated to version 4.0.
 
 ### Fixed
+
+- The `views` feature has been gated behind an `unreleased` feature flag. Development on `View`s may now continue without causing SemVar issues.  
+    Unreleased features **are not** considered when determining versioning.
 
 
 
@@ -27,7 +31,7 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Added
 
-- Asynchronous Effects that where removed on version 0.5 have been restored. They now run in a [Local Async Executor](https://maciej.codes/2022-06-09-local-async.html), rather than a mulit-threaded one, 
+- Asynchronous `Effects` that where removed on version 0.5 have been restored. They now run in a [Local Async Executor](https://maciej.codes/2022-06-09-local-async.html), rather than a mulit-threaded one, 
 
 ### Changed
 

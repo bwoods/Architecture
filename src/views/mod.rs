@@ -3,8 +3,10 @@
 use lyon::math::{Box2D as Bounds, Point, Size};
 
 mod output;
+mod text;
 
 // #[doc(inline)]
+pub mod minimal;
 pub use output::{gpu, svg, Output};
 
 /// User interface element and modifiers to re-configure it.

@@ -16,8 +16,7 @@ impl<T> Default for Dependency<T> {
         let cell = OnceCell::new();
 
         if let Some(inner) = Guard::get() {
-            let result = cell.set(inner);
-            debug_assert!(result.is_ok());
+            cell.set(inner).ok();
         }
 
         Self { inner: cell }
@@ -272,9 +271,10 @@ impl<T: DependencyDefault> Deref for Dependency<T> {
     fn deref(&self) -> &Self::Target {
         self.as_deref().unwrap_or_else(|| {
             if cfg!(test) {
-                let detailed_explanation = r#". 
+                let detailed_explanation = r#".
 DependencyDefault types are not allowed to use their default implementation within units tests.
-Either register the dependency on the TestStore or use with_dependency within the test itself."#;
+Either register the dependency on the TestStore or use with_dependency within the test itself.
+"#;
                 panic!(
                     "Dependency<{0}> was constructed during a test, but {0} was not registered{1}",
                     std::any::type_name::<T>(),
@@ -285,8 +285,7 @@ Either register the dependency on the TestStore or use with_dependency within th
             let guard = Guard::new(T::default());
             std::mem::forget(guard);
 
-            let result = self.inner.set(Guard::get().unwrap());
-            debug_assert!(result.is_ok());
+            self.inner.set(Guard::get().unwrap()).ok();
             self.as_deref().unwrap()
         })
     }
