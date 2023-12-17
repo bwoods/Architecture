@@ -1,3 +1,5 @@
+mod typography;
+
 use std::cell::RefCell;
 use std::sync::Arc;
 

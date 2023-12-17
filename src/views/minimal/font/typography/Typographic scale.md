@@ -1,12 +1,10 @@
-# Typographic scales
-
-
+# Typographic scale
 
 > #### [The typographic scale](https://spencermortensen.com/articles/typographic-scale/)
 >
 > The third and final property of any scale is its *fundamental frequency*, $f_0$. In the chromatic scale, this is the Stuttgart pitch. In the classic typographic scale, the fundamental frequency is the *pica*. This value, 1 *pica* = 12 pt, is the baseline font size used in print typography.
 >
-> And here is the formula for the frequency $f_i$ of the ith note in the scale:
+> And here is the formula for the frequency $f_i$ of the $i$th note in the scale:
 > $$
 > f_i = f_0 r^{\frac{1}{n}}
 > $$
@@ -16,9 +14,53 @@
 >
 > Classic typographical scale.
 
+The scale in use here is a “golden tetratonic” scale, where $f_0 = 10$, $r = \phi$ and $n = 5$., rather than the classic typographical scale.[^phi]
+
+[^phi]: where $\phi$ is the [golden ratio](https://en.wikipedia.org/wiki/Golden_ratio): 1.618033988749….
 
 
-## Apple Typography Examples
+
+For each of the eight accessibility options there are eleven standard type sizes; numbered 0–10.
+
+
+|   n    | XXS  |  XS  |  S   |  M   |  L   |  XL  | XXL  | XXXL |
+| :----: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| **0**  |  10  |  11  |  11  |  12  |  12  |  14  |  16  |  18  |
+| **1**  |  11  |  12  |  13  |  14  |  15  |  17  |  19  |  21  |
+| **2**  |  12  |  13  |  14  |  15  |  16  |  18  |  20  |  22  |
+| **3**  |  13  |  14  |  15  |  16  |  17  |  19  |  21  |  23  |
+| **4**  |  15  |  16  |  17  |  18  |  19  |  21  |  23  |  25  |
+| **5**  |  16  |  17  |  18  |  19  |  20  |  22  |  24  |  26  |
+| **6**  |  18  |  19  |  20  |  21  |  22  |  24  |  26  |  28  |
+| **7**  |  20  |  22  |  24  |  26  |  28  |  30  |  32  |  34  |
+| **8**  |  22  |  24  |  26  |  28  |  30  |  32  |  34  |  36  |
+| **9**  |  24  |  26  |  28  |  30  |  32  |  34  |  36  |  38  |
+| **10** |  26  |  28  |  30  |  32  |  34  |  36  |  38  |  40  |
+
+
+
+The changes in font size differ; both across the accessibility adjustments and down the standard type sizes
+
+
+|   n    | XXS  |  XS  |  S   |  M   |  L   |  XL  | XXL  | XXXL |
+| :----: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| **0**  |  10  |  +1  |  +0  |  +1  |  +0  |  +2  |  +2  |  +2  |
+| **1**  |  11  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
+| **2**  |  12  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
+| **3**  |  13  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
+| **4**  |  15  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
+| **5**  |  16  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
+| **6**  |  18  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
+| **7**  |  20  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |
+| **8**  |  22  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |
+| **9**  |  24  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |
+| **10** |  26  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |  +2  |
+
+
+
+## Apple Typography Comparison
+
+Apple platforms have their own [typography schemes](https://developer.apple.com/design/human-interface-guidelines/typography). 
 
 
 
@@ -75,7 +117,7 @@ The iOS [xSmall](https://developer.apple.com/design/human-interface-guidelines/t
 | .caption1     | regular   | 11.0 |  13.0   | +1         |
 | .caption2     | regular   | 11.0 |  13.0   | +1         |
 
-If the macOS typography is re-branded **xxSmall**, a similar comparison can be done down the rest of the iOS sizes.
+Similar comparisons can be done down the rest of the iOS sizes.
 
 #### Small
 
