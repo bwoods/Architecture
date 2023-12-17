@@ -1,7 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![feature(doc_auto_cfg)] // show features flags in documentation
 #![forbid(unsafe_code)]
-#![deny(missing_docs)]
+#![warn(missing_docs)]
 
 #[doc(no_inline)]
 pub use derive_macros::*;
