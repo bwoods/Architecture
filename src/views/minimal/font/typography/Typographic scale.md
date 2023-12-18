@@ -82,18 +82,21 @@ Assuming that `.AppleSystemUIFont` and `.SFNS-Regular` resolve to the same font:
 | .caption1     | regular | 10.0 | 2.93 | .labelFont                           |
 | .caption2     | medium  | 10.0 | 2.84 |                                      |
 
-##### Note:
+##### Notes:
 
-The names of a few of the NSFont keys are misleading:
-
-- `messageFont(ofSize fontSize: CGFloat)`  
-    Returns the font used for standard interface items, such as button labels, menu items, and so on, in the specified size.
-- `labelFont(ofSize fontSize: CGFloat)`  
-    The label font […] is used for the labels on toolbar buttons and to label tick marks on full-size sliders
-
-`.messageFont` is the standard font for labels on controls. 
-
-Also note that the effects of [NSControl.ControlSize](https://developer.apple.com/documentation/appkit/nscontrol/controlsize) have not been examined yet.
+1. The names of a few of the NSFont keys are misleading:
+   - [labelFont(ofSize fontSize: CGFloat)](https://developer.apple.com/documentation/appkit/nsfont/1528213-labelfont)  
+     The label font […] is used for the labels on toolbar buttons and to label tick marks on full-size sliders
+   - [messageFont(ofSize fontSize: CGFloat)](https://developer.apple.com/documentation/appkit/nsfont/1525777-messagefont)  
+     Returns the font used for standard interface items, such as button labels, menu items, and so on, in the specified size.  
+     
+     `.messageFont` is actually the standard font for labels on controls. 
+2. The effects of [NSControl.ControlSize](https://developer.apple.com/documentation/appkit/nscontrol/controlsize) are not shown here.
+3. Neither are the user fonts:
+   - `userFont(ofSize fontSize: CGFloat)`, and
+   - `userFixedPitchFont(ofSize fontSize: CGFloat)`  
+   
+   Which are **Helvetica 12.0 pt., spc=3.33** and **Menlo-Regular 11.0 pt., spc=6.62**, respectively.
 
 
 

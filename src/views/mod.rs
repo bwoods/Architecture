@@ -2,21 +2,23 @@
 
 use lyon::math::{Box2D as Bounds, Point, Size};
 
-mod output;
-mod text;
-
-// #[doc(inline)]
-pub mod minimal;
 pub use output::{gpu, svg, Output};
+#[doc(inline)]
+pub use text::Text;
+
+mod output;
+pub mod text;
+
+pub mod minimal;
 
 /// User interface element and modifiers to re-configure it.
 pub trait View: Sized {
     /// The intrinsic size of the `View`
     fn size(&self) -> Size;
     /// User-interface [`Event`] handling of the `View`
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) -> bool;
+    fn event(&self, event: Event, offset: Point, bounds: Bounds);
     /// How the `View` is drawn
-    fn draw(&self, bounds: Bounds, onto: &mut impl FnMut(Layer) -> u32);
+    fn draw(&self, bounds: Bounds, onto: &mut impl FnMut(Layer));
 }
 
 #[allow(missing_docs)]

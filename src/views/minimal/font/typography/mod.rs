@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub(crate) fn size_xxs(i: f32) -> f32 {
     // fi = f₀ × r^(i/n)
     let r = 1.618034f32; // Φ
