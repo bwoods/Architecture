@@ -13,6 +13,9 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Added
 
+- The `views` feature is gated behind a new `unreleased` feature flag. Development on `View`s may now continue without causing SemVar issues.  
+  Unreleased features **are not** considered when determining versioning.
+
 ### Removed
 
 ### Changed
@@ -22,8 +25,7 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Fixed
 
-- The `views` feature has been gated behind an `unreleased` feature flag. Development on `View`s may now continue without causing SemVar issues.  
-    Unreleased features **are not** considered when determining versioning.
+- Shape plans are cached for text layout.
 
 
 

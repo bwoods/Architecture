@@ -7,6 +7,7 @@ pub use output::{gpu, svg, Output};
 pub use text::Text;
 
 mod output;
+/// Text handling for `View` construction.
 pub mod text;
 
 pub mod minimal;
@@ -48,7 +49,7 @@ pub enum Layer {
     Circle { x: f32, y: f32, r: f32 },
     
     /// Adds the beginning of a path.
-    Move { x: f32, y: f32 },
+    Move { x: f32, y: f32, rgba: [u8;4] },
     /// Adds a line to `x`, `y` from the last point.
     Line { x: f32, y: f32 },
     /// Adds a quadratic curve to `x`, `y` from the last point.

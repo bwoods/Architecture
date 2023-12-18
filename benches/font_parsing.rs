@@ -15,7 +15,6 @@ fn main() {
 fn font_face_parsing() -> f32 {
     with_default_font(|| {
         let inter: Dependency<Inter> = Default::default();
-        inter.with(400.0, 14.0, |_face, scale| black_box(scale))
+        black_box(inter.size())
     })
-    .unwrap()
 }
