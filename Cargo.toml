@@ -9,10 +9,15 @@ include = ["LICENSE-APACHE.md", "LICENSE-MIT.md"]
 
 
 [features]
+# Use a spinlock internally. This feature mainly exists to demonstrate that
+# the speed gains, if any, are inconsequential for a given application.
 spin = ["flume/spin"]
+# Supplies a “blocking” store that does not have its own internal thread.
 blocking = []
 
+# Features (in development) that are not yet part of SemVer.
 unreleased = []
+# Unreleased: View drawing and events.
 views = ["lyon","svg","rustybuzz"]
 
 

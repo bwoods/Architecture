@@ -33,6 +33,7 @@ pub enum Action {
     Resize { width: u32, height: u32 },
 
     Winit(Event<()>),
+
     Menu(menu::Action),
     Wgpu(wgpu::Action),
 }

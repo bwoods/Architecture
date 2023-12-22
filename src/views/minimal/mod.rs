@@ -1,6 +1,6 @@
 //! A minimal, _but viable_, user interface layer.
 
-mod font;
+pub mod font;
 pub use font::{with_default_font, Inter};
 
 /// `Accessibility` defines a predefined scale for scalable content.
@@ -24,4 +24,14 @@ pub enum Accessibility {
     XXL,
     /// Use extra extra extra large sizes.
     XXXL,
+}
+
+impl Default for Accessibility {
+    fn default() -> Self {
+        if cfg!(ios) || cfg!(android) {
+            Accessibility::L
+        } else {
+            Accessibility::XS
+        }
+    }
 }

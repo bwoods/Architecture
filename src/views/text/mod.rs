@@ -1,5 +1,5 @@
 use font::Glyphs;
-pub use font::{Direction, Font, Language, Script};
+pub use font::{Direction, Font, FontConfig, Language, Script};
 
 use crate::views::{Bounds, Event, Layer, Point, Size, View};
 

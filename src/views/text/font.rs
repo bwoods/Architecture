@@ -1,11 +1,11 @@
 use rustybuzz::ttf_parser::name_id::{FAMILY, FULL_NAME, SUBFAMILY, UNIQUE_ID, VERSION};
+use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder, Tag};
 use rustybuzz::{shape_with_plan, Face, ShapePlan, UnicodeBuffer};
-use rustybuzz::{ttf_parser::GlyphId, ttf_parser::OutlineBuilder};
-pub use rustybuzz::{Direction, GlyphBuffer as Glyphs, Language, Script};
+pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
 
 use crate::views::{Layer, Text};
 
-/// Font data
+///
 pub struct Font<'a> {
     face: Face<'a>,
     plan: ShapePlan,
@@ -13,86 +13,44 @@ pub struct Font<'a> {
 }
 
 impl<'a> Font<'a> {
-    ///
-    pub fn new(
-        data: &'a [u8],
-        direction: Option<Direction>,
-        script: Option<Script>,
-        language: Option<&Language>,
-        weight: f32,
-        size: f32,
-    ) -> Option<Self> {
-        Self::from_collection(data, direction, script, language, weight, size, 0)
-    }
-
-    ///
-    pub fn from_collection(
-        data: &'a [u8],
-        direction: Option<Direction>,
-        script: Option<Script>,
-        language: Option<&Language>,
-        weight: f32,
-        size: f32,
-        index: u32,
-    ) -> Option<Self> {
-        let mut face = Face::from_slice(data, index)?;
-
-        for axis in face.variation_axes().into_iter() {
-            match &axis.tag.to_bytes() {
-                b"opsz" => {
-                    let opsz = size.clamp(axis.min_value, axis.max_value);
-                    face.set_variation(axis.tag, opsz);
-                }
-                b"wght" => {
-                    let wght = weight.clamp(axis.min_value, axis.max_value);
-                    face.set_variation(axis.tag, wght);
-                }
-                _ => {}
-            }
-        }
-
-        let plan = ShapePlan::new(
-            &face,
-            direction.unwrap_or(Direction::LeftToRight),
-            script,
-            language,
-            &[], // TODO: support font features
-        );
-
-        Some(Self { face, plan, size })
-    }
-
     /// Full font name that reflects all family and relevant subfamily descriptors.
+    #[inline]
     pub fn full_name(&self) -> Option<String> {
         self.name(FULL_NAME)
     }
 
     /// Family name.
+    #[inline]
     pub fn family(&self) -> Option<String> {
         self.name(FAMILY)
     }
 
     /// Subfamily name.
+    #[inline]
     pub fn style(&self) -> Option<String> {
         self.name(SUBFAMILY)
     }
 
     /// Unique font identifier
+    #[inline]
     pub fn identifier(&self) -> Option<String> {
         self.name(UNIQUE_ID)
     }
 
     /// Should begin with the syntax “Version _N_._M_”
     /// (upper case, lower case, or mixed, with a space between “Version” and the number).
+    #[inline]
     pub fn version(&self) -> Option<String> {
         self.name(VERSION)
     }
 
     /// Font size in points.
+    #[inline]
     pub fn size(&self) -> f32 {
         self.size
     }
 
+    #[inline(never)]
     fn name(&self, id: u16) -> Option<String> {
         self.face
             .names()
@@ -102,6 +60,7 @@ impl<'a> Font<'a> {
     }
 
     /// Returns a `Text` in this font.
+    #[inline(never)]
     pub fn text(&self, rgba: [u8; 4], string: &str) -> Text {
         let mut unicode = UnicodeBuffer::new();
         unicode.push_str(string);
@@ -109,12 +68,14 @@ impl<'a> Font<'a> {
         let glyphs = shape_with_plan(&self.face, &self.plan, unicode);
         let scale = self.size / self.face.units_per_em() as f32;
 
+        // TODO: both of these assume Direction::LeftToRight or RightToLeft
         let width = glyphs
             .glyph_positions()
             .iter()
             .fold(0.0, |width, position| {
-                width + (position.x_offset + position.x_advance) as f32 * scale
-            });
+                width + (position.x_offset + position.x_advance) as f32
+            })
+            * scale;
 
         let height = self
             .face
@@ -137,13 +98,14 @@ impl<'a> Font<'a> {
     /// The `Text` should have been created with this `Font`.
     ///
     /// [`View`]: crate::views::View
+    #[inline(never)]
     pub fn layout(&self, text: &Text, x: f32, y: f32, onto: &mut impl FnMut(Layer)) {
         use lyon::math::Transform;
 
         struct Layout<'a, F: FnMut(Layer)> {
             transform: Transform,
-            face: &'a Face<'a>,
             glyphs: &'a Glyphs,
+            face: &'a Face<'a>,
             rgba: [u8; 4],
             onto: &'a mut F,
         }
@@ -194,18 +156,140 @@ impl<'a> Font<'a> {
             }
         }
 
-        let transform = Transform::scale(text.scale, -text.scale)
+        let transform = Transform::scale(text.scale, -text.scale) // negate y-axis
             .then_translate((0.0, text.height).into())
             .then_translate((x, y).into());
 
         let mut layout = Layout {
             transform,
-            face: &self.face,
             glyphs: &text.glyphs,
+            face: &self.face,
             rgba: text.rgba,
             onto,
         };
 
         layout.outline_glyphs();
+    }
+}
+
+impl<'a> Font<'a> {
+    /// Create a `Font` from the raw font data.
+    #[inline(always)]
+    pub fn from(data: &'a [u8]) -> Option<FontConfig> {
+        Self::from_collection(data, 0)
+    }
+
+    /// Create a `Font` from a font collection.
+    /// Returns the font at `index`, if any
+    #[inline(never)]
+    pub fn from_collection(data: &'a [u8], index: u32) -> Option<FontConfig> {
+        let face = Face::from_slice(data, index)?;
+
+        Some(FontConfig {
+            face,
+            features: Vec::default(),
+            direction: None,
+            script: None,
+            language: None,
+            weight: None,
+        })
+    }
+}
+
+///
+#[derive(Clone)]
+pub struct FontConfig<'a> {
+    face: Face<'a>,
+    features: Vec<Feature>,
+    direction: Option<Direction>,
+    script: Option<Script>,
+    language: Option<Language>,
+    weight: Option<f32>,
+}
+
+impl<'a> FontConfig<'a> {
+    ///
+    #[inline]
+    pub fn direction(self, direction: Direction) -> Self {
+        Self {
+            direction: Some(direction),
+            ..self
+        }
+    }
+
+    ///
+    #[inline]
+    pub fn script(self, script: Script) -> Self {
+        Self {
+            script: Some(script),
+            ..self
+        }
+    }
+
+    ///
+    #[inline]
+    pub fn language(self, language: Language) -> Self {
+        Self {
+            language: Some(language),
+            ..self
+        }
+    }
+
+    ///
+    #[inline]
+    pub fn feature(mut self, tag: &[u8; 4], value: u32) -> Self {
+        self.features
+            .push(Feature::new(Tag::from_bytes(tag), value, ..));
+
+        self
+    }
+
+    ///
+    #[inline]
+    pub fn weight(self, weight: f32) -> Self {
+        Self {
+            weight: Some(weight),
+            ..self
+        }
+    }
+
+    /// The final step in building a Font.
+    #[inline(never)]
+    pub fn size(mut self, size: f32) -> Font<'a> {
+        for axis in self.face.variation_axes().into_iter() {
+            match &axis.tag.to_bytes() {
+                b"opsz" => {
+                    let opsz = size.clamp(axis.min_value, axis.max_value);
+                    self.face.set_variation(axis.tag, opsz);
+                }
+                b"wght" => {
+                    let wght = self
+                        .weight
+                        .map(|w| w.clamp(axis.min_value, axis.max_value))
+                        .unwrap_or(axis.def_value);
+
+                    self.face.set_variation(axis.tag, wght);
+                }
+                _ => {}
+            }
+        }
+
+        let direction = self.direction.unwrap_or(Direction::LeftToRight);
+        // Using direction.unwrap_or_default() would give an Direction::Invalid
+        // and that will panic!() in ShapePlan::new()
+
+        let plan = ShapePlan::new(
+            &self.face,
+            direction,
+            self.script,
+            self.language.as_ref(),
+            &self.features,
+        );
+
+        Font {
+            face: self.face,
+            plan,
+            size,
+        }
     }
 }

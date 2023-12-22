@@ -267,7 +267,7 @@ impl<T: DependencyDefault> Deref for Dependency<T> {
     type Target = T;
 
     #[track_caller]
-    #[inline(always)]
+    #[inline(never)]
     fn deref(&self) -> &Self::Target {
         self.as_deref().unwrap_or_else(|| {
             if cfg!(test) {
