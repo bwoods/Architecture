@@ -11,10 +11,12 @@ fn main() {
     run_benchmarks();
 }
 
-#[benchmark]
-fn font_face_parsing() -> f32 {
+#[benchmark(min_time = 5)]
+fn font_face_parsing(bencher: divan::Bencher) {
     with_default_fonts(|| {
-        let font: Dependency<Inter<font::body::M>> = Default::default();
-        black_box(font.size())
-    })
+        bencher.bench_local(|| {
+            let font: Dependency<Inter<font::body::M>> = black_box(Default::default());
+            black_box(font.size())
+        });
+    });
 }
