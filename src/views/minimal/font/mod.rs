@@ -1,19 +1,19 @@
 //! Minimal `Font` handling.
 
-mod typography;
+use std::marker::PhantomData;
+use std::ops::Deref;
 
 pub use typography::body;
 
 use crate::dependencies::with_dependencies;
 use crate::views::text::Font;
 
-use std::marker::PhantomData;
-use std::ops::Deref;
+mod typography;
 
 /// The Inter font v4
 pub struct Inter<'a, Design> {
-    font: Font<'a>,
     marker: PhantomData<Design>,
+    font: Font<'a>,
 }
 
 impl<'a, T> Deref for Inter<'a, T> {
@@ -25,7 +25,7 @@ impl<'a, T> Deref for Inter<'a, T> {
 }
 
 /// Sets the default font for the supplied closure.
-pub fn with_default_font<F: FnOnce() -> R, R>(f: F) -> R {
+pub fn with_default_fonts<F: FnOnce() -> R, R>(f: F) -> R {
     with_dependencies(
         (
             Inter::<body::L>::default(),
@@ -40,7 +40,7 @@ pub fn with_default_font<F: FnOnce() -> R, R>(f: F) -> R {
 fn test_font_defaults() {
     use crate::dependencies::Dependency;
 
-    with_default_font(|| {
+    with_default_fonts(|| {
         let inter: Dependency<Inter<body::M>> = Default::default();
         assert!(inter.is_some());
     });

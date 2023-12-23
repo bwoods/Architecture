@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 
 use composable::dependencies::Dependency;
-use composable::views::minimal::{font, with_default_font, Inter};
+use composable::views::minimal::{font, with_default_fonts, Inter};
 
 use divan::{bench as benchmark, main as run_benchmarks};
 
@@ -13,7 +13,7 @@ fn main() {
 
 #[benchmark]
 fn font_face_parsing() -> f32 {
-    with_default_font(|| {
+    with_default_fonts(|| {
         let font: Dependency<Inter<font::body::M>> = Default::default();
         black_box(font.size())
     })

@@ -23,7 +23,7 @@ The scale in use here is a “golden tetratonic” scale, where $f_0 = 10$, $r =
 For each of the eight accessibility options there are eleven standard type sizes; numbered 0–10.
 
 
-|   n    | XXS  |  XS  |  S   |  M   |  L   |  XL  | XXL  | XXXL |
+|  $i$   | XXS  |  XS  |  S   |  M   |  L   |  XL  | XXL  | XXXL |
 | :----: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
 | **0**  |  10  |  11  |  11  |  12  |  12  |  14  |  16  |  18  |
 | **1**  |  11  |  12  |  13  |  14  |  15  |  17  |  19  |  21  |
@@ -42,7 +42,7 @@ For each of the eight accessibility options there are eleven standard type sizes
 The changes in font size differ; both across the accessibility adjustments and down the standard type sizes
 
 
-|   n    | XXS  |  XS  |  S   |  M   |  L   |  XL  | XXL  | XXXL |
+|  $i$   | XXS  |  XS  |  S   |  M   |  L   |  XL  | XXL  | XXXL |
 | :----: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
 | **0**  |  10  |  +1  |  +0  |  +1  |  +0  |  +2  |  +2  |  +2  |
 | **1**  |  11  |  +1  |  +1  |  +1  |  +1  |  +2  |  +2  |  +2  |
@@ -82,7 +82,7 @@ Assuming that `.AppleSystemUIFont` and `.SFNS-Regular` resolve to the same font:
 | .caption1     | regular | 10.0 | 2.93 | .labelFont                           |
 | .caption2     | medium  | 10.0 | 2.84 |                                      |
 
-##### Notes:
+#### Notes:
 
 1. The names of a few of the NSFont keys are misleading:
    - [labelFont(ofSize fontSize: CGFloat)](https://developer.apple.com/documentation/appkit/nsfont/1528213-labelfont)  
@@ -97,6 +97,8 @@ Assuming that `.AppleSystemUIFont` and `.SFNS-Regular` resolve to the same font:
    - `userFixedPitchFont(ofSize fontSize: CGFloat)`  
    
    Which are **Helvetica 12.0 pt., spc=3.33** and **Menlo-Regular 11.0 pt., spc=6.62**, respectively.
+
+4. The [macOS built-in text styles](https://developer.apple.com/design/human-interface-guidelines/typography#macOS-built-in-text-styles) lists bolder font weights than simple testing revealed.
 
 
 
@@ -232,3 +234,51 @@ This is the default iOS size for Dynamic Type.
 
 
 
+## Material Typography Comparison
+
+
+
+### Material 3
+
+| Material | style  | size |         forTextStyle: | NSFont                               |
+| :------- | :----: | :--: | --------------------: | :----------------------------------- |
+| Display  | large  |  57  | .extraExtraLargeTitle |                                      |
+|          | medium |  45  |      .extraLargeTitle |                                      |
+|          | small  |  36  |                       |                                      |
+| Headline | large  |  32  |           .largeTitle |                                      |
+|          | medium |  28  |               .title1 |                                      |
+|          | small  |  24  |               .title2 |                                      |
+| Title    | large  |  22  |               .title3 |                                      |
+|          | medium |  16  |             .headline | .titleBarFont                        |
+|          | small  |  14  |          .subheadline | .paletteFont, .toolTipsFont          |
+| Body     | large  |  16  |                 .body | .systemFont, .messageFont, .menuFont |
+|          | medium |  14  |              .callout | .controlContentFont                  |
+|          | small  |  12  |                       |                                      |
+| Label    | large  |  14  |             ,footnote |                                      |
+|          | medium |  12  |             .caption1 | .labelFont                           |
+|          | small  |  11  |             .caption2 |                                      |
+
+
+
+
+
+
+# Design Language
+
+
+
+| $i$  | XXS  | XS   | L    | XL   |
+| ---- | ---- | ---- | ---- | ---- |
+| 1    | 10   | 11   | 12   | 14   |
+| 2    | 11   | 12   | 15   | 17   |
+| 3    | 12   | 13   | 16   | 18   |
+| 4    | 13   | 14   | 17   | 19   |
+| 5    | 15   | 16   | 19   | 21   |
+| 6    | 16   | 17   | 20   | 22   |
+| 7    | 18   | 19   | 22   | 24   |
+| 8    | 20   | 22   | 28   | 30   |
+| 9    | 22   | 24   | 30   | 32   |
+| 10   | 24   | 26   | 32   | 34   |
+| 11   | 26   | 28   | 34   | 36   |
+
+[TOC]
