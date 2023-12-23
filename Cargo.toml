@@ -31,7 +31,6 @@ svg = { version = "0.14.0", optional = true, default-features = false }
 
 flume = { git = "https://github.com/zesterer/flume.git", rev = "fcf3849", features = ["async"], default-features = false }
 futures = { version = "0.3.29", features = ["executor"] }
-smallvec = { version = "2.0.0-alpha" }
 
 [dependencies.ttf-parser]
 version = "*" # whatever rustybuzz is using…

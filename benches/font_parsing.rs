@@ -11,7 +11,7 @@ fn main() {
     run_benchmarks();
 }
 
-#[benchmark(min_time = 5)]
+#[benchmark(min_time = 2)]
 fn font_face_parsing(bencher: divan::Bencher) {
     with_default_fonts(|| {
         bencher.bench_local(|| {
