@@ -29,7 +29,7 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 
 
-## 0.6.0 - 2024-01-xx
+## 0.6.0-pre - 2023-12-28
 
 ### Added
 
@@ -37,6 +37,6 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Changed
 
-- **Breaking:** All traits an structs have been redesigned around the `return_position_impl_trait_in_trait` feature; as it is (finally) nearing stablization.
+- **Breaking:** All traits and structs have been redesigned around the `return_position_impl_trait_in_trait` feature.
 - Document the archtecture through `doctest`s
 
