@@ -14,20 +14,42 @@ impl Output {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
             svg: Document::new().set("viewBox", (0, 0, width, height)),
-            data: None,
+            data: Some(Data::new()),
             rgba: [0; 4],
         }
     }
 
+    fn append_path_if_needed(&mut self) {
+        if let Some(data) = self.data.replace(Data::new()) {
+            if data.is_empty() {
+                return;
+            }
+
+            let fill = format!(
+                "#{:02x}{:02x}{:02x}{:02x}",
+                self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3]
+            );
+
+            self.svg
+                .append(Path::new().set("fill", fill).set("d", data));
+        }
+    }
+
     /// Consumes the `Output` and returns the constructed SVG string.
-    pub fn into_inner(self) -> String {
+    pub fn into_inner(mut self) -> String {
+        self.append_path_if_needed();
+
         self.svg.to_string()
     }
 }
 
 impl super::Output for Output {
-    fn move_to(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
-        self.data = Some(Data::new().move_to((x, y)));
+    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
+        if rgba != self.rgba {
+            self.append_path_if_needed();
+        }
+
+        self.data = self.data.take().map(|data| data.move_to((x, y)));
         self.rgba = rgba;
     }
 
@@ -49,15 +71,9 @@ impl super::Output for Output {
             .map(|data| data.cubic_curve_to((x1, y1, x2, y2, x, y)));
     }
 
-    fn close(&mut self) {
-        if let Some(data) = self.data.take() {
-            let fill = format!(
-                "#{:02x}{:02x}{:02x}{:02x}",
-                self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3]
-            );
-
-            self.svg
-                .append(Path::new().set("fill", fill).set("d", data.close()));
+    fn end(&mut self, close: bool) {
+        if close {
+            self.data = self.data.take().map(|data| data.close());
         }
     }
 }

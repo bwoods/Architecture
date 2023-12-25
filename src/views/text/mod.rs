@@ -4,6 +4,7 @@ pub use font::{Direction, Font, FontConfig, Language, Script};
 use crate::views::{Bounds, Event, Layer, Point, Size, View};
 
 mod font;
+mod layout;
 
 /// Text data
 #[doc(hidden)] // documented as views::Text

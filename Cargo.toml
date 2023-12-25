@@ -18,7 +18,7 @@ blocking = []
 # Features (in development) that are not yet part of SemVer.
 unreleased = []
 # Unreleased: View drawing and events.
-views = ["lyon","svg","rustybuzz"]
+views = ["lyon","svg","rustybuzz","ttf-parser"]
 
 
 [dependencies]
@@ -52,15 +52,16 @@ version = "0.52.0"
 
 
 [profile.release]
-debug = true
-lto = "thin"
-
-[profile.deployment]
-inherits = "release"
 codegen-units = 1
 incremental = false
 debug = false
 strip = true
+lto = "fat"
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = false
 lto = "fat"
 
 [profile.dev]
@@ -76,6 +77,7 @@ harness = false
 
 [[bench]]
 name = "font_parsing"
+required-features = ["views"]
 harness = false
 
 

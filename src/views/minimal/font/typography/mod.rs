@@ -13,7 +13,7 @@ const InterVariable: &[u8] = include_bytes!("../InterVariable.ttf");
 
 #[inline(never)]
 fn font<Design>(weight: f32, scale: f32) -> Inter<'static, Design> {
-    let accessibility: Dependency<Accessibility> = Default::default();
+    let accessibility = Dependency::<Accessibility>::new();
 
     Inter {
         marker: PhantomData,

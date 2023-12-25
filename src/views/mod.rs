@@ -42,14 +42,14 @@ pub enum Event {
 /// [`draw`]: View::draw
 pub enum Layer {
     /// Adds a rectangle path.
-    Rect { x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32 },
+    Rect { x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4] },
     /// Adds a ellipse path.
-    Ellipse { x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32 },
+    Ellipse { x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4] },
     /// Adds a circle path.
-    Circle { x: f32, y: f32, r: f32 },
+    Circle { x: f32, y: f32, r: f32, rgba: [u8; 4] },
     
     /// Adds the beginning of a path.
-    Move { x: f32, y: f32, rgba: [u8;4] },
+    Begin { x: f32, y: f32, rgba: [u8; 4] },
     /// Adds a line to `x`, `y` from the last point.
     Line { x: f32, y: f32 },
     /// Adds a quadratic curve to `x`, `y` from the last point.
@@ -57,5 +57,5 @@ pub enum Layer {
     /// Adds a cubic curve to `x`, `y` from the last point.
     Cubic { x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32 },
     /// Closes the current path.
-    Close,
+    End { close: bool },
 }

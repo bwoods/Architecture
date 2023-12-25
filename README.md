@@ -57,11 +57,12 @@ As for *this crate* specifically. Features include:
 
 - **Small**
 
-  The crate is under 2000 lines of code, with minimal dependancies.
+  The core functionality is under 2000 lines of code and has minimal dependancies.[^wc]
 
 - **Fast**
 
-  `Store::send` is less that 50 ns. `Effects` are 5–10× faster.
+  `Store::send` takes less than 50 nanoseconds.  
+  `Effects` are 5–10× faster.
 
 - **Reliable**
 
@@ -94,4 +95,8 @@ composable = "x.y"
     See [the module level documentation][views] for more.
 
   Note that changes to `unreleased`: code will **never** be considered a semver breaking change.
+
+
+
+[^wc]: As counted with `tokei -C src/**.rs --exclude src/views/`.
 

@@ -55,27 +55,32 @@ impl<'a> Output<'a> {
 }
 
 impl super::Output for Output<'_> {
-    fn move_to(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
+    #[inline]
+    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
         self.rgba.set(rgba);
         self.builder.begin((x, y).into());
     }
 
+    #[inline]
     fn line_to(&mut self, x: f32, y: f32) {
         self.builder.line_to((x, y).into());
     }
 
+    #[inline]
     fn quadratic_bezier_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
         self.builder
             .quadratic_bezier_to((x1, y1).into(), (x, y).into());
     }
 
+    #[inline]
     fn cubic_bezier_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
         self.builder
             .cubic_bezier_to((x1, y1).into(), (x2, y2).into(), (x, y).into());
     }
 
-    fn close(&mut self) {
-        self.builder.close();
+    #[inline]
+    fn end(&mut self, close: bool) {
+        self.builder.end(close);
     }
 }
 
@@ -98,6 +103,7 @@ impl Storage {
 
 #[doc(hidden)]
 impl FillGeometryBuilder for Storage {
+    #[inline]
     fn add_fill_vertex(&mut self, vertex: FillVertex) -> Result<VertexId, GeometryBuilderError> {
         let id = self.vertices.len() as u32;
         let (x, y) = vertex.position().into();
@@ -110,6 +116,7 @@ impl FillGeometryBuilder for Storage {
 
 #[doc(hidden)]
 impl GeometryBuilder for Storage {
+    #[inline]
     fn add_triangle(&mut self, a: VertexId, b: VertexId, c: VertexId) {
         let triangle: [u32; 3] = [a, b, c].map(|id| id.into());
         self.indices.extend_from_slice(&triangle);

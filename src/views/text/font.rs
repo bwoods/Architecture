@@ -1,5 +1,5 @@
 use rustybuzz::ttf_parser::name_id::{FAMILY, FULL_NAME, SUBFAMILY, UNIQUE_ID, VERSION};
-use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder, Tag};
+use rustybuzz::ttf_parser::{GlyphId, Tag};
 use rustybuzz::{shape_with_plan, Face, ShapePlan, UnicodeBuffer};
 pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
 
@@ -93,82 +93,28 @@ impl<'a> Font<'a> {
         }
     }
 
-    /// Used by [`View`]s to layout their [`Text`].
-    ///
-    /// The `Text` should have been created with this `Font`.
-    ///
-    /// [`View`]: crate::views::View
     #[inline(never)]
-    pub fn layout(&self, text: &Text, x: f32, y: f32, onto: &mut impl FnMut(Layer)) {
+    pub(crate) fn layout(&self, text: &Text, x: f32, y: f32, onto: &mut impl FnMut(Layer)) {
         use lyon::math::Transform;
 
-        struct Layout<'a, F: FnMut(Layer)> {
-            transform: Transform,
-            glyphs: &'a Glyphs,
-            face: &'a Face<'a>,
-            rgba: [u8; 4],
-            onto: &'a mut F,
-        }
-
-        impl<'a, F: FnMut(Layer)> Layout<'a, F> {
-            fn outline_glyphs(&mut self) {
-                let positions = self.glyphs.glyph_positions().iter();
-                let glyphs = self.glyphs.glyph_infos().iter();
-
-                for (glyph, position) in Iterator::zip(glyphs, positions) {
-                    self.transform = self
-                        .transform // “How much the glyph moves on the [X/Y]-axis before drawing it”
-                        .pre_translate((position.x_offset as f32, position.y_offset as f32).into());
-
-                    self.face
-                        .outline_glyph(GlyphId(glyph.glyph_id as u16), self);
-
-                    self.transform = self
-                        .transform // “How much the line advances after drawing this glyph”
-                        .pre_translate(
-                            (position.x_advance as f32, position.y_advance as f32).into(),
-                        );
-                }
-            }
-        }
-
-        impl<F: FnMut(Layer)> OutlineBuilder for Layout<'_, F> {
-            fn move_to(&mut self, x: f32, y: f32) {
-                #[rustfmt::skip]
-                (self.onto)(Layer::Move { x, y, rgba: self.rgba });
-            }
-
-            fn line_to(&mut self, x: f32, y: f32) {
-                (self.onto)(Layer::Line { x, y });
-            }
-
-            fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-                (self.onto)(Layer::Quadratic { x1, y1, x, y });
-            }
-
-            fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-                #[rustfmt::skip]
-                (self.onto)(Layer::Cubic { x1, y1, x2, y2, x, y });
-            }
-
-            fn close(&mut self) {
-                (self.onto)(Layer::Close);
-            }
-        }
-
-        let transform = Transform::scale(text.scale, -text.scale) // negate y-axis
+        let mut transform = Transform::scale(text.scale, -text.scale) // negate y-axis
             .then_translate((0.0, text.height).into())
             .then_translate((x, y).into());
 
-        let mut layout = Layout {
-            transform,
-            glyphs: &text.glyphs,
-            face: &self.face,
-            rgba: text.rgba,
-            onto,
-        };
+        let positions = text.glyphs.glyph_positions().iter();
+        let glyphs = text.glyphs.glyph_infos().iter();
 
-        layout.outline_glyphs();
+        for (glyph, position) in Iterator::zip(glyphs, positions) {
+            transform = transform // “How much the glyph moves on the [X/Y]-axis before drawing it”
+                .pre_translate((position.x_offset as f32, position.y_offset as f32).into());
+
+            let mut layout = super::layout::Layout::new(&transform, text.rgba, onto);
+            self.face
+                .outline_glyph(GlyphId(glyph.glyph_id as u16), &mut layout);
+
+            transform = transform // “How much the line advances after drawing this glyph”
+                .pre_translate((position.x_advance as f32, position.y_advance as f32).into());
+        }
     }
 }
 
@@ -274,14 +220,18 @@ impl<'a> FontConfig<'a> {
             }
         }
 
-        let direction = self.direction.unwrap_or(Direction::LeftToRight);
         // Using direction.unwrap_or_default() would give an Direction::Invalid
         // and that will panic!() in ShapePlan::new()
+        let direction = self.direction.unwrap_or(Direction::LeftToRight);
+
+        let script = self
+            .script
+            .or_else(|| Script::from_iso15924_tag(Tag::from_bytes(b"Latn")));
 
         let plan = ShapePlan::new(
             &self.face,
             direction,
-            self.script,
+            script,
             self.language.as_ref(),
             &self.features,
         );
