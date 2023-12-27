@@ -58,7 +58,6 @@ fn test_font_defaults() {
 #[test]
 fn snapshot_testing() {
     use crate::dependencies::Dependency;
-    use crate::views::output::Output;
     use crate::views::svg::Output as Svg;
     use crate::views::{Bounds, View};
     use insta::assert_snapshot;
@@ -71,7 +70,7 @@ fn snapshot_testing() {
         let body = Dependency::<Inter<body::M>>::new();
         let text = body.text(black, "This space intentionally left blank.");
 
-        text.draw(Bounds::from_size((w, h).into()), &mut output.as_fn_mut());
+        text.draw(Bounds::from_size((w, h).into()), &mut output);
         assert_snapshot!("body text", output.into_inner());
     });
 }

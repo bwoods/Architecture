@@ -19,7 +19,7 @@ pub trait View: Sized {
     /// User-interface [`Event`] handling of the `View`
     fn event(&self, event: Event, offset: Point, bounds: Bounds);
     /// How the `View` is drawn
-    fn draw(&self, bounds: Bounds, onto: &mut impl FnMut(Layer));
+    fn draw(&self, bounds: Bounds, onto: &mut impl Output);
 }
 
 #[allow(missing_docs)]
@@ -30,32 +30,4 @@ pub enum Event {
     // Gesture(Gesture),
     Redraw,
     Resize { width: u32, height: u32 },
-}
-
-#[rustfmt::skip]
-#[allow(missing_docs)]
-#[derive(Copy, Clone)]
-/// [`View`] drawing.
-/// 
-/// [`View`]s use these primitives within their [`draw`] method to render themselves.
-///
-/// [`draw`]: View::draw
-pub enum Layer {
-    /// Adds a rectangle path.
-    Rect { x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4] },
-    /// Adds a ellipse path.
-    Ellipse { x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4] },
-    /// Adds a circle path.
-    Circle { x: f32, y: f32, r: f32, rgba: [u8; 4] },
-    
-    /// Adds the beginning of a path.
-    Begin { x: f32, y: f32, rgba: [u8; 4] },
-    /// Adds a line to `x`, `y` from the last point.
-    Line { x: f32, y: f32 },
-    /// Adds a quadratic curve to `x`, `y` from the last point.
-    Quadratic { x1: f32, y1: f32, x: f32, y: f32 },
-    /// Adds a cubic curve to `x`, `y` from the last point.
-    Cubic { x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32 },
-    /// Closes the current path.
-    End { close: bool },
 }

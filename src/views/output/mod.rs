@@ -3,8 +3,6 @@
 //!
 //! [`View`]: super::View
 
-use crate::views::Layer;
-
 pub mod gpu;
 pub mod svg;
 
@@ -77,22 +75,7 @@ pub trait Output: Sized {
     /// Once this method has been called there is no current path until [`move_to`] is called again.
     ///
     /// [`move_to`]: Self::move_to
-    fn end(&mut self, close: bool);
-
-    /// …
-    fn as_fn_mut(&mut self) -> impl FnMut(Layer) {
-        |layer: Layer| match layer {
-            Layer::Rect { x, y, w, h, rgba } => self.rectangle(x, y, w, h, rgba),
-            Layer::Ellipse { x, y, w, h, rgba } => self.ellipse(x, y, w, h, rgba),
-            Layer::Circle { x, y, r, rgba } => self.circle(x, y, r, rgba),
-            Layer::Begin { x, y, rgba } => self.begin(x, y, rgba),
-            Layer::Line { x, y } => self.line_to(x, y),
-            Layer::Quadratic { x1, y1, x, y } => self.quadratic_bezier_to(x1, y1, x, y),
-            #[rustfmt::skip]
-                Layer::Cubic { x1, y1, x2, y2, x, y, } => self.cubic_bezier_to(x1, y1, x2, y2, x, y),
-            Layer::End { close } => self.end(close),
-        }
-    }
+    fn close(&mut self);
 }
 
 /// ## Notes
@@ -139,7 +122,7 @@ fn rounded(
     output.cubic_bezier_to(c4.0, c4.1, c5.0, c5.1, p5.0, p5.1);
     output.line_to(p6.0, p6.1);
     output.cubic_bezier_to(c6.0, c6.1, c7.0, c7.1, p7.0, p7.1);
-    output.end(true);
+    output.close();
 }
 
 #[test]

@@ -71,9 +71,7 @@ impl super::Output for Output {
             .map(|data| data.cubic_curve_to((x1, y1, x2, y2, x, y)));
     }
 
-    fn end(&mut self, close: bool) {
-        if close {
-            self.data = self.data.take().map(|data| data.close());
-        }
+    fn close(&mut self) {
+        self.data = self.data.take().map(|data| data.close());
     }
 }

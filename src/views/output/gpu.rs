@@ -79,8 +79,8 @@ impl super::Output for Output<'_> {
     }
 
     #[inline]
-    fn end(&mut self, close: bool) {
-        self.builder.end(close);
+    fn close(&mut self) {
+        self.builder.close();
     }
 }
 
