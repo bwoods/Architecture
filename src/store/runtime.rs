@@ -7,7 +7,8 @@ use flume::{unbounded, WeakSender};
 use futures::executor::LocalPool;
 use futures::task::LocalSpawnExt;
 
-use crate::dependencies::with_dependency;
+use dependencies::with_dependency;
+
 use crate::effects::Executor;
 use crate::reducer::Reducer;
 use crate::store::Store;

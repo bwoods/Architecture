@@ -3,8 +3,8 @@ use std::cell::OnceCell;
 use std::ops::Deref;
 use std::rc::Rc;
 
-use crate::dependencies::guard::Guard;
-use crate::dependencies::refs::Ref;
+use crate::guard::Guard;
+use crate::refs::Ref;
 
 /// A wrapper type for accessing dependencies
 pub struct Dependency<T: 'static> {

@@ -146,6 +146,7 @@
 //! `struct` members that should not ne made part of the `Reducer` recursion.
 //!
 //! ```ignore
+//! #[derive(RecursiveReducer)]
 //! struct State {
 //!     a: A::State,
 //!     b: B::State,

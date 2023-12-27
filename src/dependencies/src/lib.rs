@@ -1,10 +1,8 @@
-#![doc = include_str!("README.md")]
+#![doc = include_str!("../README.md")]
 
-pub use reducers::ReducerDependencies;
 pub use values::{Dependency, DependencyDefault};
 
 mod guard;
-mod reducers;
 mod refs;
 mod values;
 

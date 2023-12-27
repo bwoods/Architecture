@@ -1,5 +1,3 @@
-//!
-
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 
 pub use output::{gpu, svg, Output};
@@ -10,7 +8,8 @@ mod output;
 /// Text handling for `View` construction.
 pub mod text;
 
-pub mod minimal;
+#[cfg(feature = "default_ui")]
+pub mod ui;
 
 /// User interface element and modifiers to re-configure it.
 pub trait View: Sized {
@@ -22,9 +21,9 @@ pub trait View: Sized {
     fn draw(&self, bounds: Bounds, onto: &mut impl Output);
 }
 
+/// [`View`] events.
 #[allow(missing_docs)]
 #[derive(Copy, Clone)]
-/// [`View`] events.
 pub enum Event {
     // #[from]
     // Gesture(Gesture),

@@ -3,7 +3,7 @@ use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder, Tag};
 use rustybuzz::{shape_with_plan, Face, ShapePlan, UnicodeBuffer};
 pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
 
-use crate::views::Text;
+use crate::Text;
 
 ///
 pub struct Font<'a> {

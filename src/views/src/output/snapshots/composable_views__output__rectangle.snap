@@ -1,5 +1,5 @@
 ---
-source: src/views/output/mod.rs
+source: src/views/src/output/mod.rs
 expression: output.into_inner()
 ---
 <svg viewBox="0 0 256 128" xmlns="http://www.w3.org/2000/svg">

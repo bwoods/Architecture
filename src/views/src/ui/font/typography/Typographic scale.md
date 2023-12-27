@@ -261,11 +261,7 @@ This is the default iOS size for Dynamic Type.
 
 
 
-
-
 # Design Language
-
-
 
 | $i$  | XXS  | XS   | L    | XL   |
 | ---- | ---- | ---- | ---- | ---- |
@@ -280,5 +276,7 @@ This is the default iOS size for Dynamic Type.
 | 9    | 22   | 24   | 30   | 32   |
 | 10   | 24   | 26   | 32   | 34   |
 | 11   | 26   | 28   | 34   | 36   |
+
+
 
 [TOC]

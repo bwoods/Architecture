@@ -1,5 +1,5 @@
 ---
-source: src/views/minimal/font/mod.rs
+source: src/views/src/ui/font/mod.rs
 expression: output.into_inner()
 ---
 <svg viewBox="0 0 212 16" xmlns="http://www.w3.org/2000/svg">

@@ -1,4 +1,4 @@
-use crate::views::minimal::Accessibility;
+use crate::ui::Accessibility;
 
 fn size_xxxl(i: f32) -> f32 {
     size_xxl(i) + 2.0

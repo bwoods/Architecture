@@ -8,7 +8,7 @@ use lyon::tessellation::{
     GeometryBuilderError, VertexId,
 };
 
-use crate::views::Transform;
+use crate::Transform;
 
 ///
 pub struct Output<'a> {
@@ -38,7 +38,7 @@ impl<'a> Output<'a> {
     /// construction.
     ///
     /// ```
-    /// # use composable::views::gpu::Output;
+    /// # use composable_views::gpu::Output;
     /// let (mut options, mut tessellator, mut storage) = Output::defaults();
     /// let output = Output::new(&options, &mut tessellator, &mut storage);
     ///

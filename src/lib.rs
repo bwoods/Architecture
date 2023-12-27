@@ -12,7 +12,10 @@ pub use reducer::Reducer;
 pub use store::{testing::TestStore, Store};
 
 #[cfg(all(feature = "views", feature = "unreleased"))]
-pub mod views;
+/// Optional view feature.
+pub mod views {
+    pub use composable_views::*;
+}
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other
 /// `Action`s.
@@ -29,7 +32,6 @@ pub trait Effects<Action>: effects::Effects<Action = Action> {}
 /// [original trait]: crate::effects::Effects
 impl<T, Action> Effects<Action> for T where T: effects::Effects<Action = Action> {}
 
-pub mod dependencies;
 pub mod derive_macros;
 pub mod effects;
 mod reducer;

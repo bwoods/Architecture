@@ -3,11 +3,11 @@
 use std::marker::PhantomData;
 use std::ops::Deref;
 
+use dependencies::{with_dependencies, with_dependency};
 pub use typography::{body, label, title};
 
-use crate::dependencies::{with_dependencies, with_dependency};
-use crate::views::minimal::Accessibility;
-use crate::views::text::Font;
+use crate::text::Font;
+use crate::ui::Accessibility;
 
 mod typography;
 
@@ -47,7 +47,7 @@ pub fn with_default_fonts<F: FnOnce() -> R, R>(f: F) -> R {
 
 #[test]
 fn test_font_defaults() {
-    use crate::dependencies::Dependency;
+    use dependencies::Dependency;
 
     with_default_fonts(|| {
         let body = Dependency::<Inter<body::M>>::new();
@@ -57,9 +57,9 @@ fn test_font_defaults() {
 
 #[test]
 fn snapshot_testing() {
-    use crate::dependencies::Dependency;
-    use crate::views::svg::Output as Svg;
-    use crate::views::{Bounds, View};
+    use crate::svg::Output as Svg;
+    use crate::{Bounds, View};
+    use dependencies::Dependency;
     use insta::assert_snapshot;
 
     with_default_fonts(|| {

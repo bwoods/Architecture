@@ -3,13 +3,10 @@ name = "derive_reducers"
 version = "0.0.0"
 edition = "2021"
 
-[features]
-ouroboros = []
-
 [lib]
 proc-macro = true
 
 [dependencies]
 syn = "2.0"
 quote = "1.0"
-proc-macro2 = "1.0.56"
+proc-macro2 = "1.0"

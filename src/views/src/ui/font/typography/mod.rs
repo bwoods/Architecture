@@ -2,9 +2,10 @@
 
 use std::marker::PhantomData;
 
-use crate::dependencies::{Dependency, DependencyDefault};
-use crate::views::minimal::{Accessibility, Inter};
-use crate::views::text::Font;
+use dependencies::{Dependency, DependencyDefault};
+
+use crate::text::Font;
+use crate::ui::{Accessibility, Inter};
 
 mod scale;
 

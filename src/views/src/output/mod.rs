@@ -3,7 +3,7 @@
 //!
 //! [`View`]: super::View
 
-use crate::views::Transform;
+use crate::Transform;
 
 pub mod gpu;
 pub mod svg;
@@ -52,7 +52,7 @@ pub trait Output: Sized {
         rounded(self, x, y, d, d, r, r, (1.0 - KAPPA) as f32, rgba, transform);
     }
 
-    /// Begins a new path (with the color: `rgba`).
+    /// Begins a new path.
     ///
     /// The path should be continued with a series of [`line_to`], [`quadratic_bezier_to`], and/or
     /// [`cubic_bezier_to`] calls and ended with a call to [`close`].

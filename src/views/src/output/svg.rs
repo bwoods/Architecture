@@ -3,7 +3,7 @@
 use svg::node::element::path::{Command, Position};
 use svg::{node::element::path::Data, node::element::Path, Document, Node};
 
-use crate::views::Transform;
+use crate::Transform;
 
 ///
 pub struct Output {
@@ -24,7 +24,7 @@ impl Output {
         }
     }
 
-    fn end_current_path(&mut self) {
+    fn end_current_node(&mut self) {
         let data = std::mem::take(&mut self.data);
 
         let fill = format!(
@@ -48,7 +48,7 @@ impl Output {
 
     /// Consumes the `Output` and returns the constructed SVG string.
     pub fn into_inner(mut self) -> String {
-        self.end_current_path();
+        self.end_current_node();
         self.svg.to_string()
     }
 }
@@ -56,7 +56,7 @@ impl Output {
 impl super::Output for Output {
     fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
         if !self.data.is_empty() && (rgba != self.rgba || !transform.approx_eq(&self.transform)) {
-            self.end_current_path();
+            self.end_current_node();
         }
 
         self.rgba = rgba;
