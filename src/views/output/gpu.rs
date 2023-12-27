@@ -2,15 +2,17 @@
 use std::cell::Cell;
 use std::rc::Rc;
 
-use lyon::path::builder::NoAttributes;
+use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::tessellation::{
     FillBuilder, FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
     GeometryBuilderError, VertexId,
 };
 
+use crate::views::Transform;
+
 ///
 pub struct Output<'a> {
-    builder: NoAttributes<FillBuilder<'a>>,
+    builder: NoAttributes<Transformed<FillBuilder<'a>, Transform>>,
     rgba: Rc<Cell<[u8; 4]>>,
 }
 
@@ -21,11 +23,12 @@ impl<'a> Output<'a> {
         tessellator: &'a mut FillTessellator,
         storage: &'a mut Storage,
     ) -> Self {
+        let transform = Transform::default();
         let rgba = Rc::new(Cell::default());
         storage.rgba = Rc::clone(&rgba);
 
         Self {
-            builder: tessellator.builder(options, storage),
+            builder: tessellator.builder(options, storage).transformed(transform),
             rgba,
         }
     }
@@ -56,8 +59,9 @@ impl<'a> Output<'a> {
 
 impl super::Output for Output<'_> {
     #[inline]
-    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
+    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
         self.rgba.set(rgba);
+        self.builder.inner_mut().set_transform(*transform);
         self.builder.begin((x, y).into());
     }
 

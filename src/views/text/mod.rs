@@ -1,5 +1,6 @@
 pub use font::{Direction, Font, FontConfig, Glyphs, Language, Script};
 
+use crate::dependencies::Dependency;
 use crate::views::{Bounds, Event, Output, Point, Size, Transform, View};
 
 mod font;
@@ -61,25 +62,18 @@ impl View for Text<'_> {
 
         impl<'a, F: Output> ttf_parser::OutlineBuilder for Builder<'a, F> {
             fn move_to(&mut self, x: f32, y: f32) {
-                let (x, y) = self.transform.transform_point((x, y).into()).into();
-                self.output.begin(x, y, self.rgba);
+                self.output.begin(x, y, self.rgba, &self.transform);
             }
 
             fn line_to(&mut self, x: f32, y: f32) {
-                let (x, y) = self.transform.transform_point((x, y).into()).into();
                 self.output.line_to(x, y);
             }
 
             fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32) {
-                let (x1, y1) = self.transform.transform_point((x1, y1).into()).into();
-                let (x, y) = self.transform.transform_point((x, y).into()).into();
                 self.output.quadratic_bezier_to(x1, y1, x, y);
             }
 
             fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32) {
-                let (x1, y1) = self.transform.transform_point((x1, y1).into()).into();
-                let (x2, y2) = self.transform.transform_point((x2, y2).into()).into();
-                let (x, y) = self.transform.transform_point((x, y).into()).into();
                 self.output.cubic_bezier_to(x1, y1, x2, y2, x, y);
             }
 
@@ -88,10 +82,12 @@ impl View for Text<'_> {
             }
         }
 
+        let transform = Dependency::<Transform>::new();
         let mut builder = Builder {
             transform: Transform::scale(self.scale, -self.scale) // negate y-axis
                 .then_translate((0.0, self.ascender()).into()) // font baseline
-                .then_translate(bounds.min.to_vector()), // start position,
+                .then_translate(bounds.min.to_vector()) // start position,
+                .then(&transform.unwrap_or_default()),
             rgba: self.rgba,
             output,
         };

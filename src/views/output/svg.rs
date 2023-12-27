@@ -3,9 +3,12 @@
 use svg::node::element::path::{Command, Position};
 use svg::{node::element::path::Data, node::element::Path, Document, Node};
 
+use crate::views::Transform;
+
 ///
 pub struct Output {
     svg: Document,
+    transform: Transform,
     data: Data,
     rgba: [u8; 4],
 }
@@ -15,12 +18,13 @@ impl Output {
     pub fn new(width: f32, height: f32) -> Self {
         Self {
             svg: Document::new().set("viewBox", (0, 0, width, height)),
-            data: Data::new(),
+            transform: Default::default(),
+            data: Default::default(),
             rgba: [0; 4],
         }
     }
 
-    fn append_path_if_needed(&mut self) {
+    fn end_current_path(&mut self) {
         let data = std::mem::take(&mut self.data);
 
         let fill = format!(
@@ -28,24 +32,36 @@ impl Output {
             self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3]
         );
 
-        self.svg
-            .append(Path::new().set("fill", fill).set("d", data));
+        let array = self.transform.to_array();
+        let transform = format!(
+            "matrix({} {} {} {} {} {})",
+            array[0], array[1], array[2], array[3], array[4], array[5]
+        );
+
+        self.svg.append(
+            Path::new()
+                .set("transform", transform)
+                .set("fill", fill)
+                .set("d", data),
+        );
     }
 
     /// Consumes the `Output` and returns the constructed SVG string.
     pub fn into_inner(mut self) -> String {
-        self.append_path_if_needed();
+        self.end_current_path();
         self.svg.to_string()
     }
 }
 
 impl super::Output for Output {
-    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4]) {
-        if rgba != self.rgba && !self.data.is_empty() {
-            self.append_path_if_needed();
+    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
+        if !self.data.is_empty() && (rgba != self.rgba || !transform.approx_eq(&self.transform)) {
+            self.end_current_path();
         }
 
         self.rgba = rgba;
+        self.transform = *transform;
+
         self.data
             .append(Command::Move(Position::Absolute, (x, y).into()));
     }

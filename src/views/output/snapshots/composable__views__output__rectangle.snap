@@ -3,5 +3,5 @@ source: src/views/output/mod.rs
 expression: output.into_inner()
 ---
 <svg viewBox="0 0 256 128" xmlns="http://www.w3.org/2000/svg">
-<path d="M16,16 C16,16,16,16,16,16 L240,16 C240,16,240,16,240,16 L240,128 C240,128,240,128,240,128 L16,128 C16,128,16,128,16,128 z" fill="#000000ff"/>
+<path d="M16,16 C16,16,16,16,16,16 L240,16 C240,16,240,16,240,16 L240,128 C240,128,240,128,240,128 L16,128 C16,128,16,128,16,128 z" fill="#000000ff" transform="matrix(1 0 0 1 0 0)"/>
 </svg>

@@ -56,7 +56,7 @@ fn size_xxs(i: f32) -> f32 {
 }
 
 impl Accessibility {
-    /// `Font` scale per `Accessibility` level`
+    /// `Font` scale per `Accessibility` level
     #[inline(never)]
     pub fn scale(&self, i: f32) -> f32 {
         match self {

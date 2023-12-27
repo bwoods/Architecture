@@ -63,14 +63,14 @@ fn snapshot_testing() {
     use insta::assert_snapshot;
 
     with_default_fonts(|| {
-        let (w, h) = (256.0, 22.0);
         let black = [0, 0, 0, 0xff];
-
-        let mut output = Svg::new(w, h);
         let body = Dependency::<Inter<body::M>>::new();
-        let text = body.text(black, "This space intentionally left blank.");
 
-        text.draw(Bounds::from_size((w, h).into()), &mut output);
+        let text = body.text(black, "This space intentionally left blank.");
+        let size = text.size().ceil();
+
+        let mut output = Svg::new(size.width, size.height);
+        text.draw(Bounds::from_size(size), &mut output);
         assert_snapshot!("body text", output.into_inner());
     });
 }

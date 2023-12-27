@@ -3,6 +3,8 @@
 //!
 //! [`View`]: super::View
 
+use crate::views::Transform;
+
 pub mod gpu;
 pub mod svg;
 
@@ -18,35 +20,36 @@ pub mod svg;
 const KAPPA: f64 = 0.5519703814011129; // rounded to f64
 
 /// A surface, or file format, that views may be rendered to.
+#[rustfmt::skip]
 pub trait Output: Sized {
     /// A default implementation of rectangle drawing.
-    fn rectangle(&mut self, x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4]) {
-        rounded(self, x, y, w, h, 0.0, 0.0, 0.0, rgba);
+    fn rectangle(&mut self, x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4], transform: &Transform) {
+        rounded(self, x, y, w, h, 0.0, 0.0, 0.0, rgba, transform);
     }
     /// A default implementation of rounded rectangle drawing (with circular arcs).
-    fn rounded(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32, rgba: [u8; 4]) {
+    fn rounded(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32, rgba: [u8; 4], transform: &Transform) {
         let rx = rx.min(w / 2.0);
         let ry = ry.min(h / 2.0);
-        rounded(self, x, y, w, h, rx, ry, (1.0 - KAPPA) as f32, rgba);
+        rounded(self, x, y, w, h, rx, ry, (1.0 - KAPPA) as f32, rgba, transform);
     }
     /// A default implementation of rounded rectangle drawing (with continuous arcs).
-    fn continuous(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32, rgba: [u8; 4]) {
+    fn continuous(&mut self, x: f32, y: f32, w: f32, h: f32, rx: f32, ry: f32, rgba: [u8; 4], transform: &Transform) {
         // continuous corners are much smaller than circular ones; scale them up a bit
         let c = std::f32::consts::E;
         let rx = (rx * c).min(w / 2.0);
         let ry = (ry * c).min(h / 2.0);
-        rounded(self, x, y, w, h, rx, ry, 0.0, rgba);
+        rounded(self, x, y, w, h, rx, ry, 0.0, rgba, transform);
     }
     /// A default implementation of ellipse drawing.
-    fn ellipse(&mut self, x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4]) {
+    fn ellipse(&mut self, x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4], transform: &Transform) {
         let rx = w / 2.0;
         let ry = h / 2.0;
-        rounded(self, x, y, w, h, rx, ry, (1.0 - KAPPA) as f32, rgba);
+        rounded(self, x, y, w, h, rx, ry, (1.0 - KAPPA) as f32, rgba, transform);
     }
     /// A default implementation of circle drawing.
-    fn circle(&mut self, x: f32, y: f32, d: f32, rgba: [u8; 4]) {
+    fn circle(&mut self, x: f32, y: f32, d: f32, rgba: [u8; 4], transform: &Transform) {
         let r = d / 2.0;
-        rounded(self, x, y, d, d, r, r, (1.0 - KAPPA) as f32, rgba);
+        rounded(self, x, y, d, d, r, r, (1.0 - KAPPA) as f32, rgba, transform);
     }
 
     /// Begins a new path (with the color: `rgba`).
@@ -58,7 +61,7 @@ pub trait Output: Sized {
     /// [`quadratic_bezier_to`]: Self::quadratic_bezier_to
     /// [`cubic_bezier_to`]: Self::cubic_bezier_to
     /// [`close`]: Self::close
-    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4]);
+    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform);
     /// Adds a line to the current path.
     fn line_to(&mut self, x: f32, y: f32);
     /// Adds a quadratic Bézier to the current path.
@@ -72,9 +75,9 @@ pub trait Output: Sized {
 
     /// Closes the current path.
     ///
-    /// Once this method has been called there is no current path until [`move_to`] is called again.
+    /// Once this method has been called there is no current path until [`begin`] is called again.
     ///
-    /// [`move_to`]: Self::move_to
+    /// [`begin`]: Self::begin
     fn close(&mut self);
 }
 
@@ -93,6 +96,7 @@ fn rounded(
     ry: f32,
     k: f32,
     rgba: [u8; 4],
+    transform: &Transform,
 ) {
     let p0 = (x, y + ry);
     let c0 = (x, y + ry * k);
@@ -114,7 +118,7 @@ fn rounded(
     let c7 = (x, y + h - ry * k);
     let p7 = (x, y + h - ry);
 
-    output.begin(p0.0, p0.1, rgba);
+    output.begin(p0.0, p0.1, rgba, transform);
     output.cubic_bezier_to(c0.0, c0.1, c1.0, c1.1, p1.0, p1.1);
     output.line_to(p2.0, p2.1);
     output.cubic_bezier_to(c2.0, c2.1, c3.0, c3.1, p3.0, p3.1);
@@ -130,24 +134,25 @@ fn snapshot_testing() {
     use insta::assert_snapshot;
 
     let black = [0, 0, 0, 0xff];
+    let transform = Default::default();
 
     let mut output = svg::Output::new(256.0, 256.0);
-    output.circle(16.0, 16.0, 224.0, black);
+    output.circle(16.0, 16.0, 224.0, black, &transform);
     assert_snapshot!("circle", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
-    output.ellipse(16.0, 16.0, 224.0, 112.0, black);
+    output.ellipse(16.0, 16.0, 224.0, 112.0, black, &transform);
     assert_snapshot!("ellipse", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
-    output.rectangle(16.0, 16.0, 224.0, 112.0, black);
+    output.rectangle(16.0, 16.0, 224.0, 112.0, black, &transform);
     assert_snapshot!("rectangle", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
-    output.rounded(16.0, 16.0, 224.0, 112.0, 16.0, 16.0, black);
+    output.rounded(16.0, 16.0, 224.0, 112.0, 16.0, 16.0, black, &transform);
     assert_snapshot!("rounded", output.into_inner());
 
     let mut output = svg::Output::new(256.0, 128.0);
-    output.continuous(16.0, 16.0, 224.0, 112.0, 16.0, 16.0, black);
+    output.continuous(16.0, 16.0, 224.0, 112.0, 16.0, 16.0, black, &transform);
     assert_snapshot!("continuous", output.into_inner());
 }
