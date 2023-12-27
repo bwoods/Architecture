@@ -1,6 +1,6 @@
 //!
 
-use lyon::math::{Box2D as Bounds, Point, Size};
+pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 
 pub use output::{gpu, svg, Output};
 #[doc(inline)]

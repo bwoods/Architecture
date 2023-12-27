@@ -1,9 +1,9 @@
 use rustybuzz::ttf_parser::name_id::{FAMILY, FULL_NAME, SUBFAMILY, UNIQUE_ID, VERSION};
-use rustybuzz::ttf_parser::{GlyphId, Tag};
+use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder, Tag};
 use rustybuzz::{shape_with_plan, Face, ShapePlan, UnicodeBuffer};
 pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
 
-use crate::views::{Layer, Text};
+use crate::views::Text;
 
 ///
 pub struct Font<'a> {
@@ -93,28 +93,9 @@ impl<'a> Font<'a> {
         }
     }
 
-    #[inline(never)]
-    pub(crate) fn layout(&self, text: &Text, x: f32, y: f32, onto: &mut impl FnMut(Layer)) {
-        use lyon::math::Transform;
-
-        let mut transform = Transform::scale(text.scale, -text.scale) // negate y-axis
-            .then_translate((0.0, text.height).into())
-            .then_translate((x, y).into());
-
-        let positions = text.glyphs.glyph_positions().iter();
-        let glyphs = text.glyphs.glyph_infos().iter();
-
-        for (glyph, position) in Iterator::zip(glyphs, positions) {
-            transform = transform // “How much the glyph moves on the [X/Y]-axis before drawing it”
-                .pre_translate((position.x_offset as f32, position.y_offset as f32).into());
-
-            let mut layout = super::layout::Layout::new(&transform, text.rgba, onto);
-            self.face
-                .outline_glyph(GlyphId(glyph.glyph_id as u16), &mut layout);
-
-            transform = transform // “How much the line advances after drawing this glyph”
-                .pre_translate((position.x_advance as f32, position.y_advance as f32).into());
-        }
+    #[inline(always)]
+    pub(crate) fn outline_glyph(&self, glyph: u32, builder: &mut impl OutlineBuilder) {
+        self.face.outline_glyph(GlyphId(glyph as u16), builder);
     }
 }
 
