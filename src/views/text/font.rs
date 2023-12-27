@@ -44,12 +44,6 @@ impl<'a> Font<'a> {
         self.name(VERSION)
     }
 
-    /// Font size in points.
-    #[inline]
-    pub fn size(&self) -> f32 {
-        self.size
-    }
-
     #[inline(never)]
     fn name(&self, id: u16) -> Option<String> {
         self.face
@@ -57,6 +51,42 @@ impl<'a> Font<'a> {
             .into_iter()
             .find(|name| name.name_id == id)
             .and_then(|name| name.to_string())
+    }
+
+    /// Font size in points.
+    #[inline]
+    pub fn size(&self) -> f32 {
+        self.size
+    }
+
+    /// Horizontal face ascender.
+    pub fn ascender(&self) -> f32 {
+        self.face.ascender() as f32
+    }
+
+    /// Horizontal face descender,
+    pub fn descender(&self) -> f32 {
+        self.face.descender() as f32
+    }
+
+    /// Horizontal height,
+    #[inline]
+    pub fn height(&self) -> f32 {
+        self.face.height() as f32
+    }
+
+    /// Capital height,
+    #[inline]
+    pub fn capital_height(&self) -> f32 {
+        self.face
+            .capital_height()
+            .unwrap_or_else(|| self.face.ascender()) as f32
+    }
+
+    /// Line gap,
+    #[inline]
+    pub fn line_gap(&self) -> f32 {
+        self.face.line_gap() as f32
     }
 
     /// Returns a `Text` in this font.
@@ -77,16 +107,9 @@ impl<'a> Font<'a> {
             })
             * scale;
 
-        let height = self
-            .face
-            .capital_height()
-            .unwrap_or_else(|| self.face.ascender()) as f32
-            * scale;
-
         Text {
             font: self,
             glyphs,
-            height,
             width,
             scale,
             rgba,

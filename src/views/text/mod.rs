@@ -9,15 +9,45 @@ mod font;
 pub struct Text<'a> {
     font: &'a Font<'a>,
     glyphs: Glyphs,
-    height: f32,
     width: f32,
     scale: f32,
     rgba: [u8; 4],
 }
 
+impl Text<'_> {
+    /// Height of the Text’s font.
+    #[inline]
+    pub fn height(&self) -> f32 {
+        self.font.height() * self.scale
+    }
+
+    /// Ascender height of the Text’s font.
+    pub fn ascender(&self) -> f32 {
+        self.font.ascender() * self.scale
+    }
+
+    /// Descender height of the Text’s font.  
+    /// Note that this is a negative value.
+    pub fn descender(&self) -> f32 {
+        self.font.descender() * self.scale
+    }
+
+    /// Capital height of the Text’s font.
+    #[inline]
+    pub fn capital_height(&self) -> f32 {
+        self.font.capital_height() * self.scale
+    }
+
+    /// Line gap of the Text’s font.
+    #[inline]
+    pub fn line_gap(&self) -> f32 {
+        self.font.line_gap() * self.scale
+    }
+}
+
 impl View for Text<'_> {
     fn size(&self) -> Size {
-        (self.width, self.height).into()
+        (self.width, self.height()).into()
     }
 
     fn event(&self, _event: Event, _offset: Point, _bounds: Bounds) {}
@@ -60,7 +90,7 @@ impl View for Text<'_> {
 
         let mut builder = Builder {
             transform: Transform::scale(self.scale, -self.scale) // negate y-axis
-                .then_translate((0.0, self.height).into()) // font baseline
+                .then_translate((0.0, self.ascender()).into()) // font baseline
                 .then_translate(bounds.min.to_vector()), // start position,
             rgba: self.rgba,
             output,
