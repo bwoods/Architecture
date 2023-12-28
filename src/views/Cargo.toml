@@ -19,7 +19,7 @@ svg = { version = "0.14.0", default-features = false }
 
 [dependencies.ttf-parser]
 version = "*" # whatever rustybuzz is using…
-features = ["std"] # enabled its `String` support
+features = ["std"] # enable its `String` support
 
 
 [dev-dependencies]

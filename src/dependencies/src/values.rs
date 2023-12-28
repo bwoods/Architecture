@@ -135,9 +135,10 @@ impl<T> Dependency<T> {
     where
         F: FnOnce(&T),
     {
-        self.as_deref()
-            .inspect(|inner| f(*inner))
-            .and(self.as_deref())
+        self.as_deref().map(|inner| {
+            f(inner);
+            inner
+        })
     }
 
     #[inline(always)]
