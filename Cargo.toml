@@ -43,6 +43,10 @@ muda = "0.11.2"
 [target.'cfg(target_os = "windows")'.dependencies.windows-sys]
 version = "0.52.0"
 
+[package.metadata.docs.rs] # when docs.rs builds the documentation…
+rustdoc-args = ["--cfg", "docsrs"] # show faeture flags
+all-features = true
+
 
 [profile.release]
 codegen-units = 1
