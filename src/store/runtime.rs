@@ -26,24 +26,23 @@ impl<State: Reducer> Store<State> {
         let handle = Builder::new()
             .name(std::any::type_name::<State>().into())
             .spawn(move || {
-                let mut task_pool = LocalPool::new();
-                let spawner = task_pool.spawner();
+                let mut single_threaded = LocalPool::new();
+                let spawner = single_threaded.spawner();
 
                 let mut state = with();
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
                 with_dependency(Executor::new(spawner.clone(), actions), || {
-                    task_pool.run_until(async {
+                    single_threaded.run_until(async {
                         while let Ok(result) = receiver.recv_async().await {
                             match result {
                                 Ok(action) => {
                                     state.reduce(action, Rc::downgrade(&effects));
 
-                                    // wrapping the `borrow_mut` in a closure to ensure the borrow
-                                    // is dropped before the `await` that follows
+                                    // wrapping the `borrow_mut` in a closure to ensure that the
+                                    // borrow is dropped immediately
                                     let next = || effects.borrow_mut().pop_front();
 
-                                    // see: https://rust-lang.github.io/rust-clippy/master/index.html#await_holding_refcell_ref
                                     while let Some(action) = next() {
                                         state.reduce(action, Rc::downgrade(&effects));
                                     }
@@ -53,7 +52,7 @@ impl<State: Reducer> Store<State> {
                                         // `unpark` a thread that is waiting for the store to shutdown;
                                         //  we use a future so that it happens after other (waiting) futures
                                         //
-                                        //  See: `Store::into_inner` for the other size of this
+                                        //  See: `Store::into_inner` for the other side of this
                                         .spawn_local(async move {
                                             parked.unpark();
                                         })

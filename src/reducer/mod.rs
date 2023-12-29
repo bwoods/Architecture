@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use crate::Effects;
 
 /// `Reducer`s are responsible for updating a `Store`’s state in response to its `Action`s.
@@ -58,6 +60,16 @@ pub trait Reducer {
     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>);
 }
 
+impl<T: Reducer> Reducer for Box<T> {
+    type Action = T::Action;
+
+    type Output = T::Output;
+
+    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
+        self.deref_mut().reduce(action, effects)
+    }
+}
+
 impl<T: Reducer> Reducer for Option<T> {
     type Action = T::Action;
 
@@ -67,16 +79,5 @@ impl<T: Reducer> Reducer for Option<T> {
         if let Some(state) = self {
             state.reduce(action, effects)
         }
-    }
-}
-
-impl<T: Reducer> Reducer for Box<T> {
-    type Action = T::Action;
-
-    type Output = T::Output;
-
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
-        use std::ops::DerefMut;
-        self.deref_mut().reduce(action, effects)
     }
 }

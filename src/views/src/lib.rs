@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 
 pub use output::{gpu, svg, Output};
@@ -20,6 +22,61 @@ pub trait View: Sized {
     fn event(&self, event: Event, offset: Point, bounds: Bounds);
     /// How the `View` is drawn
     fn draw(&self, bounds: Bounds, onto: &mut impl Output);
+}
+
+impl<T: View> View for Box<T> {
+    fn size(&self) -> Size {
+        self.deref().size()
+    }
+
+    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+        self.deref().event(event, offset, bounds)
+    }
+
+    fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+        self.deref().draw(bounds, onto)
+    }
+}
+
+impl<T: View> View for Option<T> {
+    fn size(&self) -> Size {
+        self.as_ref().map(|view| view.size()).unwrap_or_default()
+    }
+
+    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+        if let Some(view) = self {
+            view.event(event, offset, bounds)
+        }
+    }
+
+    fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+        if let Some(view) = self {
+            view.draw(bounds, onto)
+        }
+    }
+}
+
+impl<T: View, E: View> View for Result<T, E> {
+    fn size(&self) -> Size {
+        match self {
+            Ok(view) => view.size(),
+            Err(view) => view.size(),
+        }
+    }
+
+    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+        match self {
+            Ok(view) => view.event(event, offset, bounds),
+            Err(view) => view.event(event, offset, bounds),
+        }
+    }
+
+    fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+        match self {
+            Ok(view) => view.draw(bounds, onto),
+            Err(view) => view.draw(bounds, onto),
+        }
+    }
 }
 
 /// [`View`] events.
