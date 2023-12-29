@@ -55,7 +55,7 @@
 //! mod A {
 //! #   use composable::*;
 //!     #[derive(Default)]
-//!     pub struct State;
+//!     pub struct State { /* … */ }
 //!
 //!     #[derive(Clone)] // ⒈
 //!     pub enum Action { /* … */ }

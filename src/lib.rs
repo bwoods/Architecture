@@ -11,7 +11,7 @@ pub use effects::Task;
 pub use reducer::Reducer;
 pub use store::{testing::TestStore, Store};
 
-#[cfg(all(feature = "views", feature = "unreleased"))]
+#[cfg(all(feature = "unreleased", feature = "views"))]
 /// Optional view feature.
 pub mod views {
     pub use composable_views::*;

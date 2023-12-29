@@ -83,10 +83,10 @@ harness = false
 
 [[bench]]
 name = "font_parsing"
-required-features = ["default_ui", "unreleased"]
+required-features = ["unreleased", "default_ui"]
 harness = false
 
 
 [[example]]
 name = "winit"
-required-features = ["blocking", "default_ui", "unreleased"]
+required-features = ["unreleased", "blocking", "default_ui"]

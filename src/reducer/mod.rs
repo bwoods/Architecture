@@ -27,7 +27,7 @@ pub trait Reducer {
     ///     n: Rc<Cell<usize>>, // Rc<Cell<…>> is not Send
     /// };
     ///
-    /// enum Action { /**/ }
+    /// enum Action { /* … */ }
     ///
     /// impl composable::Reducer for State {
     ///     type Action = Action;
