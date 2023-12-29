@@ -17,7 +17,10 @@ impl Output {
     /// Creates a Scalable Vector Graphics `Output`.
     pub fn new(width: f32, height: f32) -> Self {
         Self {
-            svg: Document::new().set("viewBox", (0, 0, width, height)),
+            svg: Document::new()
+                .set("viewBox", (0, 0, width, height))
+                .set("width", width)
+                .set("height", height),
             transform: Default::default(),
             data: Default::default(),
             rgba: [0; 4],
