@@ -8,6 +8,7 @@ mod output;
 /// Text handling for `View` construction.
 pub mod text;
 
+mod layout;
 #[cfg(feature = "default_ui")]
 pub mod ui;
 
