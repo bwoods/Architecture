@@ -8,6 +8,7 @@ mod runtime;
 
 #[cfg(feature = "blocking")]
 mod blocking;
+
 pub(crate) mod testing;
 
 #[doc = include_str!("README.md")]

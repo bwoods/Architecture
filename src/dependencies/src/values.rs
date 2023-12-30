@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::cell::OnceCell;
+use std::cell::{Cell, OnceCell};
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -97,7 +97,7 @@ impl<T> Dependency<T> {
             .unwrap_or(Ref::Owned(default))
     }
 
-    #[inline(always)]
+    #[inline]
     /// Returns the dependency [`Some`] value or computes it from a closure.
     pub fn unwrap_or_else<F>(&self, f: F) -> Ref<'_, T>
     where
@@ -119,7 +119,7 @@ impl<T> Dependency<T> {
             .unwrap_or_else(|| Ref::Owned(T::default()))
     }
 
-    #[inline(always)]
+    #[inline]
     /// Maps to [`Option<U>`] by applying a function to a dependency value (if [`Some`])
     /// or returns [`None`] (if [`None`]).
     pub fn map<U, F>(&self, f: F) -> Option<U>
@@ -129,7 +129,7 @@ impl<T> Dependency<T> {
         self.as_deref().map(f)
     }
 
-    #[inline(always)]
+    #[inline]
     /// Calls the provided closure with a reference to the dependency value (if [`Some`]).
     pub fn inspect<F>(&self, f: F) -> Option<&T>
     where
@@ -141,7 +141,7 @@ impl<T> Dependency<T> {
         })
     }
 
-    #[inline(always)]
+    #[inline]
     /// Returns the provided default result (if [`None`]),
     /// or applies a function to the dependency value (if [`Some`]).
     pub fn map_or<U, F>(&self, default: U, f: F) -> U
@@ -151,7 +151,7 @@ impl<T> Dependency<T> {
         self.as_deref().map_or(default, f)
     }
 
-    #[inline(always)]
+    #[inline]
     /// Computes a default function result (if [`None`]), or
     /// applies a different function to the dependency value (if [`Some`]).
     pub fn map_or_else<U, D, F>(&self, default: D, f: F) -> U
@@ -199,14 +199,14 @@ impl<T> Dependency<T> {
         self.as_deref().and(rhs)
     }
 
-    #[inline(always)]
+    #[inline]
     /// Returns [`None`] if the dependency is [`None`], otherwise calls `f` with the
     /// dependency value and returns the result.
     pub fn and_then<U, F: FnOnce(&T) -> Option<U>>(&self, f: F) -> Option<U> {
         self.as_deref().and_then(f)
     }
 
-    #[inline(always)]
+    #[inline]
     /// Returns [`None`] if the dependency is [`None`], otherwise calls `predicate`
     /// with the dependency value and returns:
     pub fn filter<P>(&self, predicate: P) -> Option<&T>
@@ -224,7 +224,7 @@ impl<T> Dependency<T> {
         self.as_deref().map(Ref::Borrowed).or(rhs.map(Ref::Owned))
     }
 
-    #[inline(always)]
+    #[inline]
     /// Returns the dependency if it is [`Some`], otherwise calls `f` and returns the result.
     pub fn or_else<F>(&self, f: F) -> Option<Ref<'_, T>>
     where
@@ -264,48 +264,6 @@ impl<T> Dependency<T> {
     }
 }
 
-impl<T: DependencyDefault> Deref for Dependency<T> {
-    type Target = T;
-
-    #[track_caller]
-    #[inline(never)]
-    fn deref(&self) -> &Self::Target {
-        self.as_deref().unwrap_or_else(|| {
-            if cfg!(test) {
-                let detailed_explanation = r#".
-DependencyDefault types are not allowed to use their default implementation within units tests.
-Either register the dependency on the TestStore or use with_dependency within the test itself.
-"#;
-                panic!(
-                    "Dependency<{0}> was constructed during a test, but {0} was not registered{1}",
-                    std::any::type_name::<T>(),
-                    detailed_explanation
-                );
-            }
-
-            let guard = Guard::new(T::default());
-            std::mem::forget(guard);
-
-            self.inner.set(Guard::get().unwrap()).ok();
-            self.as_deref().unwrap()
-        })
-    }
-}
-
-impl<T: DependencyDefault> AsRef<T> for Dependency<T> {
-    #[inline(always)]
-    fn as_ref(&self) -> &T {
-        self.deref()
-    }
-}
-
-impl<T: DependencyDefault> Borrow<T> for Dependency<T> {
-    #[inline(always)]
-    fn borrow(&self) -> &T {
-        self.deref()
-    }
-}
-
 /// The default value for a dependency.
 ///
 /// There may be many different versions of dependencies for testing but there is often just
@@ -325,3 +283,56 @@ impl<T: DependencyDefault> Borrow<T> for Dependency<T> {
 ///  created, [`default`][`Default::default`] will be called once and the returned value will
 ///  be cached.
 pub trait DependencyDefault: Default {}
+
+impl<T: DependencyDefault> Dependency<T> {
+    #[track_caller]
+    #[inline(never)]
+    fn get_or_insert_default(&self) -> &T {
+        self.as_deref().unwrap_or_else(|| {
+            if cfg!(test) {
+                let detailed_explanation = r#".
+
+DependencyDefault types are not allowed to use their default implementation within units tests.
+Either register the dependency on the TestStore or use with_dependency(…) within the test itself.
+
+"#;
+                panic!(
+                    "Dependency<{0}> was constructed during a test, but {0} was not registered{1}",
+                    std::any::type_name::<T>(),
+                    detailed_explanation
+                );
+            }
+
+            let guard = Guard::new(T::default());
+            std::mem::forget(guard);
+
+            self.inner.set(Guard::get().unwrap()).ok();
+            self.as_deref().unwrap()
+        })
+    }
+}
+
+impl<T: DependencyDefault> Deref for Dependency<T> {
+    type Target = T;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        self.get_or_insert_default()
+    }
+}
+
+impl<T: DependencyDefault> AsRef<T> for Dependency<T> {
+    #[inline(always)]
+    fn as_ref(&self) -> &T {
+        self.get_or_insert_default()
+    }
+}
+
+impl<T: DependencyDefault> Borrow<T> for Dependency<T> {
+    #[inline(always)]
+    fn borrow(&self) -> &T {
+        self.get_or_insert_default()
+    }
+}
+
+impl<T: DependencyDefault> DependencyDefault for Cell<T> {}

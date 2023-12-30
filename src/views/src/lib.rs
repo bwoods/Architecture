@@ -10,7 +10,9 @@ mod output;
 /// Text handling for `View` construction.
 pub mod text;
 
+pub mod gesture;
 mod layout;
+mod modifiers;
 #[cfg(feature = "default_ui")]
 pub mod ui;
 
@@ -83,8 +85,15 @@ impl<T: View, E: View> View for Result<T, E> {
 #[allow(missing_docs)]
 #[derive(Copy, Clone)]
 pub enum Event {
-    // #[from]
-    // Gesture(Gesture),
+    Gesture(Gesture),
     Redraw,
     Resize { width: u32, height: u32 },
+}
+
+/// touches… buttons…
+#[derive(Copy, Clone)]
+pub enum Gesture {
+    Began { n: u8 },
+    Moved { n: u8 },
+    Ended { n: u8 },
 }

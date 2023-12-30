@@ -40,10 +40,13 @@ macro_rules! tuple_impl {
         #[allow(unused_variables)]
         impl<$($val: View),+> View for ( $($val,)+ ) {
             fn size(&self) -> Size {
+                let ( $(ref $val,)+ ) = self;
                 let size = Size::zero();
 
-                let ( $(ref $val,)+ ) = self;
-                $(let size = Vertical::size(size, $val.size());)+
+                $(
+                    let size = Vertical::size(size, $val.size());
+                )+
+
                 size
             }
 

@@ -21,6 +21,7 @@ And please only add new entries to the top of this list, right below the `# Unre
 ### Changed
 
 - `View` drawing is governed by an `Output` trait; sending geometry to the GPU is now just _one_ of the options available.
+- Gesture states are now expressed as `.active`, `.hover`, `.focus` to match the W3C’s [user action pseudo classes](https://www.w3.org/TR/selectors-3/#the-user-action-pseudo-classes-hover-act) as they are more widely known than the terms used in original **Immediate-Mode Graphical User Interfaces**  [presentation](https://www.youtube.com/watch?v=Z1qyvQsjK5Y&t=731s) by Casey Muratori.
 - The [Inter font](https://rsms.me/inter/) has been updated to version 4.0.
 
 ### Fixed
@@ -38,5 +39,8 @@ And please only add new entries to the top of this list, right below the `# Unre
 ### Changed
 
 - **Breaking:** All traits and structs have been redesigned around the `return_position_impl_trait_in_trait` feature.
-- Document the archtecture through `doctest`s
+
+### Fixed
+
+- Better documentation and automated testing throughout.
 
