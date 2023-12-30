@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 
+use composable::dependencies::Dependency;
 use composable::views::ui::{font, with_default_fonts, Inter};
-use dependencies::Dependency;
 
 use divan::{bench as benchmark, main as run_benchmarks};
 

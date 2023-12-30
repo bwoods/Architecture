@@ -12,7 +12,7 @@ use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
 use futures::{future, Future, FutureExt, Stream, StreamExt};
 
-use dependencies::Dependency;
+use crate::dependencies::Dependency;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
 ///

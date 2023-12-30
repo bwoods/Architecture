@@ -5,17 +5,15 @@
 
 #[doc(no_inline)]
 pub use derive_macros::*;
-
 #[doc(inline)]
 pub use effects::Task;
 pub use reducer::Reducer;
 pub use store::{testing::TestStore, Store};
 
+pub mod dependencies;
 #[cfg(all(feature = "unreleased", feature = "views"))]
 /// Optional view feature.
-pub mod views {
-    pub use composable_views::*;
-}
+pub mod views;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other
 /// `Action`s.

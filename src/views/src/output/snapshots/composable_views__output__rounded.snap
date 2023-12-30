@@ -1,7 +1,0 @@
----
-source: src/views/src/output/mod.rs
-expression: output.into_inner()
----
-<svg height="128" viewBox="0 0 256 128" width="256" xmlns="http://www.w3.org/2000/svg">
-<path d="M16,32 C16,23.168474,23.168474,16,32,16 L224,16 C232.83153,16,240,23.168474,240,32 L240,112 C240,120.83153,232.83153,128,224,128 L32,128 C23.168474,128,16,120.83153,16,112 z" fill="#000000ff" transform="matrix(1 0 0 1 0 0)"/>
-</svg>
