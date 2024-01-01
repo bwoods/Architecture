@@ -1,5 +1,9 @@
 #![allow(unused_imports)]
-use crate::views::{Bounds, Event, Output, Point, Size, View};
+use crate::views::{Bounds, Event, Output, Point, Size, View}; // some of these are used in the macro
+
+pub use spacing::Spacer;
+
+mod spacing;
 
 #[doc(hidden)]
 pub trait Layout {

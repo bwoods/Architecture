@@ -3,6 +3,9 @@ use std::cell::Cell;
 use crate::dependencies::DependencyDefault;
 
 mod recognizer;
+pub use recognizer::*;
+
+mod tap;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Id(pub(crate) std::num::NonZeroU128);

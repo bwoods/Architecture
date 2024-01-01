@@ -33,7 +33,7 @@ pub fn recognizer(id: Id, gesture: Gesture, location: Point, bounds: Bounds) -> 
     response
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Response {
     DownInside,
     UpInside,
