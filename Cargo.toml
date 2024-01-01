@@ -27,6 +27,7 @@ derive_reducers = { path = "src/derive_macros/derive_reducers" }
 derive_more = { version = "0.99.17", features = ["from", "try_into"], default-features = false }
 flume = { git = "https://github.com/zesterer/flume.git", rev = "fcf3849", features = ["async"], default-features = false }
 futures = { version = "0.3", features = ["executor"] }
+futures-timer = "3.0.2"
 
 
 rustybuzz = { version = "0.12.1", optional = true }

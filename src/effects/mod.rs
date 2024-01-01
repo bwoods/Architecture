@@ -5,14 +5,17 @@ use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Weak;
 use std::thread::Thread;
+use std::time::{Duration, Instant};
 
 use flume::WeakSender;
-use futures::executor::LocalSpawner;
-use futures::future::RemoteHandle;
-use futures::task::LocalSpawnExt;
-use futures::{future, Future, FutureExt, Stream, StreamExt};
+use futures::{future, stream::once, Future, FutureExt, Stream, StreamExt};
+use futures_timer::Delay;
 
-use crate::dependencies::Dependency;
+pub(crate) use crate::effects::task::Executor;
+#[doc(hidden)]
+pub use crate::effects::task::Task;
+
+mod task;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
 ///
@@ -21,8 +24,8 @@ pub trait Effects: Clone {
     /// The `Action` type sent by this `Effects`.
     type Action;
 
-    /// An effect that immediately sends an [`Action`][`Self::Action`] through the `Store`’s
-    /// [`Reducer`][`crate::Reducer`].
+    /// An effect that immediately sends an [`Action`][`Self::Action`] through
+    /// the `Store`’s [`Reducer`][`crate::Reducer`].
     fn send(&self, action: impl Into<Self::Action>);
 
     /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
@@ -33,6 +36,51 @@ pub trait Effects: Clone {
     /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
     /// should be preferred.
     fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
+
+    /// An effect that sends an [`Action`][`Self::Action`] through the `Store`’s
+    /// [`Reducer`][`crate::Reducer`] if at least `delay` time has passed since
+    /// `previous` was sent. Otherwise, all subsequent actions but the last are
+    /// dropped until that time; which resets the countdown until the next
+    /// debounced action can be sent.
+    ///
+    /// The `debounce` function will automatically update the information
+    /// stored in `previous` as it runs. The `Task` configured for this call
+    /// will be the _previous_ task for the next call, after all.
+    fn debounce(
+        &self,
+        action: impl Into<Self::Action> + 'static,
+        previous: &mut Option<Task>,
+        delay: Duration,
+    ) where
+        Self::Action: 'static,
+    {
+        let now = Instant::now();
+        let task = match previous.take().and_then(|task| task.when) {
+            Some(when) if when + delay >= now => {
+                Task {
+                    handle: self
+                        .task(once(async move {
+                            // TODO: this will have to be restructured once we are simulating time for tests
+                            // (note that futures_timer::native::timer::Timer has everything that is needed)
+                            Delay::new(when - now).await;
+                            action.into()
+                        }))
+                        .handle,
+                    when: Some(when), // same time as the Task being replaced
+                }
+            }
+            _ => {
+                self.send(action); // no need to delay, send immediately
+
+                Task {
+                    handle: None,    // no delayed work to do
+                    when: Some(now), // we sent it, just now
+                }
+            }
+        };
+
+        *previous = Some(task);
+    }
 
     /// An effect that runs a [`Future`][`std::future`] and, if it returns an
     /// [`Action`][`Self::Action`], sends it through the `Store`’s [`Reducer`][`crate::Reducer`].
@@ -99,7 +147,7 @@ impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        async_task(stream)
+        Task::new(stream)
     }
 }
 
@@ -115,58 +163,6 @@ impl<Action: 'static> Effects for WeakSender<Result<Action, Thread>> {
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        async_task(stream)
-    }
-}
-
-fn async_task<Action: 'static, S: Stream<Item = Action> + 'static>(stream: S) -> Task {
-    let handle = Dependency::<Executor<Result<Action, Thread>>>::new() //
-        .and_then(|executor| {
-            match executor.actions.upgrade() {
-                None => None,
-                Some(sender) => {
-                    let stream =
-                        stream.then(move |action| sender.clone().into_send_async(Ok(action)));
-                    let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
-
-                    executor.spawner.spawn_local_with_handle(future).ok()
-                }
-            }
-        });
-
-    Task(handle) // may return a `Task(None)` while the `Store` is shutting down
-}
-
-#[doc(hidden)]
-/// Asynchronous work being performed by a `Store`.
-///
-/// A [`Store`][`crate::Store`] uses a [Local Async Executor] to run its `Task`s.
-///
-/// [Local Async Executor]: https://maciej.codes/2022-06-09-local-async.html
-#[must_use = "dropping a Task cancels the underlying future"]
-pub struct Task(Option<RemoteHandle<()>>);
-
-impl Task {
-    /// Detaches the task; leaving its [`Future`][`std::future`] running in the background.
-    pub fn detach(self) {
-        if let Some(handle) = self.0 {
-            handle.forget()
-        }
-    }
-
-    /// Cancels the task; meaning its [`Future`][`std::future`] won’t be polled again.
-    pub fn cancel(self) {
-        drop(self)
-    }
-}
-
-pub(crate) struct Executor<Action> {
-    pub(crate) spawner: LocalSpawner,
-    pub(crate) actions: WeakSender<Action>,
-}
-
-impl<Action> Executor<Action> {
-    pub(crate) fn new(spawner: LocalSpawner, actions: WeakSender<Action>) -> Self {
-        Self { spawner, actions }
+        Task::new(stream)
     }
 }
