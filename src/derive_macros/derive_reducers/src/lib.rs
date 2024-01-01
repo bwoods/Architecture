@@ -86,7 +86,7 @@ mod structs;
 ///
 /// <br />
 ///
-#[proc_macro_derive(RecursiveReducer, attributes(not_a_reducer))]
+#[proc_macro_derive(RecursiveReducer, attributes(reducer))]
 pub fn derive_recursive_reducers(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 

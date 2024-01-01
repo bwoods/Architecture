@@ -20,9 +20,9 @@ pub struct State {
     wgpu: wgpu::State,
     menu: menu::State,
 
-    #[not_a_reducer]
+    #[reducer(skip)]
     proxy: EventLoopProxy<()>,
-    #[not_a_reducer]
+    #[reducer(skip)]
     window: Box<Window>, // must `Drop` after wgpu
 }
 

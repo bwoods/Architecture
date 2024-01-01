@@ -8,10 +8,13 @@ pub fn derive_macro(identifier: Ident, data: DataEnum) -> TokenStream {
         .variants
         .iter()
         .filter(|variant| {
-            variant
-                .attrs
-                .iter()
-                .all(|attr| !attr.path().is_ident("not_a_reducer"))
+            variant.attrs.iter().all(|attr| {
+                !attr.path().is_ident("reducer")
+                    || attr
+                        .parse_args::<Ident>()
+                        .map(|arg| arg != "skip")
+                        .unwrap_or(true)
+            })
         })
         .map(|variant| {
             let name = &variant.ident;

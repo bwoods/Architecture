@@ -94,7 +94,7 @@
 //!     a: A::State,
 //!     b: B::State,
 //! #
-//! #   #[not_a_reducer]
+//! #   #[reducer(skip)]
 //! #   c: Vec<u32>,
 //! }
 //!
@@ -142,7 +142,7 @@
 //! Compound `Reducer`s often contain fields other than the child `Reducer`s. After all, it has
 //! its own `Reducer` and that `Reducer` may need its own state.
 //!
-//! The `RecursiveReducer` macro comes with an associated attribute that allows it to ignore
+//! The `RecursiveReducer` macro comes with an associated attribute that allows it to skip
 //! `struct` members that should not ne made part of the `Reducer` recursion.
 //!
 //! ```ignore
@@ -151,14 +151,15 @@
 //!     a: A::State,
 //!     b: B::State,
 //!
-//!     #[not_a_reducer]
+//!     #[reducer(skip)]
 //!     c: Vec<u32>,
 //! }
 //! ```
 //!
 //! # Alternate Reducers
 //!
-//! A `RecursiveReducer` **`enum`** represents a
+//! A `RecursiveReducer` **`enum`** represents a single state that is best
+//! represented by an enumeration a separate reducers.
 //!
 //! **Alternate `Reducer`s** are less common than **Composite `Reducer`s** so a more concrete example may
 //! help…
@@ -195,7 +196,7 @@
 //!     LoggedIn(authenticated::State),
 //!     LoggedOut(unauthenticated::State),
 //! #
-//! #   #[not_a_reducer]
+//! #   #[reducer(skip)]
 //! #   Other,
 //! }
 //!
@@ -225,7 +226,7 @@
 //! ```ignore
 //! #[derive(RecursiveReducer)]
 //! enum Option<T: Reducer> {
-//!     #[not_a_reducer]
+//!     #[reducer(skip)]
 //!     None,
 //!     Some(T),
 //! }

@@ -8,10 +8,13 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
         .fields
         .iter()
         .filter(|field| {
-            field
-                .attrs
-                .iter()
-                .all(|attr| !attr.path().is_ident("not_a_reducer"))
+            field.attrs.iter().all(|attr| {
+                !attr.path().is_ident("reducer")
+                    || attr
+                        .parse_args::<Ident>()
+                        .map(|arg| arg != "skip")
+                        .unwrap_or(true)
+            })
         })
         .map(|field| {
             let name = &field.ident;

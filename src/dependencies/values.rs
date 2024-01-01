@@ -293,10 +293,9 @@ impl<T: DependencyDefault> Dependency<T> {
 
 DependencyDefault types are not allowed to use their default implementation within units tests.
 Either register the dependency on the TestStore or use with_dependency(…) within the test itself.
-
 "#;
                 panic!(
-                    "Dependency<{0}> was constructed during a test, but {0} was not registered{1}",
+                    "Dependency<{0}> was constructed during a test,\nbut {0} was not registered{1}",
                     std::any::type_name::<T>(),
                     detailed_explanation
                 );
