@@ -1,44 +1,20 @@
-use ::wgpu::Surface;
-use ::winit::window::Window;
+use winit::window::Window;
 
-use composable::*;
+use composable::views::Transform;
 
-pub struct State {
-    surface: Surface,
-
+pub struct Surface {
+    surface: wgpu::Surface,
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
     queue: wgpu::Queue,
 }
 
-#[derive(Clone, Debug)]
-pub enum Action {
-    Resize { width: u32, height: u32 },
-    Render,
-}
+impl Surface {
+    pub async fn new(window: &Window) -> Self {
+        let (width, height) = window.inner_size().into();
 
-impl Reducer for State {
-    type Action = Action;
-    type Output = Self;
-
-    fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
-        match action {
-            Action::Resize { width, height } => {
-                self.resize(width, height);
-            }
-            Action::Render => {
-                self.render().ok();
-            }
-        }
-    }
-}
-
-impl State {
-    pub(crate) async fn new(window: &Window) -> Self {
         let instance = wgpu::Instance::default();
         let surface = unsafe { instance.create_surface(window) }.unwrap();
-
-        let (width, height) = window.inner_size().into();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -90,7 +66,7 @@ impl State {
         }
     }
 
-    fn resize(&mut self, width: u32, height: u32) {
+    pub fn resize(&mut self, width: u32, height: u32) {
         if width * height == 0 {
             return;
         }
@@ -100,7 +76,7 @@ impl State {
         self.surface.configure(&self.device, &self.config);
     }
 
-    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -141,5 +117,16 @@ impl State {
         output.present();
 
         Ok(())
+    }
+
+    /// Converts from Frame buffer to [Normalized Device Coordinates][W3].
+    ///
+    /// [W3]: https://www.w3.org/TR/webgpu/#coordinate-systems
+    pub fn transform(&self) -> Transform {
+        Transform::scale(
+            2.0 / self.config.width as f32,
+            2.0 / self.config.height as f32,
+        )
+        .then_translate((-1.0, -1.0).into())
     }
 }

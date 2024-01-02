@@ -1,34 +1,32 @@
+use std::thread::Builder;
+
 #[cfg(target_os = "macos")]
-use muda::{AboutMetadata, MenuItem};
-use muda::{Menu, PredefinedMenuItem, Submenu};
-use winit::event_loop::EventLoopBuilder;
+use cocoa::appkit::{NSEvent, NSToolbar, NSWindow, NSWindowTitleVisibility};
+#[cfg(target_os = "macos")]
+use cocoa::base::id;
+#[cfg(target_os = "macos")]
+use muda::AboutMetadata;
+use muda::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
+use winit::event_loop::{EventLoop, EventLoopBuilder};
 #[cfg(target_os = "macos")]
 use winit::platform::macos::EventLoopBuilderExtMacOS;
 #[cfg(target_os = "windows")]
 use winit::platform::windows::EventLoopBuilderExtWindows;
+#[cfg(target_os = "macos")]
+use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::Window;
 
-use composable::*;
+use window::Action;
 
-pub struct State {
+use crate::window;
+
+pub struct MenuBar {
     menu_bar: Menu,
     windows: Option<Submenu>,
 }
 
-#[derive(Clone, Debug)]
-pub enum Action {}
-
-impl Reducer for State {
-    type Action = Action;
-    type Output = Self;
-
-    fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
-        match action {}
-    }
-}
-
-impl State {
-    pub fn new(event_loop_builder: &mut EventLoopBuilder<()>) -> Self {
+impl MenuBar {
+    pub fn new(event_loop_builder: &mut EventLoopBuilder<Action>) -> Self {
         let menu_bar = Menu::new();
 
         #[cfg(target_os = "macos")]
@@ -53,10 +51,11 @@ impl State {
         }
     }
 
-    // Note: `_window` is only needed when `cfg(target_os = "windows")`
-    pub fn attach_to(&mut self, _window: &Window) {
+    pub fn attach_to(&mut self, window: &Window, event_loop: &EventLoop<Action>) {
         #[cfg(target_os = "macos")]
         {
+            set_toolbar_thickness(window, ToolbarThickness::Thick);
+
             let application = Submenu::new("App", true);
             self.menu_bar.append(&application).unwrap();
             application
@@ -81,6 +80,7 @@ impl State {
         }
 
         let windows = Submenu::new("&Window", true);
+        let default_size = MenuItem::new("Return to Default Size", true, None);
         self.menu_bar.append_items(&[&windows]).unwrap();
         windows
             .append_items(&[
@@ -88,6 +88,7 @@ impl State {
                 &PredefinedMenuItem::maximize(None),
                 &PredefinedMenuItem::separator(),
                 &PredefinedMenuItem::fullscreen(None),
+                &default_size,
                 &PredefinedMenuItem::separator(),
                 &PredefinedMenuItem::bring_all_to_front(None),
                 // &PredefinedMenuItem::separator(),
@@ -104,7 +105,7 @@ impl State {
                 .unwrap();
 
             use winit::raw_window_handle::*;
-            if let RawWindowHandle::Win32(handle) = _window.window_handle().unwrap().as_raw() {
+            if let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() {
                 self.menu_bar.init_for_hwnd(handle.hwnd.get()).ok();
             }
         }
@@ -122,6 +123,65 @@ impl State {
             help.set_as_help_menu_for_nsapp();
         }
 
+        // gather the ids for the polling thread
+        let default_size = default_size.id().clone();
+        let proxy = event_loop.create_proxy();
+
+        Builder::new()
+            .name("menu".into())
+            .spawn(move || {
+                while let Ok(event) = MenuEvent::receiver().recv() {
+                    let action = match event.id {
+                        id if id == default_size => Action::DefaultSize,
+                        _ => continue,
+                    };
+
+                    proxy.send_event(action).ok();
+                }
+            })
+            .unwrap();
+
         self.windows = Some(windows); // must be after winit has been started
+    }
+}
+
+#[cfg(target_os = "macos")]
+enum ToolbarThickness {
+    Thick,
+    Medium,
+    Thin,
+}
+
+#[cfg(target_os = "macos")]
+fn set_toolbar_thickness(window: &Window, thickness: ToolbarThickness) {
+    unsafe {
+        let id = match window.window_handle().unwrap().as_raw() {
+            RawWindowHandle::AppKit(raw) => raw.ns_view.as_ptr() as id,
+            RawWindowHandle::UiKit(raw) => raw.ui_view.as_ptr() as id,
+            _ => unreachable!(),
+        }
+        .window();
+
+        id.setTitlebarAppearsTransparent_(cocoa::base::YES);
+
+        let make_toolbar = |id: id| {
+            let new_toolbar = NSToolbar::alloc(id);
+            new_toolbar.init_();
+            id.setToolbar_(new_toolbar);
+        };
+
+        match thickness {
+            ToolbarThickness::Thick => {
+                window.set_title("");
+                make_toolbar(id);
+            }
+            ToolbarThickness::Medium => {
+                id.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+                make_toolbar(id);
+            }
+            ToolbarThickness::Thin => {
+                id.setTitleVisibility_(NSWindowTitleVisibility::NSWindowTitleHidden);
+            }
+        }
     }
 }
