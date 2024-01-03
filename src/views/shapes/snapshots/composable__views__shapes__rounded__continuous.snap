@@ -1,5 +1,5 @@
 ---
-source: src/views/output/mod.rs
+source: src/views/shapes/rounded.rs
 expression: output.into_inner()
 ---
 <svg height="128" viewBox="0 0 256 128" width="256" xmlns="http://www.w3.org/2000/svg">

@@ -17,7 +17,7 @@ $ cargo insta test --review --all-features
 
 or as part of the unit tests, will produce snapshots and compare them to the ones saved here. However, it can be convenient to actually look at the snapshots to confirm that they match expectations. 
 
-Given that the format of each **.snap** file is a YAML head followed by the content of the snapshot, and our snapshots are valid SVG files, out snapshots are valid Markdown files and can be viewed in any graphical Markdown viewer.
+Given that the format of each **.snap** file is a YAML head followed by the content of the snapshot, and our snapshots are valid SVG files, our snapshots are valid Markdown files and can be viewed in any graphical Markdown viewer.
 
 ```sh
 $ open -a Typora *.snap

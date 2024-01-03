@@ -6,6 +6,7 @@ pub use layout::Spacer;
 pub use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
 pub use modifiers::padding::Padding;
 pub use output::{gpu, svg, Output};
+pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Rectangle, RoundedRectangle, Shape};
 #[doc(inline)]
 pub use text::Text;
 
@@ -20,6 +21,7 @@ pub mod gesture;
 mod layout;
 mod modifiers;
 
+mod shapes;
 #[cfg(feature = "default_ui")]
 pub mod ui;
 
@@ -81,7 +83,7 @@ pub trait View: Sized {
     }
 
     /// Set the size of the `View` to a fixed value.
-    fn fixed(self, width: f32, height: f32) -> Result<Padding<Self>, Fixed<Self>> {
+    fn fixed(self, width: f32, height: f32) -> impl View {
         let size = self.size();
         if size.is_empty() {
             return Err(Fixed {
@@ -96,7 +98,7 @@ pub trait View: Sized {
         Ok(self.padding_both(horizontal, vertical))
     }
 
-    fn width(self, width: f32) -> Result<Padding<Self>, FixedWidth<Self>> {
+    fn width(self, width: f32) -> impl View {
         let size = self.size();
         if size.is_empty() {
             return Err(FixedWidth { width, view: self });
@@ -106,7 +108,7 @@ pub trait View: Sized {
         Ok(self.padding_horizontal(horizontal))
     }
 
-    fn height(self, height: f32) -> Result<Padding<Self>, FixedHeight<Self>> {
+    fn height(self, height: f32) -> impl View {
         let size = self.size();
         if size.is_empty() {
             return Err(FixedHeight { height, view: self });
