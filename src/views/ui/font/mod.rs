@@ -7,13 +7,11 @@ use crate::dependencies::{with_dependencies, with_dependency};
 pub use typography::{body, label, title};
 
 use crate::views::text::Font;
-use crate::views::ui::Accessibility;
+use crate::views::ui::accessibility::Scale;
 
 mod typography;
 
 /// The [Inter font](https://github.com/rsms/inter/blob/master/README.md)
-///
-/// [Release 4.0](https://github.com/rsms/inter/releases/tag/v4.0)
 ///
 /// > # Inter
 /// >
@@ -29,6 +27,8 @@ mod typography;
 /// > <br>
 /// >
 /// > ![Sample](https://github.com/rsms/inter/raw/master/misc/readme/intro.png)
+///
+/// [Release 4.0](https://github.com/rsms/inter/releases/tag/v4.0)
 pub struct Inter<'a, Style> {
     marker: PhantomData<Style>,
     font: Font<'a>,
@@ -44,7 +44,7 @@ impl<'a, Style> Deref for Inter<'a, Style> {
 
 /// Sets the default font for the supplied closure.
 pub fn with_default_fonts<F: FnOnce() -> R, R>(f: F) -> R {
-    with_dependency(Accessibility::default(), || {
+    with_dependency(Scale::default(), || {
         with_dependencies(
             (
                 Inter::<body::L>::default(),

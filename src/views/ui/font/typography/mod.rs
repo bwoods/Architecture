@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 
 use crate::dependencies::{Dependency, DependencyDefault};
 use crate::views::text::Font;
-use crate::views::ui::{Accessibility, Inter};
+use crate::views::ui::{accessibility, Inter};
 
 mod scale;
 
@@ -13,7 +13,7 @@ const InterVariable: &[u8] = include_bytes!("../InterVariable.ttf");
 
 #[inline(never)]
 fn font<Design>(weight: f32, scale: f32) -> Inter<'static, Design> {
-    let accessibility = Dependency::<Accessibility>::new();
+    let accessibility = Dependency::<accessibility::Scale>::new();
 
     Inter {
         marker: PhantomData,

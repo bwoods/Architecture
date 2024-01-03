@@ -1,4 +1,4 @@
-use crate::views::ui::Accessibility;
+use crate::views::ui::accessibility::Scale;
 
 fn size_xxxl(i: f32) -> f32 {
     size_xxl(i) + 2.0
@@ -55,19 +55,19 @@ fn size_xxs(i: f32) -> f32 {
     (f * r.powf(i / n)).round().max(10.0)
 }
 
-impl Accessibility {
+impl Scale {
     /// `Font` scale per `Accessibility` level
     #[inline(never)]
     pub fn scale(&self, i: f32) -> f32 {
         match self {
-            Accessibility::XXS => size_xxs(i),
-            Accessibility::XS => size_xs(i),
-            Accessibility::S => size_s(i),
-            Accessibility::M => size_m(i),
-            Accessibility::L => size_l(i),
-            Accessibility::XL => size_xl(i),
-            Accessibility::XXL => size_xxl(i),
-            Accessibility::XXXL => size_xxxl(i),
+            Scale::XXS => size_xxs(i),
+            Scale::XS => size_xs(i),
+            Scale::S => size_s(i),
+            Scale::M => size_m(i),
+            Scale::L => size_l(i),
+            Scale::XL => size_xl(i),
+            Scale::XXL => size_xxl(i),
+            Scale::XXXL => size_xxxl(i),
         }
     }
 }
