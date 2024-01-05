@@ -1,5 +1,5 @@
 use crate::dependencies::Dependency;
-use crate::views::{Bounds, Event, Output, Point, Size, Transform, View};
+use crate::views::{Bounds, Output, Size, Transform, View};
 
 mod rounded;
 
@@ -123,12 +123,6 @@ impl<T: Path> View for Shape<T> {
     #[inline(always)]
     fn size(&self) -> Size {
         self.size
-    }
-
-    #[inline(always)]
-    #[allow(unused_variables)]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
-        // shapes do not respond to events
     }
 
     #[inline]

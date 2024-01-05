@@ -1,7 +1,7 @@
 pub use font::{Direction, Font, FontConfig, Glyphs, Language, Script};
 
 use crate::dependencies::Dependency;
-use crate::views::{Bounds, Event, Output, Point, Size, Transform, View};
+use crate::views::{Bounds, Output, Size, Transform, View};
 
 mod font;
 
@@ -50,8 +50,6 @@ impl View for Text<'_> {
     fn size(&self) -> Size {
         (self.width, self.height()).into()
     }
-
-    fn event(&self, _event: Event, _offset: Point, _bounds: Bounds) {}
 
     fn draw(&self, bounds: Bounds, output: &mut impl Output) {
         struct Builder<'a, T: Output> {

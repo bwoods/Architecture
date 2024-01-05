@@ -10,6 +10,8 @@ pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Rectangle, Rounded
 #[doc(inline)]
 pub use text::Text;
 
+use crate::{From, TryInto};
+
 /// Alias for `euclid::default::SideOffsets2D<f32>`
 pub type Offsets = lyon::geom::euclid::default::SideOffsets2D<f32>;
 
@@ -30,7 +32,8 @@ pub trait View: Sized {
     /// The intrinsic size of the `View`
     fn size(&self) -> Size;
     /// User-interface [`Event`] handling of the `View`
-    fn event(&self, event: Event, offset: Point, bounds: Bounds);
+    #[allow(unused_variables)]
+    fn event(&self, event: Event, offset: Point, bounds: Bounds) {}
     /// How the `View` is drawn
     fn draw(&self, bounds: Bounds, onto: &mut impl Output);
 
@@ -94,7 +97,6 @@ pub trait View: Sized {
 
         let horizontal = (width - size.width) / 2.0;
         let vertical = (height - size.height) / 2.0;
-
         Ok(self.padding_both(horizontal, vertical))
     }
 
@@ -180,7 +182,7 @@ impl<T: View, E: View> View for Result<T, E> {
 
 /// [`View`] events.
 #[allow(missing_docs)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, From, TryInto)]
 pub enum Event {
     Gesture(Gesture),
     Resize { width: u32, height: u32 },
