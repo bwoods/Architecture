@@ -76,10 +76,31 @@ impl Surface {
         self.surface.configure(&self.device, &self.config);
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(
+        &mut self,
+        // vertices: &[([f32; 2], [f32; 4])],
+        // indices: &[u32],
+    ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let msaa = self
+            .device
+            .create_texture(&wgpu::TextureDescriptor {
+                label: None,
+                size: wgpu::Extent3d {
+                    width: self.config.width,
+                    height: self.config.height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 4,
+                dimension: wgpu::TextureDimension::D2,
+                format: self.config.format,
+                view_formats: &[],
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            })
             .create_view(&wgpu::TextureViewDescriptor::default());
 
         let mut encoder = self
@@ -94,8 +115,8 @@ impl Surface {
         let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: Some("pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &view,
-                resolve_target: None,
+                view: &msaa,
+                resolve_target: Some(&view),
                 ops: wgpu::Operations {
                     load: wgpu::LoadOp::Clear(white),
                     store: wgpu::StoreOp::Store,
