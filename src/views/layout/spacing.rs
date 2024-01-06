@@ -10,6 +10,16 @@ impl Spacer {
         Spacer(OnceCell::new()) // a flexible spacer has no size (yet)
     }
 
+    #[inline]
+    pub(crate) fn is_flexible(&self) -> bool {
+        self.0.get().is_none()
+    }
+
+    #[inline]
+    pub(crate) fn set_size(&self, size: Size) {
+        self.0.set(size).expect("Size set twice")
+    }
+
     #[inline(always)]
     pub fn fixed(width: f32, height: f32) -> Self {
         let spacer = Self::fill();
@@ -39,9 +49,6 @@ impl View for Spacer {
     fn size(&self) -> Size {
         self.0.get().cloned().unwrap_or_default()
     }
-
-    #[inline(always)]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {}
 
     #[inline(always)]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {}
