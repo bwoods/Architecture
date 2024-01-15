@@ -55,28 +55,22 @@ pub trait Effects: Clone {
         Self::Action: 'static,
     {
         let now = Instant::now();
-        let task = match previous.take().and_then(|task| task.when) {
-            Some(when) if when + delay >= now => {
-                Task {
-                    handle: self
-                        .task(once(async move {
-                            // TODO: this will have to be restructured once we are simulating time for tests
-                            // (note that futures_timer::native::timer::Timer has everything that is needed)
-                            Delay::new(when - now).await;
-                            action.into()
-                        }))
-                        .handle,
-                    when: Some(when), // same time as the Task being replaced
-                }
-            }
-            _ => {
-                self.send(action); // no need to delay, send immediately
+        let when = match previous.take().and_then(|task| task.when) {
+            Some(when) if when + delay > now => when + delay, // previous was sent recently; delay this send
+            Some(when) if when > now => when, // previous was not yet sent — replace it
+            _ => now, // goes through the same code path as delayed events for CONSISTENT performance
+        };
 
-                Task {
-                    handle: None,    // no delayed work to do
-                    when: Some(now), // we sent it, just now
-                }
-            }
+        let task = Task {
+            handle: self
+                .task(once(async move {
+                    // TODO: this will have to be restructured once we are simulating time for tests
+                    // (note that futures_timer::native::timer::Timer has everything that is needed)
+                    Delay::new(when - now).await;
+                    action.into()
+                }))
+                .handle,
+            when: Some(when),
         };
 
         *previous = Some(task);
