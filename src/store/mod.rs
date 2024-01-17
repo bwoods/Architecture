@@ -65,22 +65,6 @@ impl<State: Reducer> Store<State> {
         drop(self.sender); // ends the runtime’s (outer) while-let
         self.handle.join().unwrap()
     }
-
-    #[cfg(feature = "blocking")]
-    /// Creates a special “blocking” `Store` that does *not* isolate its actions on it own thread.
-    /// This lack of isolation has consequences.
-    ///   - This `Store`’s `send` requires a mutable `self` (exclusive access) to send actions
-    ///     through the reducer.
-    ///   - This `Store`’s reducer will block the calling thread for as long as actions are running
-    ///     whenever it receives a `send`.
-    ///   - As there is no dedicated thread, no progress will be made on `async` work unless there
-    ///     are a continuous stream of actions flowing through the `Store`.
-    ///
-    ///  The main use of this constructor is for interfacing with libraries that require that they
-    ///  are always called in the main thread.
-    pub fn blocking(state: State) -> blocking::Store<State> {
-        blocking::Store::with_initial(state)
-    }
 }
 
 impl<State: Reducer> Default for Store<State>
