@@ -98,5 +98,4 @@ composable = "x.y"
 
 
 
-[^wc]: As counted with `tokei -C src/**.rs --exclude src/views/`.
-
+[^wc]: As counted with `tokei --exclude src/views/ --exclude examples --exclude benches`.

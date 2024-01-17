@@ -98,24 +98,43 @@ pub trait Effects: Clone {
         self.task(stream).detach()
     }
 
-    #[inline(always)]
     /// Scopes the `Effects` to one that sends child actions.
-    fn scope<ChildAction>(&self) -> impl Effects<Action = ChildAction>
+    ///
+    /// For example, the inner loop of the [`RecursiveReducer`] macro is,
+    /// effectively, just calling
+    ///
+    /// ```rust ignore
+    /// if let Ok(action) = action.clone().try_into() {
+    ///     reduce(&mut self.child_reducer, action, effects.scope());
+    /// }
+    /// ```
+    /// on each child-reducer.
+    ///
+    /// [`RecursiveReducer`]: crate::derive_macros
+    #[inline(always)]
+    fn scope<ChildAction>(&self) -> Scoped<Self, ChildAction>
     where
         Self::Action: From<ChildAction>,
     {
-        (self.clone(), Marker)
+        Scoped(self.clone(), Marker)
     }
 }
 
-#[doc(hidden)]
-// Nested tuples are used by `Effects::scope`
-impl<Action, Parent> Effects for (Parent, Marker<Action>)
+pub struct Scoped<Parent, Child>(Parent, Marker<Child>);
+
+// Using `#[derive(Clone)]` adds a `Clone` requirement to all `Action`s
+impl<Parent: Clone, Child> Clone for Scoped<Parent, Child> {
+    fn clone(&self) -> Self {
+        Scoped(self.0.clone(), Marker)
+    }
+}
+
+impl<Parent, Child> Effects for Scoped<Parent, Child>
 where
     Parent: Effects,
-    <Parent as Effects>::Action: From<Action>,
+    <Parent as Effects>::Action: From<Child>,
 {
-    type Action = Action;
+    type Action = Child;
 
     #[inline(always)]
     fn send(&self, action: impl Into<Self::Action>) {
@@ -123,7 +142,7 @@ where
     }
 
     #[inline(always)]
-    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
+    fn task<S: Stream<Item = Child> + 'static>(&self, stream: S) -> Task {
         self.0.task(stream.map(|action| action.into()))
     }
 }

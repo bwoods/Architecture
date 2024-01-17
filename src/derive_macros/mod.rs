@@ -43,8 +43,8 @@
 //! of its immediate children. The `Action`s of its parent are unknown to it and (by convention) it
 //! does not traffic in the `Action`s of its grandchildren.
 //!
-//! Deciding which Domains needs to be coordinated between, and thus should be siblings under a
-//! parent Feature, is the art of designing the application with an architecture like this one.
+//! Deciding which Domains need to be coordinated between, and thus should be siblings under a
+//! parent Domains, is the art of designing the application with an architecture like this one.
 //!
 //! Even though the application `struct` recursively contains the `State`s of all of it Features
 //! it usually does not end up being very “tall.”

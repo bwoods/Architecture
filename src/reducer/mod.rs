@@ -23,7 +23,7 @@ pub trait Reducer {
     /// ```rust
     /// # use std::rc::Rc;
     /// # use std::cell::Cell;
-    /// # use composable::{Effects, Store};
+    /// # use composable::{Effects, Reducer, Store};
     /// # #[derive(Default)]
     /// struct State {
     ///     n: Rc<Cell<usize>>, // Rc<Cell<…>> is not Send
@@ -31,7 +31,7 @@ pub trait Reducer {
     ///
     /// enum Action { /* … */ }
     ///
-    /// impl composable::Reducer for State {
+    /// impl Reducer for State {
     ///     type Action = Action;
     ///     type Output = usize; // but the usize itself _is_
     ///
@@ -51,7 +51,6 @@ pub trait Reducer {
     /// In short, you can use `type Output = Self;` until the compiler says that you can’t.
     type Output;
 
-    #[allow(unused_variables)]
     /// Updates the `Reducer`’s state in response to the action received.
     ///
     /// Additional `Action`s that need to be performed as a side-effect of an `Action` should be
