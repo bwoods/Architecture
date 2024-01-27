@@ -31,7 +31,7 @@ impl<T: 'static> Guard<T> {
         PER_THREAD.with_borrow(|map| {
             map.get(&TypeId::of::<T>())
                 .and_then(|vec| vec.last())
-                .and_then(|ptr| ptr.clone().downcast().ok())
+                .and_then(|ptr| Rc::clone(ptr).downcast().ok())
         })
     }
 }
@@ -59,6 +59,7 @@ impl Hasher for Unhasher {
         self.value
     }
 
+    // hashing a `TypeId` just calls `write_u64` with the bottom 64-bits
     fn write(&mut self, _bytes: &[u8]) {
         unimplemented!();
     }

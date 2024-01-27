@@ -4,10 +4,8 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Weak;
-use std::thread::Thread;
 use std::time::{Duration, Instant};
 
-use flume::WeakSender;
 use futures::{future, stream::once, Future, FutureExt, Stream, StreamExt};
 use futures_timer::Delay;
 
@@ -15,6 +13,9 @@ pub(crate) use crate::effects::task::Executor;
 #[doc(hidden)]
 pub use crate::effects::task::Task;
 
+pub use queue::*;
+
+mod queue;
 mod task;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
@@ -124,6 +125,7 @@ pub struct Scoped<Parent, Child>(Parent, Marker<Child>);
 
 // Using `#[derive(Clone)]` adds a `Clone` requirement to all `Action`s
 impl<Parent: Clone, Child> Clone for Scoped<Parent, Child> {
+    #[inline(always)]
     fn clone(&self) -> Self {
         Scoped(self.0.clone(), Marker)
     }
@@ -157,22 +159,6 @@ impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
         if let Some(actions) = self.upgrade() {
             actions.borrow_mut().push_back(action.into())
         }
-    }
-
-    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        Task::new(stream)
-    }
-}
-
-#[doc(hidden)]
-// `Parent` for `StoreOf::scope` tuples
-impl<Action: 'static> Effects for WeakSender<Result<Action, Thread>> {
-    type Action = Action;
-
-    #[inline(always)]
-    fn send(&self, action: impl Into<Self::Action>) {
-        self.upgrade()
-            .and_then(|sender| sender.send(Ok(action.into())).ok());
     }
 
     fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {

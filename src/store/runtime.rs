@@ -3,13 +3,12 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::thread::{Builder, Thread};
 
-use flume::{unbounded, WeakSender};
 use futures::executor::LocalPool;
 use futures::task::LocalSpawnExt;
+use futures::StreamExt;
 
 use crate::dependencies::with_dependency;
-
-use crate::effects::Executor;
+use crate::effects::{unbounded, Executor, WeakSender};
 use crate::reducer::Reducer;
 use crate::store::Store;
 
@@ -20,21 +19,23 @@ impl<State: Reducer> Store<State> {
         <State as Reducer>::Action: Send + 'static,
         <State as Reducer>::Output: Send + From<State> + 'static,
     {
-        let (sender, receiver) = unbounded();
+        let sender = unbounded();
         let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
 
         let handle = Builder::new()
             .name(std::any::type_name::<State>().into())
             .spawn(move || {
-                let mut single_threaded = LocalPool::new();
-                let spawner = single_threaded.spawner();
+                let mut unthreaded = LocalPool::new();
+                let spawner = unthreaded.spawner();
 
                 let mut state = with();
+                let receiver = actions.receiver().unwrap();
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
                 with_dependency(Executor::new(spawner.clone(), actions), || {
-                    single_threaded.run_until(async {
-                        while let Ok(result) = receiver.recv_async().await {
+                    unthreaded.run_until(async {
+                        futures::pin_mut!(receiver);
+                        while let Some(result) = receiver.next().await {
                             match result {
                                 Ok(action) => {
                                     state.reduce(action, Rc::downgrade(&effects));
@@ -89,8 +90,8 @@ pub mod tests {
 
     #[derive(Clone, Debug, PartialEq)]
     pub enum Action {
-        External(char),
         Internal(char),
+        External(char),
     }
 
     impl Reducer for State {

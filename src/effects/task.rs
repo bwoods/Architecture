@@ -1,12 +1,12 @@
 use std::thread::Thread;
 
-use flume::WeakSender;
 use futures::executor::LocalSpawner;
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
-use futures::{future, Stream, StreamExt};
+use futures::{Stream, StreamExt};
 
 use crate::dependencies::Dependency;
+use crate::effects::WeakSender;
 
 /// Asynchronous work being performed by a `Store`.
 ///
@@ -36,17 +36,18 @@ impl Task {
     pub(crate) fn new<Action: 'static, S: Stream<Item = Action> + 'static>(stream: S) -> Self {
         // Only called by “root” `Effects`, so it will be the same `Action` as used by the `Store`
         let handle = Dependency::<Executor<Result<Action, Thread>>>::new() //
-            .and_then(|executor| {
-                match executor.actions.upgrade() {
-                    None => None,
-                    Some(sender) => {
-                        let stream =
-                            stream.then(move |action| sender.clone().into_send_async(Ok(action)));
-                        let future = stream.for_each(|_| future::ready(())); // discard `send`s return value
+            .and_then(|executor| match executor.actions.upgrade() {
+                None => None,
+                Some(sender) => executor
+                    .spawner
+                    .spawn_local_with_handle(async move {
+                        futures::pin_mut!(stream);
 
-                        executor.spawner.spawn_local_with_handle(future).ok()
-                    }
-                }
+                        while let Some(action) = stream.next().await {
+                            sender.send(Ok(action));
+                        }
+                    })
+                    .ok(),
             });
 
         Task {
