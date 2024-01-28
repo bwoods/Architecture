@@ -1,9 +1,10 @@
 use std::thread::{JoinHandle, Thread};
 
-use crate::effects::Sender;
+use channel::Sender;
 
 use crate::Reducer;
 
+pub(crate) mod channel;
 mod runtime;
 
 pub(crate) mod testing;

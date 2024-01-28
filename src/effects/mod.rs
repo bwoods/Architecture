@@ -13,9 +13,6 @@ pub(crate) use crate::effects::task::Executor;
 #[doc(hidden)]
 pub use crate::effects::task::Task;
 
-pub use queue::*;
-
-mod queue;
 mod task;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.

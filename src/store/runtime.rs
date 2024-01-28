@@ -5,11 +5,12 @@ use std::thread::{Builder, Thread};
 
 use futures::executor::LocalPool;
 use futures::task::LocalSpawnExt;
-use futures::StreamExt;
+use futures::{pin_mut, StreamExt};
 
 use crate::dependencies::with_dependency;
-use crate::effects::{unbounded, Executor, WeakSender};
+use crate::effects::Executor;
 use crate::reducer::Reducer;
+use crate::store::channel::{channel, WeakSender};
 use crate::store::Store;
 
 impl<State: Reducer> Store<State> {
@@ -19,7 +20,7 @@ impl<State: Reducer> Store<State> {
         <State as Reducer>::Action: Send + 'static,
         <State as Reducer>::Output: Send + From<State> + 'static,
     {
-        let sender = unbounded();
+        let (sender, receiver) = channel();
         let actions: WeakSender<Result<<State as Reducer>::Action, Thread>> = sender.downgrade();
 
         let handle = Builder::new()
@@ -29,12 +30,12 @@ impl<State: Reducer> Store<State> {
                 let spawner = unthreaded.spawner();
 
                 let mut state = with();
-                let receiver = actions.receiver().unwrap();
+                let receiver = receiver.upgrade().unwrap();
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
                 with_dependency(Executor::new(spawner.clone(), actions), || {
                     unthreaded.run_until(async {
-                        futures::pin_mut!(receiver);
+                        pin_mut!(receiver);
                         while let Some(result) = receiver.next().await {
                             match result {
                                 Ok(action) => {

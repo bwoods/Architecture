@@ -3,10 +3,10 @@ use std::thread::Thread;
 use futures::executor::LocalSpawner;
 use futures::future::RemoteHandle;
 use futures::task::LocalSpawnExt;
-use futures::{Stream, StreamExt};
+use futures::{pin_mut, Stream, StreamExt};
 
 use crate::dependencies::Dependency;
-use crate::effects::WeakSender;
+use crate::store::channel::WeakSender;
 
 /// Asynchronous work being performed by a `Store`.
 ///
@@ -41,8 +41,7 @@ impl Task {
                 Some(sender) => executor
                     .spawner
                     .spawn_local_with_handle(async move {
-                        futures::pin_mut!(stream);
-
+                        pin_mut!(stream);
                         while let Some(action) = stream.next().await {
                             sender.send(Ok(action));
                         }
