@@ -51,7 +51,7 @@ impl<State: Reducer> Store<State> {
                                 }
                                 Err(parked) => {
                                     spawner
-                                        // `unpark` a thread that is waiting for the store to shutdown;
+                                        // `unpark` a thread that is waiting for the store to shut down;
                                         //  we use a future so that it happens after other (waiting) futures
                                         //
                                         //  See: `Store::into_inner` for the other side of this

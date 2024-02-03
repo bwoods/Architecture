@@ -59,6 +59,7 @@ impl<State: Reducer> Store<State> {
         std::thread::park(); // waiting for any async tasks to finish up
 
         drop(self.sender); // ends the runtime’s (outer) while-let
+        std::thread::yield_now(); // give it time to shut down
         self.handle.join().unwrap()
     }
 }

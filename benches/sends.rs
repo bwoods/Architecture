@@ -55,7 +55,7 @@ mod one_hundred_thousand {
     #[allow(unused_imports)]
     use super::*;
 
-    #[benchmark]
+    #[benchmark(min_time = 1)]
     fn external_sends() {
         let store = Store::with_initial(State(0));
         for _ in 0..N {
@@ -66,7 +66,7 @@ mod one_hundred_thousand {
         assert_eq!(n, N);
     }
 
-    #[benchmark]
+    #[benchmark(min_time = 1)]
     fn internal_sends() {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::B));
@@ -75,7 +75,7 @@ mod one_hundred_thousand {
         assert_eq!(n, N);
     }
 
-    #[benchmark]
+    #[benchmark(min_time = 1)]
     fn task_sends_batched() {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::C));
@@ -84,7 +84,7 @@ mod one_hundred_thousand {
         assert_eq!(n, N);
     }
 
-    #[benchmark]
+    #[benchmark(min_time = 1)]
     fn task_sends() {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::D));
