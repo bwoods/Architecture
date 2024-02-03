@@ -6,7 +6,8 @@ pub use layout::Spacer;
 pub use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
 pub use modifiers::padding::Padding;
 pub use output::{gpu, svg, Output};
-pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Rectangle, RoundedRectangle, Shape};
+pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Rectangle, RoundedRectangle};
+pub use shapes::{Path, Shape};
 #[doc(inline)]
 pub use text::Text;
 

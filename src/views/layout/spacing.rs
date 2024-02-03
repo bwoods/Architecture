@@ -29,12 +29,12 @@ impl Spacer {
 
     #[inline(always)]
     pub fn width(width: f32) -> Self {
-        Spacer::fixed(width, 0.0)
+        Spacer::fixed(width, 1.0)
     }
 
     #[inline(always)]
     pub fn height(height: f32) -> Self {
-        Spacer::fixed(0.0, height)
+        Spacer::fixed(1.0, height)
     }
 
     #[inline(always)]

@@ -4,9 +4,11 @@ use std::rc::Rc;
 
 use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::tessellation::{
-    FillBuilder, FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
+    FillBuilder, FillGeometryBuilder, FillTessellator, FillVertex, GeometryBuilder,
     GeometryBuilderError, VertexId,
 };
+
+pub use lyon::tessellation::FillOptions;
 
 use crate::views::Transform;
 

@@ -39,7 +39,7 @@ impl DependencyDefault for Values {}
 /// # let id: Id = 1u128.try_into().unwrap();
 /// values.active = Some(id);
 ///
-/// //…
+/// // …
 ///
 /// state.set(values);
 ///

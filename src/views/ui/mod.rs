@@ -21,6 +21,7 @@
 pub use font::{with_default_fonts, Inter};
 
 pub mod accessibility;
+mod colors;
 pub mod font;
 pub mod spacer;
 
