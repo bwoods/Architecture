@@ -16,7 +16,7 @@ pub enum Action {
     DefaultSize,
 }
 
-pub fn build() -> (Box<Window>, menu::MenuBar, EventLoop<Action>) {
+pub fn build() -> (Window, menu::MenuBar, EventLoop<Action>) {
     let mut event_loop_builder = EventLoopBuilder::<Action>::with_user_event();
 
     let mut menu = menu::MenuBar::new(&mut event_loop_builder);
@@ -45,7 +45,7 @@ pub fn build() -> (Box<Window>, menu::MenuBar, EventLoop<Action>) {
             .with_fullsize_content_view(true)
     }
 
-    let window = Box::new(builder.build(&event_loop).unwrap());
+    let window = builder.build(&event_loop).unwrap();
     menu.attach_to(&window, &event_loop);
 
     (window, menu, event_loop)

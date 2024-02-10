@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 
 use futures::executor::block_on;
+use std::sync::Arc;
 
 use composable::Store;
 use window::{Action, ControlFlow, Event, EventLoopError, LogicalSize, Size, WindowEvent};
@@ -14,8 +15,9 @@ fn main() -> Result<(), EventLoopError> {
     let (window, menu, event_loop) = window::build();
     event_loop.set_control_flow(ControlFlow::Wait); // turn off polling
 
+    let window = Arc::new(window);
     let proxy = event_loop.create_proxy();
-    let wgpu = block_on(wgpu::Surface::new(&window));
+    let wgpu = block_on(wgpu::Surface::new(window.clone()));
 
     let store = Store::new(move || frames::State::new(wgpu, proxy));
 

@@ -5,7 +5,7 @@ use crate::{wgpu, window};
 mod header;
 
 pub struct State {
-    wgpu: wgpu::Surface,
+    wgpu: wgpu::Surface<'static>,
     proxy: window::EventLoopProxy,
 
     header: header::State,
@@ -39,7 +39,7 @@ impl Reducer for State {
 }
 
 impl State {
-    pub fn new(wgpu: wgpu::Surface, proxy: window::EventLoopProxy) -> Self {
+    pub fn new(wgpu: wgpu::Surface<'static>, proxy: window::EventLoopProxy) -> Self {
         Self {
             wgpu,
             proxy,

@@ -1,20 +1,21 @@
+use std::sync::Arc;
 use winit::window::Window;
 
 use composable::views::Transform;
 
-pub struct Surface {
-    surface: wgpu::Surface,
+pub struct Surface<'a> {
+    surface: wgpu::Surface<'a>,
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
     queue: wgpu::Queue,
 }
 
-impl Surface {
-    pub async fn new(window: &Window) -> Self {
+impl Surface<'_> {
+    pub async fn new(window: Arc<Window>) -> Self {
         let (width, height) = window.inner_size().into();
 
         let instance = wgpu::Instance::default();
-        let surface = unsafe { instance.create_surface(window) }.unwrap();
+        let surface = instance.create_surface(window).unwrap();
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
@@ -30,8 +31,8 @@ impl Surface {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default().using_resolution(adapter.limits()),
+                    required_features: wgpu::Features::empty(),
+                    required_limits: Default::default(),
                 },
                 None,
             )
@@ -46,15 +47,9 @@ impl Surface {
             .find(|f| f.is_srgb())
             .unwrap_or(capabilities.formats[0]);
 
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format,
-            width,
-            height,
-            present_mode: wgpu::PresentMode::Fifo,
-            alpha_mode: capabilities.alpha_modes[0],
-            view_formats: vec![],
-        };
+        let config = surface
+            .get_default_config(&adapter, width, height)
+            .expect("config");
 
         surface.configure(&device, &config);
 
