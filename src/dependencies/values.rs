@@ -34,70 +34,70 @@ impl<T> Default for Dependency<T> {
 ///  [`deref`]: Dependency::deref
 ///  [`borrow`]: Dependency::borrow
 impl<T> Dependency<T> {
-    #[inline]
     /// Creates a optional reference to the dependency of type `T`.
+    #[inline]
     pub fn new() -> Self {
         Self::default()
     }
 
-    #[inline(always)]
     /// Returns `true` if the dependency is a [`Some`] value.
+    #[inline(always)]
     pub fn is_some(&self) -> bool {
         self.inner.get().is_some()
     }
 
-    #[inline(always)]
     /// Returns `true` if the dependency is a [`Some`] and the value inside of it matches a predicate.
+    #[inline(always)]
     pub fn is_some_and(&self, f: impl FnOnce(&T) -> bool) -> bool {
         self.as_deref().filter(|inner| f(*inner)).is_some()
     }
 
-    #[inline(always)]
     /// Returns `true` if the dependency is a [`None`] value.
+    #[inline(always)]
     pub fn is_none(&self) -> bool {
         self.inner.get().is_none()
     }
 
-    #[inline(always)]
     /// Returns a slice of the dependency value, if any. If this is [`None`], an empty slice is returned.
+    #[inline(always)]
     pub fn as_slice(&self) -> &[T] {
         self.as_deref().map_or(&[], std::slice::from_ref)
     }
 
-    #[inline(always)]
     /// Returns an iterator over the dependency value, if any.
+    #[inline(always)]
     pub fn iter(&self) -> std::slice::Iter<'_, T> {
         self.as_slice().iter()
     }
 
-    #[inline(always)]
     /// Returns the dependency [`Some`] value.
     ///
     /// # Panics
     /// Panics if the dependency is a [`None`] with a custom panic message provided by `msg`.
+    #[inline(always)]
     pub fn expect(&self, msg: &str) -> &T {
         self.as_deref().expect(msg)
     }
 
-    #[inline(always)]
     /// Returns the contained [`Some`] value.
     ///
     /// # Panics
     /// Panics if the dependency value equals [`None`].
+    #[inline(always)]
     pub fn unwrap(&self) -> &T {
         self.as_deref().unwrap()
     }
 
-    #[inline(always)]
     /// Returns the dependency [`Some`] value or a provided default.
+    #[inline(always)]
     pub fn unwrap_or(&self, default: T) -> Ref<'_, T> {
         self.as_deref()
             .map(Ref::Borrowed)
             .unwrap_or(Ref::Owned(default))
     }
 
-    #[inline]
     /// Returns the dependency [`Some`] value or computes it from a closure.
+    #[inline]
     pub fn unwrap_or_else<F>(&self, f: F) -> Ref<'_, T>
     where
         F: FnOnce() -> T,
@@ -107,8 +107,8 @@ impl<T> Dependency<T> {
             .unwrap_or_else(|| Ref::Owned(f()))
     }
 
-    #[inline(always)]
     /// Returns the dependency [`Some`] value or a default.
+    #[inline(always)]
     pub fn unwrap_or_default(&self) -> Ref<'_, T>
     where
         T: Default,
@@ -118,9 +118,9 @@ impl<T> Dependency<T> {
             .unwrap_or_else(|| Ref::Owned(T::default()))
     }
 
-    #[inline]
     /// Maps to [`Option<U>`] by applying a function to a dependency value (if [`Some`])
     /// or returns [`None`] (if [`None`]).
+    #[inline]
     pub fn map<U, F>(&self, f: F) -> Option<U>
     where
         F: FnOnce(&T) -> U,
@@ -128,21 +128,18 @@ impl<T> Dependency<T> {
         self.as_deref().map(f)
     }
 
-    #[inline]
     /// Calls the provided closure with a reference to the dependency value (if [`Some`]).
+    #[inline]
     pub fn inspect<F>(&self, f: F) -> Option<&T>
     where
         F: FnOnce(&T),
     {
-        self.as_deref().map(|inner| {
-            f(inner);
-            inner
-        })
+        self.as_deref().inspect(|inner| f(*inner))
     }
 
-    #[inline]
     /// Returns the provided default result (if [`None`]),
     /// or applies a function to the dependency value (if [`Some`]).
+    #[inline]
     pub fn map_or<U, F>(&self, default: U, f: F) -> U
     where
         F: FnOnce(&T) -> U,
@@ -150,9 +147,9 @@ impl<T> Dependency<T> {
         self.as_deref().map_or(default, f)
     }
 
-    #[inline]
     /// Computes a default function result (if [`None`]), or
     /// applies a different function to the dependency value (if [`Some`]).
+    #[inline]
     pub fn map_or_else<U, D, F>(&self, default: D, f: F) -> U
     where
         D: FnOnce() -> U,
@@ -161,16 +158,16 @@ impl<T> Dependency<T> {
         self.as_deref().map_or_else(default, f)
     }
 
-    #[inline(always)]
     /// Transforms into a [`Result<&T, E>`], mapping [`Some`] to
     /// [`Ok`] and [`None`] to [`Err`].
+    #[inline(always)]
     pub fn ok_or<E>(&self, err: E) -> Result<&T, E> {
         self.as_deref().ok_or(err)
     }
 
-    #[inline(always)]
     /// Transforms into a [`Result<&T, E>`], mapping [`Some`] to
     /// [`Ok`] and [`None`] to [`Err`].
+    #[inline(always)]
     pub fn ok_or_else<E, F>(&self, err: F) -> Result<&T, E>
     where
         F: FnOnce() -> E,
@@ -178,7 +175,6 @@ impl<T> Dependency<T> {
         self.as_deref().ok_or_else(err)
     }
 
-    #[inline]
     /// Converts into a [`Option<&T>`].
     ///
     /// # Note
@@ -188,43 +184,42 @@ impl<T> Dependency<T> {
     /// [`?`]: https://doc.rust-lang.org/nightly/core/option/index.html#the-question-mark-operator-
     /// [^try]: Once the [Try trait](https://github.com/rust-lang/rust/issues/84277) is stabilized
     ///         it will be implemented for `Dependency`.
+    #[inline]
     pub fn as_deref(&self) -> Option<&T> {
         self.inner.get().map(|inner| inner.deref())
     }
 
-    #[inline(always)]
     /// Returns [`None`] if the dependency is [`None`], otherwise returns `rhs`.
+    #[inline(always)]
     pub fn and<U>(&self, rhs: Option<U>) -> Option<U> {
         self.as_deref().and(rhs)
     }
 
-    #[inline]
     /// Returns [`None`] if the dependency is [`None`], otherwise calls `f` with the
     /// dependency value and returns the result.
+    #[inline]
     pub fn and_then<U, F: FnOnce(&T) -> Option<U>>(&self, f: F) -> Option<U> {
         self.as_deref().and_then(f)
     }
 
-    #[inline]
     /// Returns [`None`] if the dependency is [`None`], otherwise calls `predicate`
     /// with the dependency value and returns:
+    #[inline]
     pub fn filter<P>(&self, predicate: P) -> Option<&T>
     where
         P: FnOnce(&T) -> bool,
     {
-        self.as_deref()
-            .filter(|inner| predicate(*inner))
-            .and(self.as_deref())
+        self.as_deref().filter(|inner| predicate(*inner))
     }
 
-    #[inline(always)]
     /// Returns the dependency if it is [`Some`], otherwise returns `rhs`.
+    #[inline(always)]
     pub fn or(&self, rhs: Option<T>) -> Option<Ref<'_, T>> {
         self.as_deref().map(Ref::Borrowed).or(rhs.map(Ref::Owned))
     }
 
-    #[inline]
     /// Returns the dependency if it is [`Some`], otherwise calls `f` and returns the result.
+    #[inline]
     pub fn or_else<F>(&self, f: F) -> Option<Ref<'_, T>>
     where
         F: FnOnce() -> Option<T>,
@@ -234,18 +229,18 @@ impl<T> Dependency<T> {
             .or_else(|| f().map(Ref::Owned))
     }
 
-    #[inline(always)]
     /// Returns [`Some`] if only one of
     /// - the dependency, or
     /// - `rhs`
     ///
     /// is [`Some`], otherwise returns [`None`].
+    #[inline(always)]
     pub fn xor(&self, rhs: Option<T>) -> Option<Ref<'_, T>> {
         self.as_deref().map(Ref::Borrowed).xor(rhs.map(Ref::Owned))
     }
 
-    #[inline(always)]
     /// Maps the dependency to an [`Option<T>`] by **copying** the contents of the option.
+    #[inline(always)]
     pub fn copied(&self) -> Option<T>
     where
         T: Copy,
@@ -253,8 +248,8 @@ impl<T> Dependency<T> {
         self.as_deref().copied()
     }
 
-    #[inline(always)]
     /// Maps the dependency to an [`Option<T>`] by **cloning** the contents of the option.
+    #[inline(always)]
     pub fn cloned(&self) -> Option<T>
     where
         T: Clone,
