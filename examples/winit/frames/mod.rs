@@ -30,7 +30,15 @@ impl Reducer for State {
                 self.wgpu.resize(width, height);
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
-                self.wgpu.render().ok();
+                use composable::views::gpu::Output;
+                let (options, mut tessellator, mut storage) = Output::defaults();
+                let mut output = Output::new(&options, &mut tessellator, &mut storage);
+
+                self.view(effects).draw(self.wgpu.bounds(), &mut output);
+                output.build().ok();
+
+                let (vertices, indices) = storage.into_inner();
+                self.wgpu.render(&vertices, &indices).ok();
             }),
             Action::Header(_) => {
                 //

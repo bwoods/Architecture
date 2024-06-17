@@ -1,10 +1,17 @@
+use std::borrow::Cow;
 use std::sync::Arc;
+
+use meshopt::utilities::typed_to_bytes;
+use wgpu::util::DeviceExt;
 use winit::window::Window;
 
-use composable::views::Transform;
+use composable::views::{Bounds, Size, Transform};
 
 pub struct Surface<'a> {
     surface: wgpu::Surface<'a>,
+    scale: f32,
+
+    pipeline: wgpu::RenderPipeline,
     config: wgpu::SurfaceConfiguration,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -13,6 +20,7 @@ pub struct Surface<'a> {
 impl Surface<'_> {
     pub async fn new(window: Arc<Window>) -> Self {
         let (width, height) = window.inner_size().into();
+        let scale = window.scale_factor() as f32;
 
         let instance = wgpu::Instance::default();
         let surface = instance.create_surface(window).unwrap();
@@ -39,12 +47,57 @@ impl Surface<'_> {
             .expect("device");
 
         let capabilities = surface.get_capabilities(&adapter);
-        let format = capabilities
-            .formats
-            .iter()
-            .copied()
-            .find(|f| f.is_srgb())
-            .unwrap_or(capabilities.formats[0]);
+
+        let format = [
+            wgpu::TextureFormat::Bgra8UnormSrgb, // floats are needed for MSAA (apparently)
+            wgpu::TextureFormat::Rgba32Float,
+        ]
+        .into_iter()
+        .find(|format| surface.get_capabilities(&adapter).formats.contains(format))
+        .expect("format");
+
+        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: None,
+            bind_group_layouts: &[],
+            push_constant_ranges: &[],
+        });
+
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+        });
+
+        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: None,
+            layout: Some(&layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[wgpu::VertexBufferLayout {
+                    attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Uint32],
+                    array_stride: std::mem::size_of::<([f32; 2], u32)>() as wgpu::BufferAddress,
+                    step_mode: wgpu::VertexStepMode::Vertex,
+                }],
+                compilation_options: Default::default(),
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                compilation_options: Default::default(),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format,
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+            }),
+            primitive: wgpu::PrimitiveState::default(),
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 4,
+                ..Default::default()
+            },
+            multiview: None,
+        });
 
         let config = surface
             .get_default_config(&adapter, width, height)
@@ -54,6 +107,8 @@ impl Surface<'_> {
 
         Self {
             surface,
+            scale,
+            pipeline,
             config,
             device,
             queue,
@@ -72,8 +127,8 @@ impl Surface<'_> {
 
     pub fn render(
         &mut self,
-        // vertices: &[([f32; 2], [f32; 4])],
-        // indices: &[u32],
+        vertices: &[(f32, f32, u32)],
+        indices: &[u32],
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
@@ -99,15 +154,30 @@ impl Surface<'_> {
 
         let mut encoder = self
             .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("encoder"),
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+
+        let vertex_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: typed_to_bytes(vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let num_indices = indices.len() as u32;
+        let index_buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: typed_to_bytes(indices),
+                usage: wgpu::BufferUsages::INDEX,
             });
 
         #[rustfmt::skip]
         let white = wgpu::Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
 
-        let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("pass"),
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 view: &msaa,
                 resolve_target: Some(&view),
@@ -121,11 +191,11 @@ impl Surface<'_> {
             timestamp_writes: None,
         });
 
-        // render_pass.set_pipeline(&self.pipeline);
-        // render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        // render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-        //
-        // render_pass.draw_indexed(0..num_indices, 0, 0..1);
+        render_pass.set_pipeline(&self.pipeline);
+        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
+        render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+
+        render_pass.draw_indexed(0..num_indices, 0, 0..1);
         drop(render_pass);
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -139,9 +209,18 @@ impl Surface<'_> {
     /// [W3]: https://www.w3.org/TR/webgpu/#coordinate-systems
     pub fn transform(&self) -> Transform {
         Transform::scale(
-            2.0 / self.config.width as f32,
-            2.0 / self.config.height as f32,
+            2.0 / self.config.width as f32 * self.scale,
+            2.0 / self.config.height as f32 * self.scale,
         )
         .then_translate((-1.0, -1.0).into())
+        .then_scale(1.0, -1.0) // flipped (compared to SVG)
+    }
+
+    /// Logical bounds for the WGPU surface
+    pub fn bounds(&self) -> Bounds {
+        Bounds::from_size(Size::new(
+            self.config.width as f32 / self.scale,
+            self.config.height as f32 / self.scale,
+        ))
     }
 }

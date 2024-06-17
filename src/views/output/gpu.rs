@@ -5,7 +5,7 @@ use std::rc::Rc;
 use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::tessellation::{
     FillBuilder, FillGeometryBuilder, FillTessellator, FillVertex, GeometryBuilder,
-    GeometryBuilderError, VertexId,
+    GeometryBuilderError, TessellationError, VertexId,
 };
 
 pub use lyon::tessellation::FillOptions;
@@ -41,11 +41,12 @@ impl<'a> Output<'a> {
     ///
     /// ```
     /// # use composable::views::gpu::Output;
-    /// let (mut options, mut tessellator, mut storage) = Output::defaults();
-    /// let output = Output::new(&options, &mut tessellator, &mut storage);
+    /// let (options, mut tessellator, mut storage) = Output::defaults();
+    /// let mut output = Output::new(&options, &mut tessellator, &mut storage);
     ///
     /// // …
     ///
+    /// output.build();
     /// let (vertices, indices) = storage.into_inner();
     /// ```
     /// Once all the views have been drawn [`Storage::into_inner`] can be used to retrieved the
@@ -56,6 +57,10 @@ impl<'a> Output<'a> {
         let storage = Storage::default();
 
         (options, tessellator, storage)
+    }
+
+    pub fn build(self) -> Result<(), TessellationError> {
+        self.builder.build()
     }
 }
 
@@ -113,8 +118,9 @@ impl FillGeometryBuilder for Storage {
     fn add_fill_vertex(&mut self, vertex: FillVertex) -> Result<VertexId, GeometryBuilderError> {
         let id = self.vertices.len() as u32;
         let (x, y) = vertex.position().into();
+
         self.vertices
-            .push((x, y, u32::from_be_bytes(self.rgba.get())));
+            .push((x, y, u32::from_le_bytes(self.rgba.get())));
 
         Ok(id.into())
     }
