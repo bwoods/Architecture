@@ -31,13 +31,14 @@ impl Reducer for State {
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
                 use composable::views::gpu::Output;
-                let (options, mut tessellator, mut storage) = Output::defaults();
-                let mut output = Output::new(&options, &mut tessellator, &mut storage);
+                use lyon::lyon_tessellation::FillOptions;
+
+                let options = FillOptions::default();
+                let mut output = Output::new(options);
 
                 self.view(effects).draw(self.wgpu.bounds(), &mut output);
-                output.build().ok();
 
-                let (vertices, indices) = storage.into_inner();
+                let (vertices, indices) = output.into_inner();
                 self.wgpu.render(&vertices, &indices).ok();
             }),
             Action::Header(_) => {

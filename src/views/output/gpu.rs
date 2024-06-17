@@ -3,72 +3,51 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use lyon::path::builder::{NoAttributes, Transformed};
+use lyon::path::{BuilderImpl as Builder, Path};
 use lyon::tessellation::{
-    FillBuilder, FillGeometryBuilder, FillTessellator, FillVertex, GeometryBuilder,
-    GeometryBuilderError, TessellationError, VertexId,
+    FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
+    GeometryBuilderError, VertexId,
 };
-
-pub use lyon::tessellation::FillOptions;
 
 use crate::views::Transform;
 
 ///
-pub struct Output<'a> {
-    builder: NoAttributes<Transformed<FillBuilder<'a>, Transform>>,
+pub struct Output {
+    storage: Storage,
+    options: FillOptions,
+    builder: NoAttributes<Transformed<Builder, Transform>>,
+
     rgba: Rc<Cell<[u8; 4]>>,
 }
 
-impl<'a> Output<'a> {
+impl Output {
     /// Creates an indexed-triangle data `Output`.
-    pub fn new(
-        options: &'a FillOptions,
-        tessellator: &'a mut FillTessellator,
-        storage: &'a mut Storage,
-    ) -> Self {
-        let transform = Transform::default();
+    pub fn new(options: FillOptions) -> Self {
+        let builder = Path::builder().transformed(Default::default());
+
         let rgba = Rc::new(Cell::default());
+        let mut storage = Storage::default();
         storage.rgba = Rc::clone(&rgba);
 
         Self {
-            builder: tessellator.builder(options, storage).transformed(transform),
+            storage,
+            options,
+            builder,
             rgba,
         }
     }
 
-    /// `Output` has multiple dependencies with lifetime constraints. Use [`Output::defaults`]
-    /// to create these dependencies, then pass them directly into [`Output::new`] for easy
-    /// construction.
-    ///
-    /// ```
-    /// # use composable::views::gpu::Output;
-    /// let (options, mut tessellator, mut storage) = Output::defaults();
-    /// let mut output = Output::new(&options, &mut tessellator, &mut storage);
-    ///
-    /// // …
-    ///
-    /// output.build();
-    /// let (vertices, indices) = storage.into_inner();
-    /// ```
-    /// Once all the views have been drawn [`Storage::into_inner`] can be used to retrieved the
-    /// indexed-triangle data.
-    pub fn defaults() -> (FillOptions, FillTessellator, Storage) {
-        let options = FillOptions::default();
-        let tessellator = FillTessellator::default();
-        let storage = Storage::default();
-
-        (options, tessellator, storage)
-    }
-
-    pub fn build(self) -> Result<(), TessellationError> {
-        self.builder.build()
+    pub fn into_inner(self) -> (Vec<(f32, f32, u32)>, Vec<u32>) {
+        self.storage.into_inner()
     }
 }
 
-impl super::Output for Output<'_> {
+impl super::Output for Output {
     #[inline]
     fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
         self.rgba.set(rgba);
         self.builder.inner_mut().set_transform(*transform);
+
         self.builder.begin((x, y).into());
     }
 
@@ -92,6 +71,17 @@ impl super::Output for Output<'_> {
     #[inline]
     fn close(&mut self) {
         self.builder.close();
+
+        let builder = std::mem::replace(
+            &mut self.builder,
+            Path::builder().transformed(Default::default()),
+        );
+
+        let path = builder.build();
+        let mut tessellator = FillTessellator::default();
+        tessellator
+            .tessellate_path(&path, &self.options, &mut self.storage)
+            .expect("tessellate_path")
     }
 }
 
@@ -119,7 +109,7 @@ impl FillGeometryBuilder for Storage {
         let id = self.vertices.len() as u32;
         let (x, y) = vertex.position().into();
 
-        self.vertices
+        self.vertices // TODO: packSnorm2x16
             .push((x, y, u32::from_le_bytes(self.rgba.get())));
 
         Ok(id.into())
