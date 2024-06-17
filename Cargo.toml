@@ -41,6 +41,7 @@ divan = "0.1.14"
 insta = "1.39.0"
 
 winit = { version = "0.30.1", features = ["rwh_05"] }
+meshopt = "0.2.1"
 muda = "0.13.5"
 wgpu = "0.20.0"
 

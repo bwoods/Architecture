@@ -74,9 +74,10 @@ impl ApplicationHandler<Action> for State {
                     .and_modify(|store| store.0.send(frames::Action::Redraw));
             }
             WindowEvent::Resized(size) => {
-                let (width, height) = size.into();
-                let resize = frames::Action::Resize { width, height };
                 self.stores.entry(id).and_modify(|store| {
+                    let (width, height) = size.into();
+                    let resize = frames::Action::Resize { width, height };
+
                     store.0.send(resize);
                     store.1.request_redraw();
                 });
