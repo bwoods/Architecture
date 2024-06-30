@@ -303,6 +303,18 @@ Either register the dependency on the TestStore or use with_dependency(…) with
             self.as_deref().unwrap()
         })
     }
+
+    /// ## SAFETY
+    /// A `DependencyDefault`, once fetched, will last for the life of the process.
+    ///
+    /// Holding this reference is not advised as it will not reflect further overrides of this dependency.
+    #[inline(always)]
+    pub fn static_ref() -> &'static T {
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute(Self::default().get_or_insert_default())
+        }
+    }
 }
 
 impl<T: DependencyDefault> Deref for Dependency<T> {

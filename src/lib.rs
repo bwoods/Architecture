@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))] // show features flags in documentation
-#![forbid(unsafe_code)]
+#![deny(unsafe_code)]
 #![allow(missing_docs)]
 #![allow(dead_code)]
 
