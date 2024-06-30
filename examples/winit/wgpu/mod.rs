@@ -74,8 +74,8 @@ impl Surface<'_> {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[wgpu::VertexBufferLayout {
-                    attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Uint32],
-                    array_stride: std::mem::size_of::<([f32; 2], u32)>() as wgpu::BufferAddress,
+                    attributes: &wgpu::vertex_attr_array![0 => Uint32, 1 => Uint32],
+                    array_stride: std::mem::size_of::<(u32, u32)>() as wgpu::BufferAddress,
                     step_mode: wgpu::VertexStepMode::Vertex,
                 }],
                 compilation_options: Default::default(),
@@ -127,7 +127,7 @@ impl Surface<'_> {
 
     pub fn render(
         &mut self,
-        vertices: &[(f32, f32, u32)],
+        vertices: &[(i16, i16, [u8; 4])],
         indices: &[u32],
     ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
@@ -213,7 +213,8 @@ impl Surface<'_> {
             2.0 / self.config.height as f32 * self.scale,
         )
         .then_translate((-1.0, -1.0).into())
-        .then_scale(1.0, -1.0) // flipped (compared to SVG)
+        .then_scale(32767.0, 32767.0) // unpack2x16snorm(xy)
+        .then_scale(1.0, -1.0) // +y is down
     }
 
     /// Logical bounds for the WGPU surface

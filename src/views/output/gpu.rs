@@ -2,7 +2,7 @@
 use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::path::{BuilderImpl as Builder, Path};
 use lyon::tessellation::{
-    FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
+    FillGeometryBuilder, FillOptions, FillRule, FillTessellator, FillVertex, GeometryBuilder,
     GeometryBuilderError, VertexId,
 };
 
@@ -17,7 +17,15 @@ pub struct Output {
 
 impl Output {
     /// Creates an indexed-triangle data `Output`.
-    pub fn new(options: FillOptions) -> Self {
+    pub fn new(transform: &Transform) -> Self {
+        let scale = f32::min(transform.m11.abs(), transform.m21.abs());
+        let tolerance = f32::max(scale, 0.000125);
+
+        let options = FillOptions::default()
+            .with_fill_rule(FillRule::NonZero)
+            .with_intersections(true)
+            .with_tolerance(tolerance);
+
         let builder = Self::builder();
         let storage = Storage::default();
 
@@ -38,7 +46,7 @@ impl Output {
     /// ```wgsl
     #[doc = include_str!("../../../examples/winit/wgpu/shader.wgsl")]
     /// ```
-    pub fn into_inner(mut self) -> (Vec<(f32, f32, u32)>, Vec<u32>) {
+    pub fn into_inner(mut self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
         self.tessellate();
         self.storage.into_inner()
     }
@@ -97,13 +105,13 @@ impl super::Output for Output {
 ///
 #[derive(Default)]
 struct Storage {
-    vertices: Vec<(f32, f32, u32)>,
+    vertices: Vec<(i16, i16, [u8; 4])>,
     indices: Vec<u32>,
     rgba: [u8; 4],
 }
 
 impl Storage {
-    pub fn into_inner(self) -> (Vec<(f32, f32, u32)>, Vec<u32>) {
+    pub fn into_inner(self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
         (self.vertices, self.indices)
     }
 }
@@ -113,10 +121,9 @@ impl FillGeometryBuilder for Storage {
     #[inline]
     fn add_fill_vertex(&mut self, vertex: FillVertex) -> Result<VertexId, GeometryBuilderError> {
         let id = self.vertices.len() as u32;
-        let (x, y) = vertex.position().into();
 
-        self.vertices // TODO: packSnorm2x16 ?
-            .push((x, y, u32::from_le_bytes(self.rgba)));
+        let (x, y) = vertex.position().into();
+        self.vertices.push((x as i16, y as i16, self.rgba));
 
         Ok(id.into())
     }

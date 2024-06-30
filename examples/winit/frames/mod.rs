@@ -35,18 +35,10 @@ impl Reducer for State {
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
                 use composable::views::gpu::Output;
-                use lyon::lyon_tessellation::{FillOptions, FillRule};
 
-                let transform = *Dependency::<Transform>::new().unwrap();
-                let scale = f32::max(transform.m11, -transform.m21);
-                let tolerance = f32::min(std::f32::consts::FRAC_1_PI * scale, 0.000125);
+                let transform = Dependency::<Transform>::new();
+                let mut output = Output::new(&transform.unwrap_or_default());
 
-                let options = FillOptions::default()
-                    .with_fill_rule(FillRule::NonZero)
-                    .with_intersections(true)
-                    .with_tolerance(tolerance);
-
-                let mut output = Output::new(options);
                 self.view(effects).draw(self.wgpu.bounds(), &mut output);
 
                 let (vertices, indices) = output.into_inner();
