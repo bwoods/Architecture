@@ -1,5 +1,7 @@
 use crate::dependencies::{Dependency, DependencyDefault};
 
+use super::gray;
+
 pub struct Current(Box<dyn Theme>);
 
 impl Default for Current {
@@ -84,57 +86,52 @@ pub trait Theme {
 struct Light;
 struct Dark;
 
-const fn gray(blue: i32, shift: i32) -> [u8; 4] {
-    let n = blue + shift;
-    [n as u8, n as u8, blue as u8, 0xFF]
-}
-
 impl Theme for Light {
     fn primary_content(&self) -> [u8; 4] {
-        [0x0, 0x0, 0x0, 0xFF]
+        gray::pure(0)
     }
 
     fn secondary_content(&self) -> [u8; 4] {
-        gray(0x7F, -1)
+        gray::foreground(3)
     }
 
     fn tertiary_content(&self) -> [u8; 4] {
-        gray(0xBF, -1)
+        gray::foreground(6)
     }
 
     fn quaternary_content(&self) -> [u8; 4] {
-        gray(0xDF, -1)
+        gray::foreground(9)
     }
 
     fn primary_shapes(&self) -> [u8; 4] {
-        gray(0xE6, -1)
+        gray::foreground(10)
     }
 
     fn secondary_shapes(&self) -> [u8; 4] {
-        gray(0xEB, -1)
+        gray::foreground(11)
     }
 
     fn tertiary_shapes(&self) -> [u8; 4] {
-        gray(0xEF, -1)
+        gray::foreground(12)
     }
 
     fn quaternary_shapes(&self) -> [u8; 4] {
-        gray(0xF2, -1)
+        gray::foreground(14) // progression break…
     }
 
     fn primary_background(&self) -> [u8; 4] {
-        gray(0x99, -5)
+        gray::background(14)
     }
 
     fn secondary_background(&self) -> [u8; 4] {
-        gray(0xBF, -5)
+        gray::background(12)
     }
 
     fn tertiary_background(&self) -> [u8; 4] {
-        gray(0xD7, -5)
+        gray::background(10)
     }
 
     fn quaternary_background(&self) -> [u8; 4] {
-        gray(0xE6, -5)
+        gray::background(8)
     }
 }

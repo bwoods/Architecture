@@ -2,6 +2,8 @@ use theme::Theme;
 
 mod theme;
 
+pub mod gray;
+
 pub fn primary_content() -> [u8; 4] {
     theme::current().primary_content()
 }

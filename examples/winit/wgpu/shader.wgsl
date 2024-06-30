@@ -1,10 +1,7 @@
-// naga shader.wgsl shader.spv
-
 struct VertexInput {
     @location(0) position: vec2<f32>,
     @location(1) rgba: u32,
 };
-
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,

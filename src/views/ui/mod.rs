@@ -3,7 +3,7 @@
 //! # Minimal
 //!
 //! **Minimal** exist as a separate feature so that applications that need
-//! completely custom user interface elements are not weighned down by the
+//! completely custom user interface elements are not weighted down by the
 //! implementations here; while still having access to those same interface
 //! elements to use as reference when building their own.
 //!
@@ -21,7 +21,7 @@
 pub use font::{with_default_fonts, Inter};
 
 pub mod accessibility;
-mod colors;
+pub mod colors;
 pub mod font;
 pub mod spacer;
 

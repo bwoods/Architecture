@@ -77,7 +77,7 @@ impl<T> Clone for Sender<T> {
 
 impl<T> Drop for Sender<T> {
     fn drop(&mut self) {
-        self.wake_after(|shared| drop(shared)) // redundant, but…
+        self.wake_after(|_| { /* drop */ })
     }
 }
 
@@ -94,7 +94,7 @@ impl<T> Sender<T> {
 
     /// Perform some work and then, if a `Receiver` was waiting, wake it.
     ///
-    /// Note that the [`Waker`] will only ever be callen once for each time it
+    /// Note that the [`Waker`] will only ever be called once for each time it
     /// has entered the [`Poll::Pending`] state. Regardless of how many times
     /// `wake_after` is called.
     fn wake_after<F: FnOnce(MutexGuard<Shared<T>>)>(&self, f: F) {
@@ -107,7 +107,7 @@ impl<T> Sender<T> {
         f(shared);
 
         if let Some(waker) = waker {
-            waker.wake() // wake _after_ the `MutexGuard` has been dropped
+            waker.wake() // wake _after_ the `MutexGuard` has been dropped by `f`
         }
     }
 }

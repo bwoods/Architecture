@@ -3,8 +3,8 @@ use crate::views::{Bounds, Gesture, Point};
 
 use super::{Id, State};
 
-#[inline(never)]
 ///
+#[inline(never)]
 pub fn recognizer(id: Id, gesture: Gesture, location: Point, bounds: Bounds) -> Option<Response> {
     let current = Dependency::<State>::new();
     let mut state = current.get();

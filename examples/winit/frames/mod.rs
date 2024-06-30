@@ -1,3 +1,7 @@
+use composable::dependencies::Dependency;
+use composable::views::ui::font::{body, title};
+use composable::views::ui::Inter;
+use composable::views::Transform;
 use composable::{dependencies::with_dependency, views::View, Effects, From, Reducer, TryInto};
 
 use crate::{wgpu, window};
@@ -31,11 +35,18 @@ impl Reducer for State {
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
                 use composable::views::gpu::Output;
-                use lyon::lyon_tessellation::FillOptions;
+                use lyon::lyon_tessellation::{FillOptions, FillRule};
 
-                let options = FillOptions::default();
+                let transform = *Dependency::<Transform>::new().unwrap();
+                let scale = f32::max(transform.m11, -transform.m21);
+                let tolerance = f32::min(std::f32::consts::FRAC_1_PI * scale, 0.000125);
+
+                let options = FillOptions::default()
+                    .with_fill_rule(FillRule::NonZero)
+                    .with_intersections(true)
+                    .with_tolerance(tolerance);
+
                 let mut output = Output::new(options);
-
                 self.view(effects).draw(self.wgpu.bounds(), &mut output);
 
                 let (vertices, indices) = output.into_inner();
@@ -64,6 +75,14 @@ impl State {
     }
 
     pub fn view(&self, effects: impl Effects<Action>) -> impl View {
-        (self.header.view(effects.scope()),)
+        let black = [0, 0, 0, 0xff];
+
+        let large = Dependency::<Inter<title::L>>::static_ref();
+        let small = Dependency::<Inter<body::S>>::static_ref();
+
+        let title = large.text(black, "This space intentionally left blank.");
+        let body = small.text(black, "except for this, of course…");
+
+        (self.header.view(effects.scope()), title, body)
     }
 }
