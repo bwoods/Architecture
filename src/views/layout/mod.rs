@@ -5,65 +5,6 @@ pub use spacing::Spacer;
 
 mod spacing;
 
-#[doc(hidden)]
-pub trait Layout {
-    fn size(size: Size, next: Size) -> Size;
-    fn bounds(bounds: Bounds, previous: Size) -> Bounds;
-    fn space(n: u32, required: Size, available: Size) -> Size;
-}
-
-struct Vertical;
-
-impl Layout for Vertical {
-    fn size(size: Size, next: Size) -> Size {
-        Size::new(f32::max(size.width, next.width), size.height + next.height)
-    }
-
-    fn bounds(mut bounds: Bounds, previous: Size) -> Bounds {
-        bounds.min.y += previous.height;
-        bounds.min.y = f32::min(bounds.min.y, bounds.max.y);
-        bounds
-    }
-
-    fn space(n: u32, required: Size, mut available: Size) -> Size {
-        let surplus = available.height - required.height;
-
-        if surplus <= 0.0 {
-            Size::zero()
-        } else {
-            available.height = surplus / n as f32;
-            available.width = 0.0;
-            available
-        }
-    }
-}
-
-struct Horizontal;
-
-impl Layout for Horizontal {
-    fn size(size: Size, next: Size) -> Size {
-        Size::new(size.width + next.width, f32::max(size.height, next.height))
-    }
-
-    fn bounds(mut bounds: Bounds, previous: Size) -> Bounds {
-        bounds.min.x += previous.width;
-        bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
-        bounds
-    }
-
-    fn space(n: u32, required: Size, mut available: Size) -> Size {
-        let surplus = available.width - required.width;
-
-        if surplus <= 0.0 {
-            Size::zero()
-        } else {
-            available.width = surplus / n as f32;
-            available.height = 0.0;
-            available
-        }
-    }
-}
-
 ///
 #[doc(hidden)]
 struct Row<T>(T);
@@ -77,36 +18,41 @@ macro_rules! tuple_impl {
             #[inline]
             fn size(&self) -> Size {
                 let ( $(ref $val,)+ ) = self;
-                let size = Size::zero();
 
+                let mut size = Size::zero();
                 $(
-                    let size = Vertical::size(size, $val.size());
+                    let next = $val.size();
+                    size = Size::new(f32::max(size.width, next.width), size.height + next.height);
                 )+
 
                 size
             }
 
             #[inline]
-            fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+            fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
                 self.update_layout(self.size(), bounds);
 
                 let ( $(ref $val,)+ ) = self;
                 $(
                     let size = $val.size();
                     $val.event(event, offset, bounds);
-                    let bounds = Vertical::bounds(bounds, size);
+
+                    bounds.min.y += size.height;
+                    bounds.min.y = f32::min(bounds.min.y, bounds.max.y);
                 )+
             }
 
             #[inline]
-            fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+            fn draw(&self, mut bounds: Bounds, onto: &mut impl Output) {
                 self.update_layout(self.size(), bounds);
 
                 let ( $(ref $val,)+ ) = self;
                 $(
                     let size = $val.size();
                     $val.draw(bounds, onto);
-                    let bounds = Vertical::bounds(bounds, size);
+
+                    bounds.min.y += size.height;
+                    bounds.min.y = f32::min(bounds.min.y, bounds.max.y);
                 )+
             }
 
@@ -116,12 +62,23 @@ macro_rules! tuple_impl {
                 let mut n = 0;
 
                 $(
-                    size = Vertical::size(size, $val.size());
+                    let next = $val.size();
+                    size = Size::new(f32::max(size.width, next.width), size.height + next.height);
                     n += $val.needs_layout() as u32;
                 )+
 
                 if n != 0 {
-                    let space = Vertical::space(n, size, bounds.size());
+                    let mut available = bounds.size();
+                    let surplus = available.height - size.height;
+
+                    let space = if surplus <= 0.0 {
+                        Size::zero()
+                    } else {
+                        available.height = surplus / n as f32;
+                        available.width = 0.0;
+                        available
+                    };
+
                     $(
                         if $val.needs_layout() {
                             $val.update_layout(space, bounds);
@@ -142,32 +99,39 @@ macro_rules! tuple_impl {
         impl<$($val: View),+> View for Row<( $($val,)+ )> {
             fn size(&self) -> Size {
                 let ( $(ref $val,)+ ) = self.0;
-                let size = Size::zero();
 
+                let mut size = Size::zero();
                 $(
-                    let size = Horizontal::size(size, $val.size());
+                    let next = $val.size();
+                    size = Size::new(size.width + next.width, f32::max(size.height, next.height));
                 )+
 
                 size
             }
 
-            fn event(&self, event: Event, offset: Point, bounds: Bounds) {
-                let ( $(ref $val,)+ ) = self.0;
+            fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
+                self.update_layout(self.size(), bounds);
 
+                let ( $(ref $val,)+ ) = self.0;
                 $(
                     let size = $val.size();
                     $val.event(event, offset, bounds);
-                    let bounds = Horizontal::bounds(bounds, size);
+
+                    bounds.min.x += size.width;
+                    bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
                 )+
             }
 
-            fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
-                let ( $(ref $val,)+ ) = self.0;
+            fn draw(&self, mut bounds: Bounds, onto: &mut impl Output) {
+                self.update_layout(self.size(), bounds);
 
+                let ( $(ref $val,)+ ) = self.0;
                 $(
                     let size = $val.size();
                     $val.draw(bounds, onto);
-                    let bounds = Horizontal::bounds(bounds, size);
+
+                    bounds.min.x += size.width;
+                    bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
                 )+
             }
 
@@ -179,16 +143,27 @@ macro_rules! tuple_impl {
             #[inline(always)]
             fn update_layout(&self, size: Size, bounds: Bounds) {
                 let ( $(ref $val,)+ ) = self.0;
-                let size = Size::zero();
-                let n = 0;
+                let mut size = Size::zero();
+                let mut n = 0;
 
                 $(
-                    let size = Horizontal::size(size, $val.size());
-                    let n = n + $val.needs_layout() as u32;
+                    let next = $val.size();
+                    size = Size::new(size.width + next.width, f32::max(size.height, next.height));
+                    n += $val.needs_layout() as u32;
                 )+
 
                 if n != 0 {
-                    let space = Horizontal::space(n, size, bounds.size());
+                    let mut available = bounds.size();
+                    let surplus = available.width - size.width;
+
+                    let space = if surplus <= 0.0 {
+                        Size::zero()
+                    } else {
+                        available.width = surplus / n as f32;
+                        available.height = 0.0;
+                        available
+                    };
+
                     $(
                         if $val.needs_layout() {
                             $val.update_layout(space, bounds);

@@ -1,6 +1,5 @@
 use std::cell::OnceCell;
 
-use crate::views::layout::Layout;
 use crate::views::{Bounds, Event, Output, Point, Size, View};
 
 pub struct Spacer(pub(crate) OnceCell<Size>);
