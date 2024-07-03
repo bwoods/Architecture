@@ -2,7 +2,7 @@
 use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::path::{BuilderImpl as Builder, Path};
 use lyon::tessellation::{
-    FillGeometryBuilder, FillOptions, FillRule, FillTessellator, FillVertex, GeometryBuilder,
+    FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
     GeometryBuilderError, VertexId,
 };
 
@@ -17,14 +17,11 @@ pub struct Output {
 
 impl Output {
     /// Creates an indexed-triangle data `Output`.
-    pub fn new(transform: &Transform) -> Self {
-        let scale = f32::min(transform.m11.abs(), transform.m21.abs());
-        let tolerance = f32::max(scale, 0.000125);
-
-        let options = FillOptions::default()
-            .with_fill_rule(FillRule::NonZero)
-            .with_intersections(true)
-            .with_tolerance(tolerance);
+    pub fn new(_transform: &Transform) -> Self {
+        // let scale = f32::min(transform.m11.abs(), transform.m21.abs());
+        // let tolerance = f32::max(scale, 0.000125);
+        let tolerance = 0.01;
+        let options = FillOptions::non_zero().with_tolerance(tolerance);
 
         let builder = Self::builder();
         let storage = Storage::default();
@@ -46,11 +43,13 @@ impl Output {
     /// ```wgsl
     #[doc = include_str!("../../../examples/winit/wgpu/shader.wgsl")]
     /// ```
+    #[allow(clippy::type_complexity)]
     pub fn into_inner(mut self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
         self.tessellate();
         self.storage.into_inner()
     }
 
+    #[inline(never)]
     fn tessellate(&mut self) {
         let builder = std::mem::replace(&mut self.builder, Self::builder());
 
@@ -96,7 +95,7 @@ impl super::Output for Output {
             .cubic_bezier_to((x1, y1).into(), (x2, y2).into(), (x, y).into());
     }
 
-    #[inline(never)]
+    #[inline]
     fn close(&mut self) {
         self.builder.close();
     }
@@ -111,7 +110,9 @@ struct Storage {
 }
 
 impl Storage {
+    #[warn(clippy::type_complexity)]
     pub fn into_inner(self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
+        // eprintln!("{} vertices", self.vertices.len());
         (self.vertices, self.indices)
     }
 }
@@ -121,10 +122,9 @@ impl FillGeometryBuilder for Storage {
     #[inline]
     fn add_fill_vertex(&mut self, vertex: FillVertex) -> Result<VertexId, GeometryBuilderError> {
         let id = self.vertices.len() as u32;
-
         let (x, y) = vertex.position().into();
-        self.vertices.push((x as i16, y as i16, self.rgba));
 
+        self.vertices.push((x as i16, y as i16, self.rgba));
         Ok(id.into())
     }
 }

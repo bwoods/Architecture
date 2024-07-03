@@ -54,8 +54,8 @@ pub trait Effects: Clone {
     {
         let now = Instant::now();
         let when = match previous.take().and_then(|task| task.when) {
-            Some(when) if when + delay > now => when + delay, // previous was sent recently; delay this send
             Some(when) if when > now => when, // previous was not yet sent — replace it
+            Some(when) if when + delay > now => when + delay, // previous was sent recently; delay this send
             _ => now, // goes through the same code path as delayed events for CONSISTENT performance
         };
 
@@ -65,6 +65,7 @@ pub trait Effects: Clone {
                     // TODO: this will have to be restructured once we are simulating time for tests
                     // (note that futures_timer::native::timer::Timer has everything that is needed)
                     Delay::new(when - now).await;
+                    eprintln!("action");
                     action.into()
                 }))
                 .handle,

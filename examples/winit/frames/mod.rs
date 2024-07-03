@@ -1,8 +1,10 @@
-use composable::dependencies::Dependency;
-use composable::views::ui::font::{body, title};
-use composable::views::ui::Inter;
-use composable::views::Transform;
-use composable::{dependencies::with_dependency, views::View, Effects, From, Reducer, TryInto};
+use composable::dependencies::{with_dependency, Dependency};
+use composable::views::ui::font::body;
+use composable::views::ui::{spacer, spacing, Inter};
+use composable::views::{Transform, View};
+use composable::{Effects, From, Reducer, Task, TryInto};
+
+use std::time::Duration;
 
 use crate::{wgpu, window};
 
@@ -12,6 +14,8 @@ pub struct State {
     wgpu: wgpu::Surface<'static>,
     window: window::WindowId,
     proxy: window::EventLoopProxy,
+
+    resizing: Option<Task>,
 
     header: header::State,
 }
@@ -32,6 +36,12 @@ impl Reducer for State {
         match action {
             Action::Resize { width, height } => {
                 self.wgpu.resize(width, height);
+
+                effects.debounce(
+                    Action::Redraw,
+                    &mut self.resizing,
+                    Duration::from_secs_f32(1.0 / 100.0),
+                );
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
                 use composable::views::gpu::Output;
@@ -62,6 +72,7 @@ impl State {
             proxy,
             window,
 
+            resizing: None,
             header: Default::default(),
         }
     }
