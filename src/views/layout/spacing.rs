@@ -1,5 +1,6 @@
 use std::cell::OnceCell;
 
+use crate::views::layout::Layout;
 use crate::views::{Bounds, Event, Output, Point, Size, View};
 
 pub struct Spacer(pub(crate) OnceCell<Size>);
@@ -8,16 +9,6 @@ impl Spacer {
     #[inline(always)]
     pub fn fill() -> Self {
         Spacer(OnceCell::new()) // a flexible spacer has no size (yet)
-    }
-
-    #[inline]
-    pub(crate) fn is_flexible(&self) -> bool {
-        self.0.get().is_none()
-    }
-
-    #[inline]
-    pub(crate) fn set_size(&self, size: Size) {
-        self.0.set(size).expect("Size set twice")
     }
 
     #[inline(always)]
@@ -52,4 +43,14 @@ impl View for Spacer {
 
     #[inline(always)]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {}
+
+    #[inline]
+    fn needs_layout(&self) -> bool {
+        self.0.get().is_none()
+    }
+
+    #[inline]
+    fn update_layout(&self, size: Size, _bounds: Bounds) {
+        self.0.set(size).expect("size set twice")
+    }
 }

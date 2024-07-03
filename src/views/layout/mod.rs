@@ -9,6 +9,7 @@ mod spacing;
 pub trait Layout {
     fn size(size: Size, next: Size) -> Size;
     fn bounds(bounds: Bounds, previous: Size) -> Bounds;
+    fn space(n: u32, required: Size, available: Size) -> Size;
 }
 
 struct Vertical;
@@ -20,7 +21,20 @@ impl Layout for Vertical {
 
     fn bounds(mut bounds: Bounds, previous: Size) -> Bounds {
         bounds.min.y += previous.height;
+        bounds.min.y = f32::min(bounds.min.y, bounds.max.y);
         bounds
+    }
+
+    fn space(n: u32, required: Size, mut available: Size) -> Size {
+        let surplus = available.height - required.height;
+
+        if surplus <= 0.0 {
+            Size::zero()
+        } else {
+            available.height = surplus / n as f32;
+            available.width = 0.0;
+            available
+        }
     }
 }
 
@@ -33,9 +47,26 @@ impl Layout for Horizontal {
 
     fn bounds(mut bounds: Bounds, previous: Size) -> Bounds {
         bounds.min.x += previous.width;
+        bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
         bounds
     }
+
+    fn space(n: u32, required: Size, mut available: Size) -> Size {
+        let surplus = available.width - required.width;
+
+        if surplus <= 0.0 {
+            Size::zero()
+        } else {
+            available.width = surplus / n as f32;
+            available.height = 0.0;
+            available
+        }
+    }
 }
+
+///
+#[doc(hidden)]
+struct Row<T>(T);
 
 macro_rules! tuple_impl {
     ( $($val:ident)+ ) => {
@@ -43,6 +74,7 @@ macro_rules! tuple_impl {
         #[allow(non_snake_case)]
         #[allow(unused_variables)]
         impl<$($val: View),+> View for ( $($val,)+ ) {
+            #[inline]
             fn size(&self) -> Size {
                 let ( $(ref $val,)+ ) = self;
                 let size = Size::zero();
@@ -54,22 +86,115 @@ macro_rules! tuple_impl {
                 size
             }
 
+            #[inline]
             fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+                self.update_layout(self.size(), bounds);
+
                 let ( $(ref $val,)+ ) = self;
+                $(
+                    let size = $val.size();
+                    $val.event(event, offset, bounds);
+                    let bounds = Vertical::bounds(bounds, size);
+                )+
+            }
+
+            #[inline]
+            fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+                self.update_layout(self.size(), bounds);
+
+                let ( $(ref $val,)+ ) = self;
+                $(
+                    let size = $val.size();
+                    $val.draw(bounds, onto);
+                    let bounds = Vertical::bounds(bounds, size);
+                )+
+            }
+
+            fn update_layout(&self, size: Size, bounds: Bounds) {
+                let ( $(ref $val,)+ ) = self;
+                let mut size = Size::zero();
+                let mut n = 0;
 
                 $(
+                    size = Vertical::size(size, $val.size());
+                    n += $val.needs_layout() as u32;
+                )+
+
+                if n != 0 {
+                    let space = Vertical::space(n, size, bounds.size());
+                    $(
+                        if $val.needs_layout() {
+                            $val.update_layout(space, bounds);
+                        }
+                    )+;
+                }
+            }
+
+            #[inline(always)]
+            fn across(self) -> impl View {
+                Row(self)
+            }
+        }
+
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        #[allow(unused_variables)]
+        impl<$($val: View),+> View for Row<( $($val,)+ )> {
+            fn size(&self) -> Size {
+                let ( $(ref $val,)+ ) = self.0;
+                let size = Size::zero();
+
+                $(
+                    let size = Horizontal::size(size, $val.size());
+                )+
+
+                size
+            }
+
+            fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+                let ( $(ref $val,)+ ) = self.0;
+
+                $(
+                    let size = $val.size();
                     $val.event(event, offset, bounds);
-                    let bounds = Vertical::bounds(bounds, $val.size());
+                    let bounds = Horizontal::bounds(bounds, size);
                 )+
             }
 
             fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
-                let ( $(ref $val,)+ ) = self;
+                let ( $(ref $val,)+ ) = self.0;
 
                 $(
+                    let size = $val.size();
                     $val.draw(bounds, onto);
-                    let bounds = Vertical::bounds(bounds, $val.size());
+                    let bounds = Horizontal::bounds(bounds, size);
                 )+
+            }
+
+            #[inline(always)]
+            fn needs_layout(&self) -> bool {
+                self.0.needs_layout()
+            }
+
+            #[inline(always)]
+            fn update_layout(&self, size: Size, bounds: Bounds) {
+                let ( $(ref $val,)+ ) = self.0;
+                let size = Size::zero();
+                let n = 0;
+
+                $(
+                    let size = Horizontal::size(size, $val.size());
+                    let n = n + $val.needs_layout() as u32;
+                )+
+
+                if n != 0 {
+                    let space = Horizontal::space(n, size, bounds.size());
+                    $(
+                        if $val.needs_layout() {
+                            $val.update_layout(space, bounds);
+                        }
+                    )+;
+                }
             }
         }
     };

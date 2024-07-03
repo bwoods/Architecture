@@ -120,6 +120,24 @@ pub trait View: Sized {
         let vertical = (height - size.height) / 2.0;
         Ok(self.padding_vertical(vertical))
     }
+
+    #[doc(hidden)]
+    #[inline(always)]
+    fn needs_layout(&self) -> bool {
+        false
+    }
+
+    #[doc(hidden)]
+    fn update_layout(&self, _size: Size, _bounds: Bounds) {
+        unreachable!() // see: layout.mod
+    }
+
+    /// Causes a tuple of `View`s to cascade horizontally, rather than vertically.
+    /// ## Note
+    /// For other views, nothing changes
+    fn across(self) -> impl View {
+        self
+    }
 }
 
 impl<T: View> View for Box<T> {
