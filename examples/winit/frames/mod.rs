@@ -88,7 +88,9 @@ impl State {
 
         (
             self.header.view(effects.scope()),
-            (body, spacer::S(), spacer::fill(), caption).padding_all(spacing::S),
+            (body, spacer::fill(), caption)
+                // .across()
+                .padding_all(spacing::S),
         )
     }
 }
