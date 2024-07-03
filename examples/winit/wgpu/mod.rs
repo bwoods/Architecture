@@ -134,6 +134,7 @@ impl Surface<'_> {
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
+
         let msaa = self
             .device
             .create_texture(&wgpu::TextureDescriptor {
@@ -164,7 +165,6 @@ impl Surface<'_> {
                 usage: wgpu::BufferUsages::VERTEX,
             });
 
-        let num_indices = indices.len() as u32;
         let index_buffer = self
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -175,7 +175,6 @@ impl Surface<'_> {
 
         #[rustfmt::skip]
         let white = wgpu::Color { r: 1.0, g: 1.0, b: 1.0, a: 1.0 };
-
         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
             label: None,
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -195,6 +194,7 @@ impl Surface<'_> {
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
+        let num_indices = indices.len() as u32;
         render_pass.draw_indexed(0..num_indices, 0, 0..1);
         drop(render_pass);
 

@@ -79,7 +79,6 @@ impl ApplicationHandler<Action> for State {
                     let resize = frames::Action::Resize { width, height };
 
                     store.0.send(resize);
-                    store.1.request_redraw();
                 });
             }
             WindowEvent::CloseRequested => {
