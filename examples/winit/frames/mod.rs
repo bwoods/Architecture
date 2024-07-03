@@ -80,12 +80,15 @@ impl State {
     pub fn view(&self, effects: impl Effects<Action>) -> impl View {
         let black = [0, 0, 0, 0xff];
 
-        let large = Dependency::<Inter<title::L>>::static_ref();
+        let medium = Dependency::<Inter<body::M>>::static_ref();
         let small = Dependency::<Inter<body::S>>::static_ref();
 
-        let title = large.text(black, "This space intentionally left blank.");
-        let body = small.text(black, "except for this, of course…");
+        let body = medium.text(black, "This space intentionally left blank.");
+        let caption = small.text(black, "except for this, I mean…");
 
-        (self.header.view(effects.scope()), title, body)
+        (
+            self.header.view(effects.scope()),
+            (body, spacer::S(), spacer::fill(), caption).padding_all(spacing::S),
+        )
     }
 }
