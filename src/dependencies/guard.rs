@@ -39,7 +39,7 @@ impl<T: 'static> Guard<T> {
 impl<T: 'static> Drop for Guard<T> {
     fn drop(&mut self) {
         // There is no need to handle Guards being used in anything other than a strictly stack-like
-        // manner as they are a private implementation-detail and are only used that way internally
+        // manner as they are a private implementation-detail and are only used that way internally.
         PER_THREAD.with_borrow_mut(|map| map.get_mut(&TypeId::of::<T>()).and_then(|vec| vec.pop()));
     }
 }

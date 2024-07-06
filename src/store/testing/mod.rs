@@ -34,9 +34,9 @@ where
         Self::with_initial(with())
     }
 
-    #[track_caller]
     /// Calls the `Store`’s [`Reducer`][`crate::Reducer`] with `action` and asserts the
     /// expected state changes.
+    #[track_caller]
     pub fn send(&mut self, action: <State as Reducer>::Action, assert: impl FnOnce(&mut State))
     where
         State: Clone + Debug + PartialEq,
@@ -58,9 +58,9 @@ where
         assert_eq!(self.state, expected);
     }
 
-    #[track_caller]
     /// Checks that the `Store`’s [`Reducer`][`crate::Reducer`] was called with `action`
     /// and asserts the expected state changes.
+    #[track_caller]
     pub fn recv(&mut self, action: <State as Reducer>::Action, assert: impl FnOnce(&mut State))
     where
         State: Clone + Debug + PartialEq,

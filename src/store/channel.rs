@@ -1,10 +1,10 @@
-use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, MutexGuard, Weak};
 use std::task::{Context, Poll, Waker};
 use std::{mem::swap, pin::Pin};
 
 use futures::Stream;
+use pin_project::pin_project;
 
 struct Shared<T> {
     queue: VecDeque<T>,
@@ -21,34 +21,32 @@ impl<T> Default for Shared<T> {
 }
 
 #[derive(Default)]
+#[pin_project] // See: https://blog.adamchalmers.com/pin-unpin/
 pub struct Receiver<T> {
     shared: Arc<Mutex<Shared<T>>>,
-    buffer: RefCell<VecDeque<T>>,
+    buffer: VecDeque<T>,
 }
 
 impl<T> Stream for Receiver<T> {
     type Item = T;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let internal = &mut *self.buffer.borrow_mut();
+        let inner = &mut self.project();
 
-        if let Some(value) = internal.pop_front() {
+        if let Some(value) = inner.buffer.pop_front() {
             return Poll::Ready(Some(value));
         }
 
-        let mut shared = self
-            .shared
-            .lock() //
-            .unwrap_or_else(|err| err.into_inner());
+        let mut shared = inner.shared.lock().unwrap_or_else(|err| err.into_inner());
         let external = &mut shared.queue;
 
         match external.pop_front() {
             Some(value) => {
                 // move all other pending values (if any) into the (un-Mutex’d) internal buffer
-                swap(external, internal);
+                swap(external, &mut inner.buffer);
                 Poll::Ready(Some(value))
             }
-            None if Arc::strong_count(&self.shared) == 1 => {
+            None if Arc::strong_count(&inner.shared) == 1 => {
                 Poll::Ready(None) // no receivers remaining
             }
             None => {
@@ -107,7 +105,7 @@ impl<T> Sender<T> {
         f(shared);
 
         if let Some(waker) = waker {
-            waker.wake() // wake _after_ the `MutexGuard` has been dropped by `f`
+            waker.wake() // wake _after_ the `MutexGuard` has been dropped by `f(…)`
         }
     }
 }
@@ -129,6 +127,12 @@ impl<T> WeakSender<T> {
         self.shared
             .upgrade() //
             .map(|shared| Sender { shared })
+    }
+
+    pub(crate) fn send(&self, value: T) {
+        if let Some(sender) = self.upgrade() {
+            sender.send(value);
+        }
     }
 }
 
