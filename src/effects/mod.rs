@@ -6,13 +6,14 @@ use std::marker::PhantomData as Marker;
 use std::rc::Weak;
 use std::time::{Duration, Instant};
 
-use futures::{future, stream::once, Future, FutureExt, Stream, StreamExt};
+use futures::{future, stream::once, Future, Stream, StreamExt};
 use futures_timer::Delay;
 
 pub(crate) use crate::effects::task::Executor;
 #[doc(hidden)]
 pub use crate::effects::task::Task;
 
+mod scheduler;
 mod task;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
@@ -82,10 +83,7 @@ pub trait Effects: Clone {
     where
         Self::Action: 'static,
     {
-        let stream = future
-            .into_stream()
-            .map(future::ready)
-            .filter_map(|option| option);
+        let stream = once(future).map(future::ready).filter_map(|option| option);
         self.task(stream).detach()
     }
 

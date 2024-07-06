@@ -33,7 +33,9 @@ impl<State: Reducer> Store<State> {
                 let receiver = receiver.upgrade().unwrap();
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
-                with_dependency(Executor::new(spawner.clone(), actions), || {
+                let executor = Executor::new(spawner.clone(), actions);
+
+                with_dependency(executor, || {
                     unthreaded.run_until(async {
                         pin_mut!(receiver);
                         while let Some(result) = receiver.next().await {
@@ -42,7 +44,8 @@ impl<State: Reducer> Store<State> {
                                     state.reduce(action, Rc::downgrade(&effects));
 
                                     // wrapping the `borrow_mut` in a closure to ensure that the
-                                    // borrow is dropped immediately
+                                    // `borrow_mut` is dropped immediately so that the action is
+                                    // free to push further actions to `effects`
                                     let next = || effects.borrow_mut().pop_front();
 
                                     while let Some(action) = next() {
