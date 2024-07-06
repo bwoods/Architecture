@@ -18,6 +18,16 @@ enum State {
     Ready(Instant),
 }
 
+impl State {
+    fn is_some(&self) -> bool {
+        match self {
+            State::None => false,
+            _ => true,
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Delay(Arc<Mutex<State>>);
 
 impl Delay {
@@ -115,7 +125,13 @@ impl Default for Scheduler {
                     // thread loop ends if the `Mutex` is poisoned
                     while let Ok(mut shared) = remote.lock() {
                         let now = shared.now.take().unwrap_or_else(|| Instant::now());
-                        let delayed = shared.queue.drain_up_to(now);
+                        let delayed = shared.queue.drain_until_while(now, |delay| {
+                            delay // stop at un-polled Futures as they do not have a Waker yet
+                                .try_lock() // (including being polled right now!)
+                                .map(|state| state.is_some())
+                                .ok()
+                                .unwrap_or(false)
+                        });
                         let next = shared.queue.peek_next();
                         drop(shared); // release the `Mutex` in case any of the delayed work wants the `Scheduler`
 
@@ -170,10 +186,15 @@ impl<Key: PartialOrd, Value> Queue<Key, Value> {
         self.deque.insert(index, (key, value));
     }
 
-    pub fn drain_up_to(&mut self, key: Key) -> impl Iterator<Item = (Key, Value)> {
+    pub fn drain_until_while(
+        &mut self,
+        key: Key,
+        mut pred: impl FnMut(&Value) -> bool,
+    ) -> impl Iterator<Item = (Key, Value)> {
         let key = Reverse(key);
-        let index = self.deque.partition_point(|x| x.0 < key);
         // without the use of `Reverse` for the keys `split_off` would return the wrong half!
+        // similarly we have to reverse the predicate…
+        let index = self.deque.partition_point(|x| x.0 < key || !pred(&x.1));
         self.deque
             .split_off(index)
             .into_iter()
