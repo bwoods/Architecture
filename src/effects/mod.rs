@@ -7,8 +7,8 @@ use std::rc::Weak;
 use std::time::{Duration, Instant};
 
 use futures::{future, stream::once, Future, Stream, StreamExt};
-use futures_timer::Delay;
 
+use crate::effects::scheduler::Delay;
 pub(crate) use crate::effects::task::Executor;
 #[doc(hidden)]
 pub use crate::effects::task::Task;
@@ -53,7 +53,7 @@ pub trait Effects: Clone {
     ) where
         Self::Action: 'static,
     {
-        let now = Instant::now();
+        let now = Instant::now(); // FIXME: get from the Scheduler?
         let when = match previous.take().and_then(|task| task.when) {
             Some(when) if when > now => when, // previous was not yet sent — replace it
             Some(when) if when + delay > now => when + delay, // previous was sent recently; delay this send
@@ -63,10 +63,7 @@ pub trait Effects: Clone {
         let task = Task {
             handle: self
                 .task(once(async move {
-                    // TODO: this will have to be restructured once we are simulating time for tests
-                    // (note that futures_timer::native::timer::Timer has everything that is needed)
-                    Delay::new(when - now).await;
-                    eprintln!("action");
+                    Delay::new(when).await;
                     action.into()
                 }))
                 .handle,

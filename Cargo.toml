@@ -21,7 +21,6 @@ default_ui = ["views"]
 derive_reducers = { path = "src/derive_macros/derive_reducers" }
 derive_more = { version = "0.99.17", features = ["from", "try_into"], default-features = false }
 futures = { version = "0.3.30", features = ["executor"] }
-futures-timer = "3.0.3"
 pin-project = "1.1.5"
 
 # view feature dependencies
