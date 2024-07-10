@@ -5,14 +5,17 @@ use std::cmp::max;
 use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Weak;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use crate::effects::scheduler::Delay;
-pub(crate) use crate::effects::task::Executor;
-#[doc(hidden)]
-pub use crate::effects::task::Task;
 use futures::stream::unfold;
 use futures::{future, stream::once, Future, Stream, StreamExt};
+
+use scheduler::{Delay, Scheduler as Timer};
+pub(crate) use task::Executor;
+#[doc(hidden)]
+pub use task::Task;
+
+use crate::dependencies::Dependency;
 
 mod scheduler;
 mod task;
@@ -125,16 +128,42 @@ impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
     }
 }
 
-/// `Effects` are also [`Scheduler`]s; able to apply modifiers to when (and how often) `Action`s. are sent.
-pub trait Scheduler {
-    /// The [`Effects::Action`].
-    type Action;
+#[doc(hidden)]
+impl<Parent: Effects, Child> Scheduler for Scoped<Parent, Child> where
+    <Parent as Effects>::Action: From<Child>
+{
+}
 
+#[doc(hidden)]
+impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {}
+
+/// `Effects` are also [`Scheduler`]s; able to apply modifiers to when (and how often) `Action`s. are sent.
+pub trait Scheduler: Effects {
     /// Sends the `Action` after this `Instant` of time.
-    fn after(&self, instant: Instant, action: impl Into<Self::Action> + 'static) -> Task;
+    fn after(&self, duration: Duration, action: impl Into<Self::Action> + Clone + 'static) -> Task {
+        self.task(Delay::duration(duration).map(move |_| action.clone().into()))
+    }
 
     /// Sends the `Action` every `Interval` of time.
-    fn every(&self, interval: Interval, action: impl Into<Self::Action> + Clone + 'static) -> Task;
+    fn every(&self, interval: Interval, action: impl Into<Self::Action> + Clone + 'static) -> Task {
+        let (n, duration) = match interval {
+            Interval::Leading(duration) => (0, duration), // 0 × delay => no initial delay
+            Interval::Trailing(duration) => (1, duration),
+        };
+
+        let scheduler = Dependency::<Timer>::new();
+        let start = scheduler.now();
+
+        self.task(unfold(n, move |n| {
+            let action = action.clone();
+
+            async move {
+                let instant = start.checked_add(duration.checked_mul(n)?)?;
+                Delay::instant(instant).await;
+                Some((action.into(), n.checked_add(1)?))
+            }
+        }))
+    }
 
     /// An effect that sends an [`Action`][`Self::Action`] through the `Store`’s
     /// [`Reducer`][`crate::Reducer`] if at least one `interval` of time has passed
@@ -147,11 +176,29 @@ pub trait Scheduler {
     /// will be the _previous_ task for the next call, if any.
     fn debounce(
         &self,
-        action: impl Into<Self::Action> + 'static,
+        action: impl Into<Self::Action> + Clone + 'static,
         previous: &mut Option<Task>,
         interval: Interval,
     ) where
-        Self::Action: 'static;
+        Self::Action: 'static,
+    {
+        let scheduler = Dependency::<Timer>::new();
+        let now = scheduler.now();
+
+        let delay = interval.duration();
+
+        let when = match previous.take().and_then(|task| task.when) {
+            Some(when) if when > now => when, // previous was not yet sent — replace it
+            Some(when) if when + delay > now => when + delay, // previous was sent recently
+            _ => match interval {
+                Interval::Leading(_) => now,
+                Interval::Trailing(_) => now + delay,
+            },
+        };
+
+        let task = self.after(when - now, action);
+        *previous = Some(task);
+    }
 
     /// An effect that coalesces repeated attempts to send [`Action`][`Self::Action`]s
     /// through the`Store`’s [`Reducer`][`crate::Reducer`] into a singe send.
@@ -163,84 +210,23 @@ pub trait Scheduler {
     /// will be the _previous_ task for the next call, if any.
     fn coalesce(
         &self,
-        action: impl Into<Self::Action> + 'static,
+        action: impl Into<Self::Action> + Clone + 'static,
         previous: &mut Option<Task>,
-        timeout: Duration,
-    ) where
-        Self::Action: 'static;
-}
-
-impl<T: Effects> Scheduler for T {
-    type Action = T::Action;
-
-    fn after(&self, instant: Instant, action: impl Into<Self::Action> + 'static) -> Task {
-        self.task(once(async move {
-            Delay::new(instant).await;
-            action.into()
-        }))
-    }
-
-    fn every(&self, interval: Interval, action: impl Into<Self::Action> + Clone + 'static) -> Task {
-        let (n, delay) = match interval {
-            Interval::Leading(delay) => (0, delay), // 0 × delay => no initial delay
-            Interval::Trailing(delay) => (1, delay),
-        };
-
-        let start = Instant::now(); // FIXME
-        self.task(unfold(n, move |n| {
-            let action = action.clone();
-
-            async move {
-                let instant = start.checked_add(delay.checked_mul(n)?)?;
-                Delay::new(instant).await;
-
-                Some((action.into(), n + 1))
-            }
-        }))
-    }
-
-    fn debounce(
-        &self,
-        action: impl Into<Self::Action> + 'static,
-        previous: &mut Option<Task>,
-        interval: Interval,
-    ) where
-        Self::Action: 'static,
-    {
-        let now = Instant::now(); // FIXME
-        let delay = interval.duration();
-
-        let when = match previous.take().and_then(|task| task.when) {
-            Some(when) if when > now => when, // previous was not yet sent — replace it
-            Some(when) if when + delay > now => when + delay, // previous was sent recently; delay this send
-            _ => match interval {
-                Interval::Leading(_) => now,
-                Interval::Trailing(_) => now + delay,
-            },
-        };
-
-        let task = self.after(when, action);
-        *previous = Some(task);
-    }
-
-    fn coalesce(
-        &self,
-        action: impl Into<Self::Action> + 'static,
-        waiting: &mut Option<Task>,
         timeout: Duration,
     ) where
         Self::Action: 'static,
     {
-        let now = Instant::now(); // FIXME
+        let scheduler = Dependency::<Timer>::new();
+        let now = scheduler.now();
 
-        let when = waiting
+        let when = previous
             .take()
             .and_then(|task| task.when)
             .map(|previous| max(previous + timeout, now))
             .unwrap_or_else(|| now + timeout);
 
-        let task = self.after(when, action);
-        *waiting = Some(task);
+        let task = self.after(when - now, action);
+        *previous = Some(task);
     }
 }
 
