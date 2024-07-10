@@ -37,18 +37,14 @@ impl Reducer for State {
             Action::Resize { width, height } => {
                 self.wgpu.resize(width, height);
 
-                effects.debounce(
+                effects.throttle(
                     Action::Redraw,
                     &mut self.resizing,
-                    Duration::from_secs_f32(1.0 / 100.0),
+                    Interval::Leading(Duration::from_secs_f32(1.0 / 100.0)),
                 );
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
-                use composable::views::gpu::Output;
-
-                let transform = Dependency::<Transform>::new();
-                let mut output = Output::new(&transform.unwrap_or_default());
-
+                let mut output = Output::new(8.0);
                 self.view(effects).draw(self.wgpu.bounds(), &mut output);
 
                 let (vertices, indices) = output.into_inner();
