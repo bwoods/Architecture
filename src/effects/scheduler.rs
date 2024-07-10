@@ -22,21 +22,11 @@ pub(crate) enum State {
 
 pub struct Delay(Arc<Mutex<State>>);
 
-impl Delay {
-    pub fn instant(instant: Instant) -> Self {
-        Delay(Arc::new(Mutex::new(State::Instant(instant))))
-    }
-
-    pub fn duration(duration: Duration) -> Self {
-        Delay(Arc::new(Mutex::new(State::Duration(duration))))
-    }
-}
-
 impl Future for Delay {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.poll_next(cx).map(|_| ())
+        self.poll_next(cx).map(|_| ()) // Some(()) → ()
     }
 }
 
@@ -84,6 +74,16 @@ impl Stream for Delay {
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         (1, Some(1))
+    }
+}
+
+impl Delay {
+    pub fn instant(instant: Instant) -> Self {
+        Delay(Arc::new(Mutex::new(State::Instant(instant))))
+    }
+
+    pub fn duration(duration: Duration) -> Self {
+        Delay(Arc::new(Mutex::new(State::Duration(duration))))
     }
 }
 
@@ -193,7 +193,9 @@ impl<Key: PartialOrd, Value> Queue<Key, Value> {
     }
 
     pub fn drain_until(&mut self, key: Key) -> impl Iterator<Item = Value> {
-        let key = Reverse(key); // without the use of `Reverse` for the keys `split_off` would return the wrong half
+        // without the use of `Reverse` for the keys `split_off` would return the wrong half
+        let key = Reverse(key);
+
         let index = self.deque.partition_point(|x| x.0 < key);
         self.deque.split_off(index).into_iter().rev().map(|kv| kv.1)
     }

@@ -1,11 +1,10 @@
 #![doc = include_str!("README.md")]
 
 use std::cell::RefCell;
-use std::cmp::max;
 use std::collections::VecDeque;
 use std::marker::PhantomData as Marker;
 use std::rc::Weak;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use futures::stream::unfold;
 use futures::{future, stream::once, Future, Stream, StreamExt};
@@ -139,12 +138,16 @@ impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {}
 
 /// `Effects` are also [`Scheduler`]s; able to apply modifiers to when (and how often) `Action`s. are sent.
 pub trait Scheduler: Effects {
-    /// Sends the `Action` after this `Instant` of time.
+    /// Sends the `Action` after `duration`.
     fn after(&self, duration: Duration, action: impl Into<Self::Action> + Clone + 'static) -> Task {
         self.task(Delay::duration(duration).map(move |_| action.clone().into()))
     }
 
-    /// Sends the `Action` every `Interval` of time.
+    fn at(&self, instant: Instant, action: impl Into<Self::Action> + Clone + 'static) -> Task {
+        self.task(Delay::instant(instant).map(move |_| action.clone().into()))
+    }
+
+    /// Sends the `Action` every `interval`.
     fn every(&self, interval: Interval, action: impl Into<Self::Action> + Clone + 'static) -> Task {
         let (n, duration) = match interval {
             Interval::Leading(duration) => (0, duration), // 0 × delay => no initial delay
@@ -153,6 +156,7 @@ pub trait Scheduler: Effects {
 
         let scheduler = Dependency::<Timer>::new();
         let start = scheduler.now();
+        drop(scheduler);
 
         self.task(unfold(n, move |n| {
             let action = action.clone();
@@ -160,16 +164,15 @@ pub trait Scheduler: Effects {
             async move {
                 let instant = start.checked_add(duration.checked_mul(n)?)?;
                 Delay::instant(instant).await;
-                Some((action.into(), n.checked_add(1)?))
+                Some((action.clone().into(), n.checked_add(1)?))
             }
         }))
     }
 
-    /// An effect that sends an [`Action`][`Self::Action`] through the `Store`’s
-    /// [`Reducer`][`crate::Reducer`] if at least one `interval` of time has passed
-    /// since `previous` was sent. Otherwise, all subsequent actions but the last
-    /// are dropped until that time; which resets the countdown until the next
-    /// debounced action can be sent.
+    /// An effect that coalesces repeated attempts to send [`Action`][`Effects::Action`]s
+    /// through the `Store`’s [`Reducer`][`crate::Reducer`] into a singe send.
+    /// Once `timeout` has elapsed with no further `Action`s being attempted,
+    /// the last `Action` will be sent.
     ///
     /// The `debounce` function will automatically update the information
     /// stored in `previous` as it runs. The `Task` debounced by this call
@@ -182,50 +185,61 @@ pub trait Scheduler: Effects {
     ) where
         Self::Action: 'static,
     {
-        let scheduler = Dependency::<Timer>::new();
-        let now = scheduler.now();
+        let task = match interval {
+            Interval::Trailing(timeout) => self.after(timeout, action),
+            Interval::Leading(timeout) => match previous.as_ref().and_then(|task| task.when) {
+                None => self.after(Duration::ZERO, action),
+                Some(then) => {
+                    let scheduler = Dependency::<Timer>::new();
+                    let now = scheduler.now();
 
-        let delay = interval.duration();
+                    let mut task = if then + timeout >= now {
+                        self.after(Duration::ZERO, action)
+                    } else {
+                        return; // A leading debounce DROPS subsequent actions within the interval
+                    };
 
-        let when = match previous.take().and_then(|task| task.when) {
-            Some(when) if when > now => when, // previous was not yet sent — replace it
-            Some(when) if when + delay > now => when + delay, // previous was sent recently
-            _ => match interval {
-                Interval::Leading(_) => now,
-                Interval::Trailing(_) => now + delay,
+                    task.when = Some(now);
+                    task
+                }
             },
         };
 
-        let task = self.after(when - now, action);
         *previous = Some(task);
     }
 
-    /// An effect that coalesces repeated attempts to send [`Action`][`Self::Action`]s
-    /// through the`Store`’s [`Reducer`][`crate::Reducer`] into a singe send.
-    /// Once `timeout` has elapsed with no further actions being attempted, a single
-    /// `Action` will be sent.
+    /// An effect that sends an [`Action`][`Effects::Action`] through the `Store`’s
+    /// [`Reducer`][`crate::Reducer`] if at least one `interval` of time has passed
+    /// since `previous` was sent. Otherwise, all subsequent actions but the last
+    /// are dropped until that time; which resets the countdown until the next
+    /// debounced action can be sent.
     ///
-    /// The `coalesce` function will automatically update the information
-    /// stored in `previous` as it runs. The `Task` coalesced by this call
+    /// The `throttle` function will automatically update the information
+    /// stored in `previous` as it runs. The `Task` throttled by this call
     /// will be the _previous_ task for the next call, if any.
-    fn coalesce(
+    fn throttle(
         &self,
         action: impl Into<Self::Action> + Clone + 'static,
         previous: &mut Option<Task>,
-        timeout: Duration,
+        interval: Interval,
     ) where
         Self::Action: 'static,
     {
         let scheduler = Dependency::<Timer>::new();
         let now = scheduler.now();
 
-        let when = previous
-            .take()
-            .and_then(|task| task.when)
-            .map(|previous| max(previous + timeout, now))
-            .unwrap_or_else(|| now + timeout);
+        let timeout = interval.duration();
 
-        let task = self.after(when - now, action);
+        let when = match previous.take().and_then(|task| task.when) {
+            Some(when) if when > now => when, // previous was not yet sent — replace it
+            Some(when) if when + timeout > now => when + timeout, // previous was sent recently
+            _ => match interval {
+                Interval::Leading(_) => now,
+                Interval::Trailing(_) => now + timeout,
+            },
+        };
+
+        let task = self.at(when, action);
         *previous = Some(task);
     }
 }
@@ -235,7 +249,7 @@ pub trait Scheduler: Effects {
 pub enum Interval {
     /// The first `Action` should be sent immediately.
     Leading(Duration),
-    /// The first `Action` should not be send until after the first `Interval` has passed.
+    /// The first `Action` should not be send until after the `Duration` has passed.
     Trailing(Duration),
 }
 
