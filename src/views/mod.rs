@@ -128,9 +128,8 @@ pub trait View: Sized {
     }
 
     #[doc(hidden)]
-    fn update_layout(&self, _size: Size, _bounds: Bounds) {
-        unreachable!() // see: layout.mod
-    }
+    #[inline(always)]
+    fn update_layout(&self, _size: Size, _bounds: Bounds) {}
 
     /// Causes a tuple of `View`s to cascade horizontally, rather than vertically.
     /// ## Note
@@ -141,14 +140,17 @@ pub trait View: Sized {
 }
 
 impl<T: View> View for Box<T> {
+    #[inline(always)]
     fn size(&self) -> Size {
         self.deref().size()
     }
 
+    #[inline(always)]
     fn event(&self, event: Event, offset: Point, bounds: Bounds) {
         self.deref().event(event, offset, bounds)
     }
 
+    #[inline(always)]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
         self.deref().draw(bounds, onto)
     }

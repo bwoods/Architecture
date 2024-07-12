@@ -164,19 +164,21 @@ Similar comparisons can be done down the rest of the iOS sizes.
 
 This is the default iOS size for Dynamic Type.
 
-| forTextStyle: | wght      | size | leading | difference |
-| :------------ | :-------- | :--: | :-----: | :--------- |
-| .largeTitle   | regular   | 34.0 |  41.0   | +1         |
-| .title1       | regular   | 28.0 |  34.0   | +1         |
-| .title2       | regular   | 22.0 |  28.0   | +1/+4      |
-| .title3       | regular   | 20.0 |  25.0   | +1         |
-| .headline     | semi-bold | 17.0 |  22.0   | +1         |
-| .body         | regular   | 17.0 |  22.0   | +1         |
-| .callout      | regular   | 16.0 |  21.0   | +1         |
-| .subheadline  | regular   | 15.0 |  20.0   | +1         |
-| .footnote     | regular   | 13.0 |  18.0   | +1/+2      |
-| .caption1     | regular   | 12.0 |  16.0   | +1/+3      |
-| .caption2     | regular   | 11.0 |  13.0   | —          |
+| forTextStyle:     | wght      | size | leading | difference |
+| :---------------- | :-------- | :--: | :-----: | :--------- |
+| .extraLargeTitle  | Bold      | 36.0 |         |            |
+| .extraLargeTitle2 | Bold      | 28.0 |         |            |
+| .largeTitle       | regular   | 34.0 |  41.0   | +1         |
+| .title1           | regular   | 28.0 |  34.0   | +1         |
+| .title2           | regular   | 22.0 |  28.0   | +1/+4      |
+| .title3           | regular   | 20.0 |  25.0   | +1         |
+| .headline         | semi-bold | 17.0 |  22.0   | +1         |
+| .body             | regular   | 17.0 |  22.0   | +1         |
+| .callout          | regular   | 16.0 |  21.0   | +1         |
+| .subheadline      | regular   | 15.0 |  20.0   | +1         |
+| .footnote         | regular   | 13.0 |  18.0   | +1/+2      |
+| .caption1         | regular   | 12.0 |  16.0   | +1/+3      |
+| .caption2         | regular   | 11.0 |  13.0   | —          |
 
 
 
@@ -254,7 +256,7 @@ This is the default iOS size for Dynamic Type.
 | Body     | large  |  16  |                 .body | .systemFont, .messageFont, .menuFont |
 |          | medium |  14  |              .callout | .controlContentFont                  |
 |          | small  |  12  |                       |                                      |
-| Label    | large  |  14  |             ,footnote |                                      |
+| Label    | large  |  14  |             .footnote |                                      |
 |          | medium |  12  |             .caption1 | .labelFont                           |
 |          | small  |  11  |             .caption2 |                                      |
 
