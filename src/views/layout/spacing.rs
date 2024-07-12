@@ -43,7 +43,7 @@ impl View for Spacer {
     #[inline(always)]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {}
 
-    #[inline]
+    #[inline(always)]
     fn needs_layout(&self) -> bool {
         self.0.get().is_none()
     }

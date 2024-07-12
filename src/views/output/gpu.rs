@@ -17,14 +17,15 @@ pub struct Output {
 
 impl Output {
     /// Creates an indexed-triangle data `Output`.
-    pub fn new(_transform: &Transform) -> Self {
-        // let scale = f32::min(transform.m11.abs(), transform.m21.abs());
-        // let tolerance = f32::max(scale, 0.000125);
-        let tolerance = 0.01;
-        let options = FillOptions::non_zero().with_tolerance(tolerance);
-
+    pub fn new(rounding: f32) -> Self {
         let builder = Self::builder();
         let storage = Storage::default();
+
+        let options = FillOptions::non_zero().with_tolerance(if rounding > 0.0 {
+            rounding
+        } else {
+            FillOptions::DEFAULT_TOLERANCE
+        });
 
         Self {
             storage,
@@ -110,9 +111,9 @@ struct Storage {
 }
 
 impl Storage {
-    #[warn(clippy::type_complexity)]
+    #[allow(clippy::type_complexity)]
     pub fn into_inner(self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
-        // eprintln!("{} vertices", self.vertices.len());
+        eprintln!("{} vertices", self.vertices.len());
         (self.vertices, self.indices)
     }
 }

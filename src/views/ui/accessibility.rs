@@ -25,7 +25,7 @@ pub enum Scale {
 
 impl Default for Scale {
     fn default() -> Self {
-        if cfg!(ios) || cfg!(android) {
+        if cfg!(target_os = "ios") || cfg!(target_os = "android") {
             Scale::L
         } else {
             Scale::XXS

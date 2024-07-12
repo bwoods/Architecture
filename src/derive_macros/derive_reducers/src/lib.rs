@@ -12,7 +12,7 @@ mod structs;
 ///
 ///
 ///
-/// ### the trait bound `winit::State: composable::RecursiveReducer` is not satisfied
+/// ### the trait bound `xxxx::State: composable::RecursiveReducer` is not satisfied
 ///
 /// ```sh
 /// | #[derive(RecursiveReducer)]
@@ -55,7 +55,7 @@ mod structs;
 ///
 /// where `…`  is replaced with the type of one of the struct's fields in the error message.
 ///
-/// **Cause**: … `#[not_a_reducer]`
+/// **Cause**: A `#[reducer(skip)]` attribute is missing.
 ///
 /// <br />
 ///

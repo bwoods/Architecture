@@ -23,12 +23,14 @@ impl Text<'_> {
     }
 
     /// Ascender height of the Text’s font.
+    #[inline]
     pub fn ascender(&self) -> f32 {
         self.font.ascender() * self.scale
     }
 
     /// Descender height of the Text’s font.  
     /// Note that this is a negative value.
+    #[inline]
     pub fn descender(&self) -> f32 {
         self.font.descender() * self.scale
     }
@@ -47,6 +49,7 @@ impl Text<'_> {
 }
 
 impl View for Text<'_> {
+    #[inline(always)]
     fn size(&self) -> Size {
         (self.width, self.height()).into()
     }

@@ -61,7 +61,7 @@ As for *this crate* specifically. Features include:
 
 - **Fast**
 
-  `Store::send` takes less than 50 nanoseconds.  
+  `Store::send` takes less than 20 nanoseconds.  
   `Effects` are 5–10× faster.
 
 - **Reliable**
