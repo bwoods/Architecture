@@ -2,26 +2,25 @@
 
 use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::iter::from_fn;
 use std::marker::PhantomData as Marker;
 use std::rc::Weak;
 use std::time::{Duration, Instant};
 
-use futures::stream::unfold;
-use futures::{future, stream::once, Future, Stream, StreamExt};
+use futures::stream::{iter, once};
+use futures::{future, Future, Stream, StreamExt};
 
-use scheduler::{Delay, Scheduler as Timer};
+use scheduler::Delay;
 pub(crate) use task::Executor;
 #[doc(hidden)]
 pub use task::Task;
-
-use crate::dependencies::Dependency;
 
 mod scheduler;
 mod task;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
 ///
-/// `Effects` are also [`Scheduler`]s; able to apply modifiers to when (and how often) `Action`s. are sent.
+/// `Effects` are also [`Scheduler`]s — able to apply modifiers to when (and how often) `Action`s. are sent.
 ///
 /// See [the module level documentation](self) for more.
 pub trait Effects: Clone {
@@ -60,7 +59,7 @@ pub trait Effects: Clone {
         self.task(stream).detach()
     }
 
-    /// Scopes the `Effects` to one that sends child actions.
+    /// Scopes the `Effects` down to one that sends child actions.
     ///
     /// For example, the inner loop of the [`RecursiveReducer`] macro is,
     /// effectively, just calling
@@ -82,91 +81,60 @@ pub trait Effects: Clone {
     }
 }
 
-pub struct Scoped<Parent, Child>(Parent, Marker<Child>);
-
-// Using `#[derive(Clone)]` adds a `Clone` requirement to all `Action`s
-impl<Parent: Clone, Child> Clone for Scoped<Parent, Child> {
-    #[inline(always)]
-    fn clone(&self) -> Self {
-        Scoped(self.0.clone(), Marker)
-    }
-}
-
-impl<Parent, Child> Effects for Scoped<Parent, Child>
-where
-    Parent: Effects,
-    <Parent as Effects>::Action: From<Child>,
-{
-    type Action = Child;
-
-    #[inline(always)]
-    fn send(&self, action: impl Into<Self::Action>) {
-        self.0.send(action.into());
-    }
-
-    #[inline(always)]
-    fn task<S: Stream<Item = Child> + 'static>(&self, stream: S) -> Task {
-        self.0.task(stream.map(|action| action.into()))
-    }
-}
-
-#[doc(hidden)]
-// `Parent` for `Effects::scope` tuples
-impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
-    type Action = Action;
-
-    #[inline(always)]
-    fn send(&self, action: impl Into<Self::Action>) {
-        if let Some(actions) = self.upgrade() {
-            actions.borrow_mut().push_back(action.into())
-        }
-    }
-
-    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
-        Task::new(stream)
-    }
-}
-
-#[doc(hidden)]
-impl<Parent: Effects, Child> Scheduler for Scoped<Parent, Child> where
-    <Parent as Effects>::Action: From<Child>
-{
-}
-
-#[doc(hidden)]
-impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {}
-
-/// `Effects` are also [`Scheduler`]s; able to apply modifiers to when (and how often) `Action`s. are sent.
+/// [`Effects`] are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s. are sent.
 pub trait Scheduler: Effects {
+    #[doc(hidden)]
+    fn schedule(
+        &self,
+        action: Self::Action,
+        after: impl IntoIterator<Item = Delay> + 'static,
+    ) -> Task
+    where
+        Self::Action: Clone + 'static;
+
+    #[doc(hidden)]
+    #[inline(always)]
+    fn now(&self) -> Instant {
+        Instant::now()
+    }
     /// Sends the `Action` after `duration`.
-    fn after(&self, duration: Duration, action: impl Into<Self::Action> + Clone + 'static) -> Task {
-        self.task(Delay::duration(duration).map(move |_| action.clone().into()))
+    #[track_caller]
+    fn after(&self, duration: Duration, action: Self::Action) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        let instant = self.now() + duration;
+        self.schedule(action.into(), [Delay::new(instant)])
     }
 
-    fn at(&self, instant: Instant, action: impl Into<Self::Action> + Clone + 'static) -> Task {
-        self.task(Delay::instant(instant).map(move |_| action.clone().into()))
+    /// Sends the `Action` at `instant`.
+    fn at(&self, instant: Instant, action: Self::Action) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        self.schedule(action.into(), [Delay::new(instant)])
     }
 
     /// Sends the `Action` every `interval`.
-    fn every(&self, interval: Interval, action: impl Into<Self::Action> + Clone + 'static) -> Task {
-        let (n, duration) = match interval {
+    fn every(&self, interval: Interval, action: Self::Action) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        let (mut n, duration) = match interval {
             Interval::Leading(duration) => (0, duration), // 0 × delay => no initial delay
             Interval::Trailing(duration) => (1, duration),
         };
 
-        let scheduler = Dependency::<Timer>::new();
-        let start = scheduler.now();
-        drop(scheduler);
-
-        self.task(unfold(n, move |n| {
-            let action = action.clone();
-
-            async move {
+        let start = self.now();
+        self.schedule(
+            action.into(),
+            from_fn(move || {
                 let instant = start.checked_add(duration.checked_mul(n)?)?;
-                Delay::instant(instant).await;
-                Some((action.clone().into(), n.checked_add(1)?))
-            }
-        }))
+                n = n.checked_add(1)?;
+
+                Some(Delay::new(instant))
+            }),
+        )
     }
 
     /// An effect that coalesces repeated attempts to send [`Action`][`Effects::Action`]s
@@ -177,21 +145,16 @@ pub trait Scheduler: Effects {
     /// The `debounce` function will automatically update the information
     /// stored in `previous` as it runs. The `Task` debounced by this call
     /// will be the _previous_ task for the next call, if any.
-    fn debounce(
-        &self,
-        action: impl Into<Self::Action> + Clone + 'static,
-        previous: &mut Option<Task>,
-        interval: Interval,
-    ) where
-        Self::Action: 'static,
+    fn debounce(&self, action: Self::Action, previous: &mut Option<Task>, interval: Interval)
+    where
+        Self::Action: Clone + 'static,
     {
         let task = match interval {
             Interval::Trailing(timeout) => self.after(timeout, action),
             Interval::Leading(timeout) => match previous.as_ref().and_then(|task| task.when) {
                 None => self.after(Duration::ZERO, action),
                 Some(then) => {
-                    let scheduler = Dependency::<Timer>::new();
-                    let now = scheduler.now();
+                    let now = self.now();
 
                     let mut task = if then + timeout >= now {
                         self.after(Duration::ZERO, action)
@@ -217,17 +180,11 @@ pub trait Scheduler: Effects {
     /// The `throttle` function will automatically update the information
     /// stored in `previous` as it runs. The `Task` throttled by this call
     /// will be the _previous_ task for the next call, if any.
-    fn throttle(
-        &self,
-        action: impl Into<Self::Action> + Clone + 'static,
-        previous: &mut Option<Task>,
-        interval: Interval,
-    ) where
-        Self::Action: 'static,
+    fn throttle(&self, action: Self::Action, previous: &mut Option<Task>, interval: Interval)
+    where
+        Self::Action: Clone + 'static,
     {
-        let scheduler = Dependency::<Timer>::new();
-        let now = scheduler.now();
-
+        let now = self.now();
         let timeout = interval.duration();
 
         let when = match previous.take().and_then(|task| task.when) {
@@ -259,5 +216,91 @@ impl Interval {
             Interval::Leading(duration) => *duration,
             Interval::Trailing(duration) => *duration,
         }
+    }
+}
+
+/// An `Effects` that scopes its `Action`s to one that sends child actions.
+///
+/// This `struct` is created by the [`scope`] method on [`Effects`]. See its
+/// documentation for more.
+///
+/// [`scope`]: Effects::scope
+pub struct Scoped<Parent, Child>(Parent, Marker<Child>);
+
+// Using `#[derive(Clone)]` adds a `Clone` requirement to all `Action`s
+impl<Parent: Clone, Child> Clone for Scoped<Parent, Child> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        Scoped(self.0.clone(), Marker)
+    }
+}
+
+impl<Parent, Child> Effects for Scoped<Parent, Child>
+where
+    Parent: Effects,
+    <Parent as Effects>::Action: From<Child>,
+{
+    type Action = Child;
+
+    #[inline(always)]
+    fn send(&self, action: impl Into<Self::Action>) {
+        self.0.send(action.into());
+    }
+
+    #[inline(always)]
+    fn task<S: Stream<Item = Child> + 'static>(&self, stream: S) -> Task {
+        self.0.task(stream.map(|action| action.into()))
+    }
+}
+
+#[doc(hidden)]
+impl<Parent, Child> Scheduler for Scoped<Parent, Child>
+where
+    Parent: Scheduler,
+    <Parent as Effects>::Action: From<Child> + Clone + 'static,
+{
+    #[inline(always)]
+    fn schedule(
+        &self,
+        action: Self::Action,
+        after: impl IntoIterator<Item = Delay> + 'static,
+    ) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        self.0.schedule(action.into(), after)
+    }
+}
+
+#[doc(hidden)]
+// `Parent` for `Effects::scope` tuples
+impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
+    type Action = Action;
+
+    fn send(&self, action: impl Into<Self::Action>) {
+        if let Some(actions) = self.upgrade() {
+            actions.borrow_mut().push_back(action.into())
+        }
+    }
+
+    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
+        Task::new(stream)
+    }
+}
+
+#[doc(hidden)]
+impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {
+    fn schedule(&self, action: Action, after: impl IntoIterator<Item = Delay> + 'static) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        self.task(iter(after).then(move |delay| {
+            let action = action.clone();
+
+            async move {
+                delay.await;
+                action.clone().into()
+            }
+        }))
     }
 }
