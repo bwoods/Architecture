@@ -113,7 +113,7 @@ pub fn build() -> Result<(Menu, EventLoop<Action>), EventLoopError> {
     let proxy = event_loop.create_proxy();
 
     Builder::new()
-        .name("menu".into())
+        .name(std::any::type_name::<MenuBar>().into())
         .spawn(move || {
             while let Ok(event) = MenuEvent::receiver().recv() {
                 let action = match event.id {

@@ -1,10 +1,12 @@
-use composable::dependencies::{with_dependency, Dependency};
-use composable::views::ui::font::body;
-use composable::views::ui::{spacer, spacing, Inter};
-use composable::views::{Transform, View};
-use composable::{Effects, From, Reducer, Task, TryInto};
-
 use std::time::Duration;
+
+use composable::dependencies::{with_dependency, Dependency};
+use composable::effects::Interval;
+use composable::views::gpu::Output;
+use composable::views::ui::font::{body, label, title};
+use composable::views::ui::{spacer, spacing, Inter};
+use composable::views::View;
+use composable::{Effects, From, Reducer, Task, TryInto};
 
 use crate::{wgpu, window};
 
@@ -16,7 +18,6 @@ pub struct State {
     proxy: window::EventLoopProxy,
 
     resizing: Option<Task>,
-
     header: header::State,
 }
 
@@ -76,16 +77,21 @@ impl State {
     pub fn view(&self, effects: impl Effects<Action>) -> impl View {
         let black = [0, 0, 0, 0xff];
 
-        let medium = Dependency::<Inter<body::M>>::static_ref();
-        let small = Dependency::<Inter<body::S>>::static_ref();
+        let title = Dependency::<Inter<title::L>>::static_ref();
+        let body = Dependency::<Inter<body::L>>::static_ref();
+        let label = Dependency::<Inter<label::L>>::static_ref();
 
-        let body = medium.text(black, "This space intentionally left blank.");
-        let caption = small.text(black, "except for this, I mean…");
+        let top = title.text(black, "This space intentionally left blank.");
+        let right = body.text(black, "except for this bit on the right…");
+        let bottom = label.text(black, "except for this bit on the bottom…");
 
         (
             self.header.view(effects.scope()),
-            (body, spacer::fill(), caption)
-                // .across()
+            (
+                (top, spacer::fill(), right).across(),
+                spacer::fill(),
+                bottom,
+            )
                 .padding_all(spacing::S),
         )
     }
