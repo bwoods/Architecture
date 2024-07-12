@@ -47,8 +47,6 @@ pub fn build(event_loop: &ActiveEventLoop) -> Window {
     #[cfg(target_os = "macos")]
     set_toolbar_thickness(&window, ToolbarThickness::Medium);
 
-    // TBD: menu
-
     window
 }
 

@@ -49,7 +49,8 @@ impl Surface<'_> {
         let capabilities = surface.get_capabilities(&adapter);
 
         let format = [
-            wgpu::TextureFormat::Bgra8UnormSrgb, // floats are needed for MSAA (apparently)
+            wgpu::TextureFormat::Bgra8UnormSrgb,
+            wgpu::TextureFormat::Rgba8UnormSrgb,
             wgpu::TextureFormat::Rgba32Float,
         ]
         .into_iter()
