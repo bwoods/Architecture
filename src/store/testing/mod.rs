@@ -2,8 +2,18 @@ use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
+use futures::executor::LocalPool;
+use futures::Stream;
+
+use clock::TestClock;
+
+use crate::effects::{Delay, Effects, Queue, Scheduler};
 use crate::reducer::Reducer;
+use crate::Task;
+
+mod clock;
 
 #[doc = include_str!("README.md")]
 pub struct TestStore<State: Reducer>
@@ -11,7 +21,35 @@ where
     <State as Reducer>::Action: Debug,
 {
     state: Option<State>, // `Option` so that `into_inner` does not break `Drop`
-    effects: Rc<RefCell<VecDeque<<State as Reducer>::Action>>>,
+    inner: Rc<RefCell<Inner<<State as Reducer>::Action>>>,
+}
+
+impl<State: Reducer> Default for TestStore<State>
+where
+    State: Default,
+    <State as Reducer>::Action: Debug,
+{
+    fn default() -> Self {
+        Self::new(|| State::default())
+    }
+}
+
+impl<State: Reducer> Drop for TestStore<State>
+where
+    <State as Reducer>::Action: Debug,
+{
+    #[track_caller]
+    fn drop(&mut self) {
+        assert!(
+            self.inner.borrow().effects.is_empty(),
+            "one or more extra actions were not tested for: {:#?}",
+            self.inner
+                .borrow_mut()
+                .effects
+                .drain(..)
+                .collect::<Vec<_>>()
+        );
+    }
 }
 
 impl<State: Reducer> TestStore<State>
@@ -22,7 +60,7 @@ where
     pub fn with_initial(state: State) -> Self {
         Self {
             state: Some(state),
-            effects: Rc::new(RefCell::new(VecDeque::new())),
+            inner: Default::default(),
         }
     }
 
@@ -46,15 +84,19 @@ where
         assert(expected.as_mut().unwrap());
 
         assert!(
-            self.effects.borrow().is_empty(),
+            self.inner.borrow().effects.is_empty(),
             "an extra action was received: {:#?}",
-            self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
+            self.inner
+                .borrow_mut()
+                .effects
+                .drain(..)
+                .collect::<Vec<_>>()
         );
 
         self.state
             .as_mut()
             .unwrap()
-            .reduce(action, Rc::downgrade(&self.effects));
+            .reduce(action, self.inner.clone());
         assert_eq!(self.state, expected);
     }
 
@@ -70,8 +112,9 @@ where
         assert(expected.as_mut().unwrap());
 
         let received = self
-            .effects
+            .inner
             .borrow_mut()
+            .effects
             .pop_front()
             .expect("no action received");
         assert_eq!(received, action);
@@ -79,8 +122,21 @@ where
         self.state
             .as_mut()
             .unwrap()
-            .reduce(action, Rc::downgrade(&self.effects));
+            .reduce(action, self.inner.clone());
         assert_eq!(self.state, expected);
+    }
+
+    /// Waits until all scheduled tasks have completed.
+    ///
+    /// A timeout should be added to the unit test to ensure that it does not
+    /// wait forever if there are bugs in the asynchronous tasks.
+    ///
+    /// The ntest framework provides a [#[timeout]][timeout] attribute macro
+    /// for example.
+    ///
+    /// [timeout]: (https://docs.rs/ntest/latest/ntest/attr.timeout.html)
+    pub fn wait(&mut self) {
+        self.inner.borrow_mut().pool.run()
     }
 
     /// Consumes the `Store` and returns its current `state` value.
@@ -92,26 +148,72 @@ where
     }
 }
 
-impl<State: Reducer> Default for TestStore<State>
+/// Shared between [`TestStore`] and [`TestClock`]
+
+struct Inner<Action> {
+    effects: VecDeque<Action>,
+    queue: Queue<Instant, Action>,
+
+    pool: LocalPool,
+    now: Instant,
+}
+
+impl<Action> Effects for Rc<RefCell<Inner<Action>>>
 where
-    State: Default,
-    <State as Reducer>::Action: Debug,
+    Action: Debug + 'static,
 {
-    fn default() -> Self {
-        Self::new(|| State::default())
+    type Action = Action;
+
+    fn send(&self, action: impl Into<<Self as Effects>::Action>) {
+        self.borrow_mut().effects.push_back(action.into());
+    }
+
+    fn task<S: Stream<Item = <Self as Effects>::Action> + 'static>(&self, _stream: S) -> Task {
+        todo!()
     }
 }
 
-impl<State: Reducer> Drop for TestStore<State>
+impl<Action> Scheduler for Rc<RefCell<Inner<Action>>>
 where
-    <State as Reducer>::Action: Debug,
+    Action: Debug + 'static,
 {
-    #[track_caller]
-    fn drop(&mut self) {
-        assert!(
-            self.effects.borrow().is_empty(),
-            "one or more extra actions were not tested for: {:#?}",
-            self.effects.borrow_mut().drain(..).collect::<Vec<_>>()
-        );
+    type Action = Action;
+
+    fn now(&self) -> Instant {
+        self.borrow().now
+    }
+
+    fn schedule(
+        &self,
+        _action: Self::Action,
+        _after: impl IntoIterator<Item = Delay> + 'static,
+    ) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        todo!()
+    }
+}
+
+impl<Action> TestClock for Rc<RefCell<Inner<Action>>> {
+    fn advance(&self, duration: Duration) {
+        use std::ops::Deref;
+
+        let inner = &mut *self.deref().borrow_mut();
+        inner.now += duration;
+
+        let effects = &mut inner.effects;
+        effects.extend(inner.queue.drain_until(inner.now));
+    }
+}
+
+impl<Action> Default for Inner<Action> {
+    fn default() -> Self {
+        Self {
+            effects: Default::default(),
+            queue: Default::default(),
+            pool: Default::default(),
+            now: Instant::now().into(),
+        }
     }
 }

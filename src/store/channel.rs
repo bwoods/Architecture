@@ -128,12 +128,6 @@ impl<T> WeakSender<T> {
             .upgrade() //
             .map(|shared| Sender { shared })
     }
-
-    pub(crate) fn send(&self, value: T) {
-        if let Some(sender) = self.upgrade() {
-            sender.send(value);
-        }
-    }
 }
 
 pub struct WeakReceiver<T> {

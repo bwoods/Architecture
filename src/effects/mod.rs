@@ -8,13 +8,15 @@ use std::rc::Weak;
 use std::time::{Duration, Instant};
 
 use futures::stream::{iter, once};
-use futures::{future, Future, Stream, StreamExt};
+use futures::{Future, Stream, StreamExt};
 
-use scheduler::Delay;
+pub(crate) use delay::Delay;
+pub(crate) use scheduler::Queue;
 pub(crate) use task::Executor;
 #[doc(hidden)]
 pub use task::Task;
 
+mod delay;
 mod scheduler;
 mod task;
 
@@ -23,13 +25,13 @@ mod task;
 /// `Effects` are also [`Scheduler`]s — able to apply modifiers to when (and how often) `Action`s. are sent.
 ///
 /// See [the module level documentation](self) for more.
-pub trait Effects: Clone {
+pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     /// The `Action` type sent by this `Effects`.
     type Action;
 
     /// An effect that immediately sends an [`Action`][`Self::Action`] through
     /// the `Store`’s [`Reducer`][`crate::Reducer`].
-    fn send(&self, action: impl Into<Self::Action>);
+    fn send(&self, action: impl Into<<Self as Effects>::Action>);
 
     /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
     /// zero or more [`Action`][`Self::Action`]s back into the `Store`’s [`Reducer`][`crate::Reducer`]
@@ -38,16 +40,16 @@ pub trait Effects: Clone {
     /// Use this method if you need to ability to [`cancel`][Task::cancel] the task
     /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
     /// should be preferred.
-    fn task<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) -> Task;
+    fn task<S: Stream<Item = <Self as Effects>::Action> + 'static>(&self, stream: S) -> Task;
 
     /// An effect that runs a [`Future`][`std::future`] and, if it returns an
     /// [`Action`][`Self::Action`], sends it through the `Store`’s [`Reducer`][`crate::Reducer`].
-    #[inline]
-    fn future<F: Future<Output = Option<Self::Action>> + 'static>(&self, future: F)
+    #[inline(always)]
+    fn future<F: Future<Output = Option<<Self as Effects>::Action>> + 'static>(&self, future: F)
     where
-        Self::Action: 'static,
+        <Self as Effects>::Action: 'static,
     {
-        let stream = once(future).map(future::ready).filter_map(|option| option);
+        let stream = once(future).filter_map(|action| async move { action });
         self.task(stream).detach()
     }
 
@@ -55,7 +57,7 @@ pub trait Effects: Clone {
     /// and sends every [`Action`][`Self::Action`] it returns through the `Store`’s
     /// [`Reducer`][`crate::Reducer`].
     #[inline(always)]
-    fn stream<S: Stream<Item = Self::Action> + 'static>(&self, stream: S) {
+    fn stream<S: Stream<Item = <Self as Effects>::Action> + 'static>(&self, stream: S) {
         self.task(stream).detach()
     }
 
@@ -75,14 +77,22 @@ pub trait Effects: Clone {
     #[inline(always)]
     fn scope<ChildAction>(&self) -> Scoped<Self, ChildAction>
     where
-        Self::Action: From<ChildAction>,
+        <Self as Effects>::Action: From<ChildAction>,
     {
         Scoped(self.clone(), Marker)
     }
 }
 
 /// [`Effects`] are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s. are sent.
-pub trait Scheduler: Effects {
+pub trait Scheduler {
+    /// The `Action` sends scheduled by this `Scheduler`.
+    type Action;
+
+    #[doc(hidden)]
+    fn now(&self) -> Instant {
+        Instant::now()
+    }
+
     #[doc(hidden)]
     fn schedule(
         &self,
@@ -92,19 +102,13 @@ pub trait Scheduler: Effects {
     where
         Self::Action: Clone + 'static;
 
-    #[doc(hidden)]
-    #[inline(always)]
-    fn now(&self) -> Instant {
-        Instant::now()
-    }
     /// Sends the `Action` after `duration`.
-    #[track_caller]
     fn after(&self, duration: Duration, action: Self::Action) -> Task
     where
         Self::Action: Clone + 'static,
     {
         let instant = self.now() + duration;
-        self.schedule(action.into(), [Delay::new(instant)])
+        self.at(instant, action)
     }
 
     /// Sends the `Action` at `instant`.
@@ -112,7 +116,9 @@ pub trait Scheduler: Effects {
     where
         Self::Action: Clone + 'static,
     {
-        self.schedule(action.into(), [Delay::new(instant)])
+        let mut task = self.schedule(action.into(), [Delay::new(instant)]);
+        task.when = Some(instant);
+        task
     }
 
     /// Sends the `Action` every `interval`.
@@ -127,7 +133,7 @@ pub trait Scheduler: Effects {
 
         let start = self.now();
         self.schedule(
-            action.into(),
+            action,
             from_fn(move || {
                 let instant = start.checked_add(duration.checked_mul(n)?)?;
                 n = n.checked_add(1)?;
@@ -151,21 +157,19 @@ pub trait Scheduler: Effects {
     {
         let task = match interval {
             Interval::Trailing(timeout) => self.after(timeout, action),
-            Interval::Leading(timeout) => match previous.as_ref().and_then(|task| task.when) {
-                None => self.after(Duration::ZERO, action),
-                Some(then) => {
-                    let now = self.now();
+            Interval::Leading(timeout) => {
+                let now = self.now();
+                match previous.as_ref().and_then(|task| task.when).as_ref() {
+                    None => self.at(now, action),
+                    Some(then) => {
+                        if now <= *then + timeout {
+                            return; // A leading debounce DROPS subsequent actions within the interval
+                        }
 
-                    let mut task = if then + timeout >= now {
-                        self.after(Duration::ZERO, action)
-                    } else {
-                        return; // A leading debounce DROPS subsequent actions within the interval
-                    };
-
-                    task.when = Some(now);
-                    task
+                        self.at(now, action)
+                    }
                 }
-            },
+            }
         };
 
         *previous = Some(task);
@@ -238,12 +242,13 @@ impl<Parent: Clone, Child> Clone for Scoped<Parent, Child> {
 impl<Parent, Child> Effects for Scoped<Parent, Child>
 where
     Parent: Effects,
-    <Parent as Effects>::Action: From<Child>,
+    <Parent as Effects>::Action: Clone + From<Child> + 'static,
+    Child: 'static,
 {
     type Action = Child;
 
     #[inline(always)]
-    fn send(&self, action: impl Into<Self::Action>) {
+    fn send(&self, action: impl Into<<Self as Effects>::Action>) {
         self.0.send(action.into());
     }
 
@@ -256,9 +261,11 @@ where
 #[doc(hidden)]
 impl<Parent, Child> Scheduler for Scoped<Parent, Child>
 where
-    Parent: Scheduler,
+    Parent: Effects,
     <Parent as Effects>::Action: From<Child> + Clone + 'static,
 {
+    type Action = Child;
+
     #[inline(always)]
     fn schedule(
         &self,
@@ -277,7 +284,7 @@ where
 impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
-    fn send(&self, action: impl Into<Self::Action>) {
+    fn send(&self, action: impl Into<<Self as Effects>::Action>) {
         if let Some(actions) = self.upgrade() {
             actions.borrow_mut().push_back(action.into())
         }
@@ -290,7 +297,13 @@ impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
 
 #[doc(hidden)]
 impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {
-    fn schedule(&self, action: Action, after: impl IntoIterator<Item = Delay> + 'static) -> Task
+    type Action = Action;
+
+    fn schedule(
+        &self,
+        action: Action, //
+        after: impl IntoIterator<Item = Delay> + 'static,
+    ) -> Task
     where
         Self::Action: Clone + 'static,
     {

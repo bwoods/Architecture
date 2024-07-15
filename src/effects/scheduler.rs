@@ -1,76 +1,14 @@
 use std::cmp::Reverse;
 use std::collections::VecDeque;
-use std::future::Future;
 use std::mem::replace;
-use std::pin::Pin;
 use std::sync::{Arc, Mutex};
-use std::task::{Context, Poll, Waker};
 use std::thread::{park, park_timeout, Builder, JoinHandle};
 use std::time::Instant;
 
-use futures::Stream;
+use crate::dependencies::DependencyDefault;
+use crate::effects::delay::State;
 
-use crate::dependencies::{Dependency, DependencyDefault};
-
-pub(crate) enum State {
-    Instant(Instant),
-    Waiting(Waker),
-    Ready,
-    Done,
-}
-
-pub struct Delay(Arc<Mutex<State>>);
-
-impl Future for Delay {
-    type Output = ();
-
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.poll_next(cx).map(|_| ()) // Some(()) → ()
-    }
-}
-
-impl Stream for Delay {
-    type Item = ();
-
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let mut state = self.0.lock().unwrap_or_else(|err| err.into_inner());
-
-        match &mut *state {
-            State::Instant(instant) => {
-                let instant = *instant;
-                *state = State::Waiting(cx.waker().clone());
-                drop(state);
-
-                // Now that it has a Waker…
-                let scheduler = Dependency::<Scheduler>::new();
-                scheduler.add(instant, self.0.clone());
-
-                Poll::Pending
-            }
-            State::Waiting(waker) => {
-                waker.clone_from(cx.waker()); // update the waker if needed
-                Poll::Pending
-            }
-            State::Ready => {
-                *state = State::Done;
-                Poll::Ready(Some(()))
-            }
-            State::Done => Poll::Ready(None),
-        }
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (1, Some(1))
-    }
-}
-
-impl Delay {
-    pub fn new(instant: Instant) -> Self {
-        Delay(Arc::new(Mutex::new(State::Instant(instant))))
-    }
-}
-
-/// Shared between the `Scheduler` and its polling Thread (if any)
+/// Shared between the `Scheduler` and its polling Thread
 #[derive(Default)]
 struct Shared {
     queue: Queue<Instant, Arc<Mutex<State>>>,
@@ -111,7 +49,7 @@ impl Default for Scheduler {
 
                     match next {
                         None => park(),
-                        Some(when) => park_timeout(when - now),
+                        Some(when) => park_timeout(when.saturating_duration_since(now)),
                     }
                 }
             })
@@ -139,7 +77,7 @@ impl Scheduler {
     }
 }
 
-struct Queue<Key, Value> {
+pub(crate) struct Queue<Key, Value> {
     deque: VecDeque<(Reverse<Key>, Value)>,
 }
 
@@ -166,10 +104,10 @@ impl<Key: PartialOrd, Value> Queue<Key, Value> {
     }
 
     pub fn drain_until(&mut self, key: Key) -> impl Iterator<Item = Value> {
-        // without the use of `Reverse` for the keys `split_off` would return the wrong half
         let key = Reverse(key);
-
         let index = self.deque.partition_point(|x| x.0 < key);
+
+        // without the use of `Reverse` for the keys `split_off` would return the wrong half
         self.deque.split_off(index).into_iter().rev().map(|kv| kv.1)
     }
 }
