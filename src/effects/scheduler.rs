@@ -11,12 +11,34 @@ use crate::effects::delay::State;
 /// Shared between the `Scheduler` and its polling Thread
 #[derive(Default)]
 struct Shared {
-    queue: Queue<Instant, Arc<Mutex<State>>>,
+    pub(crate) queue: Queue<Instant, Arc<Mutex<State>>>,
+}
+
+impl Shared {
+    pub fn poll(now: Instant, shared: &Mutex<Shared>) -> Option<Instant> {
+        let mut shared = shared.lock().unwrap();
+        let delays = shared.queue.drain_until(now);
+        let next = shared.queue.peek_next();
+        drop(shared); // release the `Mutex` in case any of the delayed work wants the `Scheduler`
+
+        for delay in delays {
+            let mut state = delay.lock().unwrap();
+            let waiting = replace(&mut *state, State::Ready);
+            drop(state); // release the `Mutex` before the waker is called
+
+            match waiting {
+                State::Waiting(waker) => waker.wake(),
+                _ => unreachable!(),
+            }
+        }
+
+        next
+    }
 }
 
 pub(crate) struct Scheduler {
     shared: Arc<Mutex<Shared>>,
-    handle: JoinHandle<()>,
+    handle: Option<JoinHandle<()>>,
 }
 
 impl Default for Scheduler {
@@ -27,41 +49,40 @@ impl Default for Scheduler {
 
         let handle = Builder::new()
             .name(std::any::type_name::<Self>().into())
-            .spawn(move || {
-                loop {
-                    let now = Instant::now();
+            .spawn(move || loop {
+                let now = Instant::now();
+                let next = Shared::poll(now, &remote);
 
-                    let mut shared = remote.lock().unwrap();
-                    let delays = shared.queue.drain_until(now);
-                    let next = shared.queue.peek_next();
-                    drop(shared); // release the `Mutex` in case any of the delayed work wants the `Scheduler`
-
-                    for delay in delays {
-                        let mut state = delay.lock().unwrap();
-                        let waiting = replace(&mut *state, State::Ready);
-                        drop(state); // release the `Mutex` before the waker is called
-
-                        match waiting {
-                            State::Waiting(waker) => waker.wake(),
-                            _ => unreachable!(),
-                        }
-                    }
-
-                    match next {
-                        None => park(),
-                        Some(when) => park_timeout(when.saturating_duration_since(now)),
-                    }
+                match next {
+                    None => park(),
+                    Some(when) => park_timeout(when.saturating_duration_since(now)),
                 }
             })
             .expect("scheduler thread");
 
-        Self { shared, handle }
+        Self {
+            shared,
+            handle: Some(handle),
+        }
     }
 }
 
 impl DependencyDefault for Scheduler {}
 
 impl Scheduler {
+    pub(crate) fn new() -> Self {
+        let shared = Arc::new(Mutex::<Shared>::default());
+
+        Self {
+            shared,
+            handle: None,
+        }
+    }
+
+    pub(crate) fn poll(&self, now: Instant) -> Instant {
+        Shared::poll(now, &self.shared).unwrap_or(now)
+    }
+
     #[inline(never)]
     pub(crate) fn add(&self, new: Instant, state: Arc<Mutex<State>>) {
         let mut shared = self.shared.lock().unwrap();
@@ -69,9 +90,9 @@ impl Scheduler {
         shared.queue.insert(new, state);
         drop(shared);
 
-        match next {
-            None => self.handle.thread().unpark(), // no `unpark` is scheduled yet
-            Some(pending) if new < pending => self.handle.thread().unpark(),
+        match (&self.handle, next) {
+            (Some(handle), None) => handle.thread().unpark(), // no `unpark` is scheduled yet
+            (Some(handle), Some(pending)) if new < pending => handle.thread().unpark(),
             _ => {}
         }
     }

@@ -14,10 +14,22 @@ use crate::store::channel::WeakSender;
 ///
 /// [Local Async Executor]: https://maciej.codes/2022-06-09-local-async.html
 #[doc(hidden)]
+#[derive(Debug)]
 #[must_use = "dropping a Task cancels the underlying future"]
 pub struct Task {
     pub(crate) handle: Option<RemoteHandle<()>>,
     pub(crate) when: Option<std::time::Instant>,
+}
+
+/// Cloning a `Task` an empty `Task` but implementing `Clone` allows it to be
+/// used in states that use [`TestStore`]s for testing.
+impl Clone for Task {
+    fn clone(&self) -> Self {
+        Task {
+            handle: None,
+            when: None,
+        }
+    }
 }
 
 impl Task {

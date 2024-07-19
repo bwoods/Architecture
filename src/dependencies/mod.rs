@@ -2,7 +2,7 @@
 
 pub use values::{Dependency, DependencyDefault};
 
-mod guard;
+pub(crate) mod guard;
 mod refs;
 mod values;
 
