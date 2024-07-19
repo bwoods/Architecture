@@ -11,13 +11,12 @@ use futures::stream::{iter, once};
 use futures::{Future, Stream, StreamExt};
 
 pub(crate) use delay::Delay;
-pub(crate) use scheduler::Queue;
 pub(crate) use task::Executor;
 #[doc(hidden)]
 pub use task::Task;
 
 mod delay;
-mod scheduler;
+pub(crate) mod scheduler;
 mod task;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
@@ -302,12 +301,12 @@ impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {
     fn schedule(
         &self,
         action: Action, //
-        after: impl IntoIterator<Item = Delay> + 'static,
+        delays: impl IntoIterator<Item = Delay> + 'static,
     ) -> Task
     where
         Self::Action: Clone + 'static,
     {
-        self.task(iter(after).then(move |delay| {
+        self.task(iter(delays).then(move |delay| {
             let action = action.clone();
 
             async move {

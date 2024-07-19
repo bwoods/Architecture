@@ -7,9 +7,9 @@
 #[doc(no_inline)]
 pub use derive_macros::*;
 #[doc(inline)]
-pub use effects::Task;
+pub use effects::{Interval, Task};
 pub use reducer::Reducer;
-pub use store::{testing::TestStore, Store};
+pub use store::{testing::TestClock, testing::TestStore, Store};
 
 pub mod dependencies;
 /// Optional view feature.
