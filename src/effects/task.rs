@@ -21,17 +21,6 @@ pub struct Task {
     pub(crate) when: Option<std::time::Instant>,
 }
 
-/// Cloning a `Task` an empty `Task` but implementing `Clone` allows it to be
-/// used in states that use [`TestStore`]s for testing.
-impl Clone for Task {
-    fn clone(&self) -> Self {
-        Task {
-            handle: None,
-            when: None,
-        }
-    }
-}
-
 impl Task {
     /// Detaches the task; leaving its [`Future`][`std::future`] running in the background.
     pub fn detach(self) {
