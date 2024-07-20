@@ -7,7 +7,7 @@ use std::time::Duration;
 /// # use std::time::Duration;
 /// # use composable::*;
 /// #
-/// #[derive(Clone, Debug, Default)]
+/// #[derive(Debug, Default)]
 ///  struct State {
 ///      previous: Option<Task>,
 ///      n: usize,
@@ -19,6 +19,14 @@ use std::time::Duration;
 /// #     }
 /// # }
 /// #
+/// # impl Clone for State {
+/// #     fn clone(&self) -> Self {
+/// #         Self {
+/// #             previous: None,
+/// #             n: self.n
+/// #         }
+/// #     }
+/// # }
 /// #[derive(Clone, Debug, PartialEq)]
 /// enum Action {
 ///     Send,
