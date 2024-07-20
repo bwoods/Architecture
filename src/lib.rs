@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))] // show features flags in documentation
+#![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_code)]
 #![allow(missing_docs)]
 #![allow(dead_code)]
