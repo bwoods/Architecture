@@ -14,7 +14,7 @@ pub use store::{testing::TestClock, testing::TestStore, Store};
 
 pub mod dependencies;
 /// Optional view feature.
-#[cfg(all(feature = "unreleased", feature = "views"))]
+#[cfg(all(feature = "unstable", feature = "views"))]
 pub mod views;
 
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other
