@@ -86,12 +86,14 @@ composable = "x.y"
 
 ### Optional Features
 ****
-- `unreleased`: enable features that are still heavily under development. Unreleased features include:
+- `unstable`: enable **unreleased** features that are still heavily under development:[^semvar]
+  
   - `views`: immediate-mode user interface elements designed…  
     See [the module level documentation][views] for more.
+  
+  Note that changes to `unstable` code will never be considered a semver breaking change.
 
-  Note that changes to `unreleased`: code will **never** be considered a semver breaking change.
 
 
-
+[^semvar]: Renamed from `unreleased` to `unstable` for compatibility with [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks) 
 [^wc]: As counted with `tokei --exclude src/views/ --exclude examples --exclude benches`.

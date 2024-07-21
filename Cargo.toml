@@ -10,7 +10,7 @@ include = ["LICENSE-APACHE.md", "LICENSE-MIT.md"]
 
 [features]
 # Features (in development) that are not yet part of SemVer.
-unreleased = []
+unstable = []
 
 # Unreleased: View drawing and events.
 views = ["lyon", "svg", "rustybuzz", "ttf-parser"]
@@ -80,10 +80,10 @@ harness = false
 
 [[bench]]
 name = "font_parsing"
-required-features = ["unreleased", "default_ui"]
+required-features = ["unstable", "default_ui"]
 harness = false
 
 
 [[example]]
 name = "winit"
-required-features = ["unreleased", "default_ui"]
+required-features = ["unstable", "default_ui"]

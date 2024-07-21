@@ -13,8 +13,9 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Added
 
-- The `views` feature is gated behind a new `unreleased` feature flag. Development on `View`s may now continue without causing SemVar issues.  
-  Unreleased features **are not** considered when determining versioning.
+- The `views` feature is gated behind a new `unstable` feature flag. Development on `View`s may now continue without causing SemVar issues.  
+  Unstable features **are not** considered when determining versioning.
+- The `Scheduler` trait (on `Effects`) can now be used to 
 
 ### Removed
 
