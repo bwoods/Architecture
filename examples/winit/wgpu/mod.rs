@@ -40,6 +40,7 @@ impl Surface<'_> {
                     label: None,
                     required_features: wgpu::Features::empty(),
                     required_limits: Default::default(),
+                    memory_hints: Default::default(),
                 },
                 None,
             )
@@ -98,6 +99,7 @@ impl Surface<'_> {
                 ..Default::default()
             },
             multiview: None,
+            cache: None,
         });
 
         let config = surface
