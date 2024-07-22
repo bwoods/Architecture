@@ -42,7 +42,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 # Why use Composable?
 
-A composable architecture is based around
+A composable architecture is based around…
 
 > ### Note
 >
@@ -79,7 +79,7 @@ Furthermore, the optional `async` handling is done without dependence on a runti
 To use Composable, place the following line under the `[dependencies]` section in your `Cargo.toml`:
 
 ```toml
-composable = "x.y"
+composable = "0.6"
 ```
 
 

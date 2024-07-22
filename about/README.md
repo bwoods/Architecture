@@ -16,7 +16,7 @@
 As this crate has not been published yet, for now, we must explicitly set the baseline to compare the public interface to.
 
 ~~~sh
-cargo semver-checks --baseline-rev v0.6.0-pre || exit
+cargo semver-checks --baseline-rev v0.6.0 || exit
 ~~~
 
 If there are any [detected violations](https://github.com/obi1kenobi/cargo-semver-checks) of SemVar, the crate should not be published until the version number has been updated accordingly. Or if the change was accidental, the breakage should be fixed.
