@@ -6,7 +6,7 @@ pub struct TapGesture<V, E, A> {
     id: Id,
     view: V,
     action: A,
-    effects: E,
+    send: E,
 }
 
 impl<V, E, A> View for TapGesture<V, E, A>
@@ -29,7 +29,7 @@ where
                 offset,
                 Bounds::from_origin_and_size(bounds.min, self.size()),
             ) {
-                self.effects.send(self.action.clone())
+                self.send.action(self.action.clone())
             }
         }
     }

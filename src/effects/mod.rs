@@ -30,7 +30,8 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
 
     /// An effect that immediately sends an [`Action`][`Self::Action`] through
     /// the `Store`’s [`Reducer`][`crate::Reducer`].
-    fn send(&self, action: impl Into<<Self as Effects>::Action>);
+    #[doc(alias = "Effects::send")]
+    fn action(&self, action: impl Into<<Self as Effects>::Action>);
 
     /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]
     /// zero or more [`Action`][`Self::Action`]s back into the `Store`’s [`Reducer`][`crate::Reducer`]
@@ -115,7 +116,7 @@ pub trait Scheduler {
     where
         Self::Action: Clone + 'static,
     {
-        let mut task = self.schedule(action.into(), [Delay::new(instant)]);
+        let mut task = self.schedule(action, [Delay::new(instant)]);
         task.when = Some(instant);
         task
     }
@@ -247,8 +248,8 @@ where
     type Action = Child;
 
     #[inline(always)]
-    fn send(&self, action: impl Into<<Self as Effects>::Action>) {
-        self.0.send(action.into());
+    fn action(&self, action: impl Into<<Self as Effects>::Action>) {
+        self.0.action(action.into());
     }
 
     #[inline(always)]
@@ -283,7 +284,7 @@ where
 impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
-    fn send(&self, action: impl Into<<Self as Effects>::Action>) {
+    fn action(&self, action: impl Into<Action>) {
         if let Some(actions) = self.upgrade() {
             actions.borrow_mut().push_back(action.into())
         }
@@ -298,20 +299,16 @@ impl<Action: 'static> Effects for Weak<RefCell<VecDeque<Action>>> {
 impl<Action: 'static> Scheduler for Weak<RefCell<VecDeque<Action>>> {
     type Action = Action;
 
-    fn schedule(
-        &self,
-        action: Action, //
-        delays: impl IntoIterator<Item = Delay> + 'static,
-    ) -> Task
+    fn schedule(&self, action: Action, delays: impl IntoIterator<Item = Delay> + 'static) -> Task
     where
-        Self::Action: Clone + 'static,
+        Action: Clone + 'static,
     {
         self.task(iter(delays).then(move |delay| {
             let action = action.clone();
 
             async move {
                 delay.await;
-                action.clone().into()
+                action.clone()
             }
         }))
     }

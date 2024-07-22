@@ -22,21 +22,20 @@ impl Reducer for State {
     type Output = usize;
 
     #[inline(never)]
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+    fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
         use Action::*;
 
         match action {
             A => self.0 += std::hint::black_box(1),
             B => {
                 for _ in 0..std::hint::black_box(N) {
-                    effects.send(std::hint::black_box(A))
+                    send.action(std::hint::black_box(A))
                 }
             }
-            C => effects
-                .stream(stream::repeat(std::hint::black_box(A)).take(std::hint::black_box(N))),
+            C => send.stream(stream::repeat(std::hint::black_box(A)).take(std::hint::black_box(N))),
             D => {
                 for _ in 0..std::hint::black_box(N) {
-                    effects.future(future::ready(Some(std::hint::black_box(A))))
+                    send.future(future::ready(Some(std::hint::black_box(A))))
                 }
             }
         }

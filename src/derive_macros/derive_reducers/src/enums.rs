@@ -21,7 +21,7 @@ pub fn derive_macro(identifier: Ident, data: DataEnum) -> TokenStream {
             quote! {
                 #identifier::#name(state) => {
                     if let Ok(action) = action.clone().try_into() {
-                        composable::Reducer::reduce(state, action, effects.scope());
+                        composable::Reducer::reduce(state, action, send.scope());
                     }
                 }
             }
@@ -38,9 +38,9 @@ pub fn derive_macro(identifier: Ident, data: DataEnum) -> TokenStream {
             fn reduce(
                 &mut self,
                 action: Self::Action,
-                effects: impl composable::Effects<Self::Action>,
+                send: impl composable::Effects<Self::Action>,
             ) {
-                <Self as RecursiveReducer>::reduce(self, action.clone(), effects.clone());
+                <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
 
                 #[allow(unreachable_patterns)]
                 match self {

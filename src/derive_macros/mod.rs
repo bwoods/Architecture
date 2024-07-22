@@ -46,7 +46,7 @@
 //! Deciding which Domains need to be coordinated between, and thus should be siblings under a
 //! parent Domains, is the art of designing the application with an architecture like this one.
 //!
-//! Even though the application `struct` recursively contains the `State`s of all of it Features
+//! Even though the application `struct` recursively contains the `State`s of all of its Features
 //! it usually does not end up being very “tall.”
 //!
 //! See [Unidirectional Event Architecture][crate] for more.
@@ -64,7 +64,7 @@
 //!         type Action = Action;
 //!         type Output = Self;
 //!         
-//!         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!         fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
 //!             match action { /* … */ }
 //!         }
 //!     }
@@ -82,7 +82,7 @@
 //!         type Action = Action;
 //!         type Output = Self;
 //!
-//!         fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!         fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
 //!             match action { /* … */ }
 //!         }
 //!     }
@@ -110,7 +110,7 @@
 //! impl RecursiveReducer for State { // ⒌
 //!     type Action = Action;
 //!
-//!     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!     fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
 //!         match action {
 //!             Action::SomeAction => { /* … */ }
 //!             Action::SomeOtherAction => { /* … */ }
@@ -174,7 +174,7 @@
 //! #    impl Reducer for State {
 //! #        type Action = Action;
 //! #        type Output = Self;
-//! #        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {}
+//! #        fn reduce(&mut self, action: Action, send: impl Effects<Action>) {}
 //! #    }
 //! # }
 //! #
@@ -187,7 +187,7 @@
 //! #    impl Reducer for State {
 //! #        type Action = Action;
 //! #        type Output = Self;
-//! #        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {}
+//! #        fn reduce(&mut self, action: Action, send: impl Effects<Action>) {}
 //! #    }
 //! # }
 //! # use composable::*;
@@ -209,7 +209,7 @@
 //! impl RecursiveReducer for State {
 //!     type Action = Action;
 //!
-//!     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+//!     fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
 //!         // logic independent of the user’s authentication
 //!     }
 //! }
@@ -251,5 +251,5 @@ pub trait RecursiveReducer {
 
     /// This `reduce` should perform any actions that are needed _before_ the macro recurses
     /// into the other reducers.
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>);
+    fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>);
 }

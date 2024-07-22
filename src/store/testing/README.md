@@ -1,8 +1,6 @@
 A state container for the application testing.
 
-
-
-## Example 
+## Example
 
 Here is the second [`Reducer`] example being tested with a [`TestStore`].
 
@@ -26,18 +24,18 @@ impl Reducer for State {
     type Output = Self;
 
     // This reducer ensures the value is always an even number
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+    fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
         match action {
             Increment => {
                 self.n += 1;
                 if self.n % 2 == 1 {
-                    effects.send(Increment);
+                    send.action(Increment);
                 }
             }
             Decrement => {
                 self.n -= 1;
                 if self.n % 2 == 1 {
-                    effects.send(Decrement);
+                    send.action(Decrement);
                 }
             }
         }

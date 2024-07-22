@@ -1,8 +1,18 @@
 use std::time::Duration;
 
-/// When testing, it is important to have control over the (simulated) passage of time.
+/// By implementing the `TestClock` trait, [`TestStore`] can be used to test
+/// `Reducer`s that utilize [tasks], [futures], or [streams].
 ///
-/// …
+/// This [`debounce`] example exercises scheduling and task cancellation; all
+/// with deterministic control of over the (simulated) passage of time.
+///
+/// [`TestStore`]: `crate::TestStore`
+/// [`debounce`]: `crate::effects::Scheduler::debounce`
+///
+/// [tasks]: `crate::effects::Scheduler`
+/// [futures]: `crate::effects::Effects::future`
+/// [streams]: `crate::effects::Effects::stream`
+///
 /// ```rust
 /// # use std::time::Duration;
 /// # use composable::*;
@@ -39,10 +49,10 @@ use std::time::Duration;
 ///     type Action = Action;
 ///     type Output = Self;
 ///
-///     fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+///     fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
 ///         match action {
 ///             Send => {
-///                 effects.debounce(
+///                 send.debounce(
 ///                     Recv,
 ///                     &mut self.previous,
 ///                     Interval::Trailing(Duration::from_secs(4)),
