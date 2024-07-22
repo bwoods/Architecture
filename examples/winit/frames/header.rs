@@ -11,13 +11,13 @@ impl Reducer for State {
     type Action = Action;
     type Output = Self;
 
-    fn reduce(&mut self, action: Action, _effects: impl Effects<Action>) {
+    fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
         match action {}
     }
 }
 
 impl State {
-    pub fn view(&self, effects: impl Effects<Action>) -> impl View {
+    pub fn view(&self, send: impl Effects<Action>) -> impl View {
         (
             Rectangle {
                 rgba: [246, 248, 250, 255],

@@ -33,12 +33,12 @@ impl Reducer for State {
     type Action = Action;
     type Output = Self;
 
-    fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+    fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
         match action {
             Action::Resize { width, height } => {
                 self.wgpu.resize(width, height);
 
-                effects.throttle(
+                send.throttle(
                     Action::Redraw,
                     &mut self.resizing,
                     Interval::Leading(Duration::from_secs_f32(1.0 / 100.0)),
@@ -46,7 +46,7 @@ impl Reducer for State {
             }
             Action::Redraw => with_dependency(self.wgpu.transform(), || {
                 let mut output = Output::new(8.0);
-                self.view(effects).draw(self.wgpu.bounds(), &mut output);
+                self.view(send).draw(self.wgpu.bounds(), &mut output);
 
                 let (vertices, indices) = output.into_inner();
                 self.wgpu.render(&vertices, &indices).ok();

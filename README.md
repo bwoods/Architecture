@@ -62,7 +62,7 @@ As for *this crate* specifically. Features include:
 - **Fast**
 
   `Store::send` takes less than 20 nanoseconds.  
-  `Effects` are 5–10× faster.
+  `Effects::action`s are 5–10× faster.
 
 - **Reliable**
 
@@ -86,14 +86,13 @@ composable = "x.y"
 
 ### Optional Features
 ****
-- `unstable`: enable **unreleased** features that are still heavily under development:[^semvar]
+- `unstable`: enable features that are still heavily under development. Unreleased features include:
   
-  - `views`: immediate-mode user interface elements designed…  
+  - `views`: immediate-mode user interface elements.  
     See [the module level documentation][views] for more.
   
-  Note that changes to `unstable` code will never be considered a semver breaking change.
+  Note that changes to `unstable` code will **never** be considered a semver breaking change.
 
 
 
-[^semvar]: Renamed from `unreleased` to `unstable` for compatibility with [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks) 
 [^wc]: As counted with `tokei --exclude src/views/ --exclude examples --exclude benches`.

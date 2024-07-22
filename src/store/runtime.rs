@@ -102,7 +102,7 @@ pub mod tests {
         type Action = Action;
         type Output = Self;
 
-        fn reduce(&mut self, action: Action, effects: impl Effects<Action>) {
+        fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
             use Action::*;
 
             match action {
@@ -111,10 +111,10 @@ pub mod tests {
                     self.characters.lock().unwrap().push(ch);
 
                     if ch == '1' {
-                        effects.send(Internal('A'));
-                        effects.send(Internal('B'));
-                        effects.send(Internal('C'));
-                        effects.send(Internal('D'));
+                        send.action(Internal('A'));
+                        send.action(Internal('B'));
+                        send.action(Internal('C'));
+                        send.action(Internal('D'));
                     }
                 }
             }
@@ -184,7 +184,7 @@ pub mod tests {
             type Action = Action;
             type Output = Self;
 
-            fn reduce(&mut self, _action: Action, _effects: impl Effects<Action>) {}
+            fn reduce(&mut self, _action: Action, _send: impl Effects<Action>) {}
         }
 
         let store = Store::<State>::default();

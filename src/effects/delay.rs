@@ -7,7 +7,7 @@ use std::time::Instant;
 use futures::Stream;
 
 use crate::dependencies::Dependency;
-use crate::effects::scheduler::Scheduler;
+use crate::effects::scheduler::Reactor;
 
 pub(crate) enum State {
     New(Instant),
@@ -43,7 +43,7 @@ impl Stream for Delay {
                 drop(state);
 
                 // Now that it has a Waker…
-                let scheduler = Dependency::<Scheduler>::new();
+                let scheduler = Dependency::<Reactor>::new();
                 scheduler.add(instant, self.0.clone());
 
                 Poll::Pending

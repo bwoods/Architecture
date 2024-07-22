@@ -36,12 +36,15 @@ impl Shared {
     }
 }
 
-pub(crate) struct Scheduler {
+/// A minimal [Reactor] that powers the `Delay` future/stream.
+///
+/// [Reactor]: https://rust-lang.github.io/async-book/08_ecosystem/00_chapter.html#async-runtimes
+pub struct Reactor {
     shared: Arc<Mutex<Shared>>,
     handle: Option<JoinHandle<()>>,
 }
 
-impl Default for Scheduler {
+impl Default for Reactor {
     #[inline(never)]
     fn default() -> Self {
         let shared = Arc::new(Mutex::<Shared>::default());
@@ -67,9 +70,9 @@ impl Default for Scheduler {
     }
 }
 
-impl DependencyDefault for Scheduler {}
+impl DependencyDefault for Reactor {}
 
-impl Scheduler {
+impl Reactor {
     pub(crate) fn new() -> Self {
         let shared = Arc::new(Mutex::<Shared>::default());
 

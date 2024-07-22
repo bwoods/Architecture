@@ -35,7 +35,7 @@ pub trait Reducer {
     ///     type Action = Action;
     ///     type Output = usize; // but the usize itself _is_
     ///
-    ///     fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) { /**/ }
+    ///     fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>) { /**/ }
     /// }
     ///
     /// impl From<State> for usize {
@@ -56,7 +56,7 @@ pub trait Reducer {
     /// Additional `Action`s that need to be performed as a side-effect of an `Action` should be
     /// [invoked][`crate::effects::Effects`] on `effects`.
     #[doc = include_str!("README.md")]
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>);
+    fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>);
 }
 
 impl<T: Reducer> Reducer for Box<T> {
@@ -64,8 +64,8 @@ impl<T: Reducer> Reducer for Box<T> {
 
     type Output = T::Output;
 
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
-        self.deref_mut().reduce(action, effects)
+    fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>) {
+        self.deref_mut().reduce(action, send)
     }
 }
 
@@ -74,9 +74,9 @@ impl<T: Reducer> Reducer for Option<T> {
 
     type Output = Option<T::Output>;
 
-    fn reduce(&mut self, action: Self::Action, effects: impl Effects<Self::Action>) {
+    fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>) {
         if let Some(state) = self {
-            state.reduce(action, effects)
+            state.reduce(action, send)
         }
     }
 }

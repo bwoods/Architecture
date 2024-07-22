@@ -12,8 +12,7 @@ use futures::{pin_mut, Stream, StreamExt};
 pub use clock::TestClock;
 
 use crate::dependencies::{guard::Guard, Dependency};
-use crate::effects::scheduler::Scheduler as Timer;
-use crate::effects::{Delay, Effects, Scheduler};
+use crate::effects::{scheduler::Reactor, Delay, Effects, Scheduler};
 use crate::reducer::Reducer;
 use crate::Task;
 
@@ -29,7 +28,7 @@ where
 
     // external polling
     inner: Rc<RefCell<Inner<<State as Reducer>::Action>>>,
-    scheduler: Guard<Timer>,
+    reactor: Guard<Reactor>,
 }
 
 impl<State: Reducer> Default for TestStore<State>
@@ -49,11 +48,11 @@ where
     #[track_caller]
     fn drop(&mut self) {
         assert!(
-            self.inner.borrow().effects.is_empty(),
+            self.inner.borrow().actions.is_empty(),
             "one or more extra actions were not tested for: {:#?}",
             self.inner
                 .borrow_mut()
-                .effects
+                .actions
                 .drain(..)
                 .collect::<Vec<_>>()
         );
@@ -70,7 +69,7 @@ where
         inner.now = now;
         drop(inner);
 
-        let timer = Dependency::<Timer>::new();
+        let timer = Dependency::<Reactor>::new();
 
         loop {
             self.pool.run_until_stalled();
@@ -103,7 +102,7 @@ where
         Self {
             state: Some(state),
             inner: Inner::new(spawner),
-            scheduler: Guard::new(Timer::new()),
+            reactor: Guard::new(Reactor::new()),
             pool,
         }
     }
@@ -119,11 +118,11 @@ where
         assert(expected.as_mut().unwrap());
 
         assert!(
-            self.inner.borrow().effects.is_empty(),
+            self.inner.borrow().actions.is_empty(),
             "an extra action was received: {:#?}",
             self.inner
                 .borrow_mut()
-                .effects
+                .actions
                 .drain(..)
                 .collect::<Vec<_>>()
         );
@@ -149,7 +148,7 @@ where
         let received = self
             .inner
             .borrow_mut()
-            .effects
+            .actions
             .pop_front()
             .expect("no action received");
         assert_eq!(received, action);
@@ -189,8 +188,7 @@ where
 }
 
 struct Inner<Action> {
-    // queue: Queue<Instant, Action>,
-    effects: VecDeque<Action>,
+    actions: VecDeque<Action>,
     spawner: LocalSpawner,
     now: Instant,
 }
@@ -201,11 +199,11 @@ where
 {
     type Action = Action;
 
-    fn send(&self, action: impl Into<<Self as Effects>::Action>) {
-        self.borrow_mut().effects.push_back(action.into());
+    fn action(&self, action: impl Into<<Self as Effects>::Action>) {
+        self.borrow_mut().actions.push_back(action.into());
     }
 
-    fn task<S: Stream<Item = <Self as Effects>::Action> + 'static>(&self, stream: S) -> Task {
+    fn task<S: Stream<Item = Action> + 'static>(&self, stream: S) -> Task {
         let effects = self.clone();
         let spawner = self.borrow().spawner.clone();
 
@@ -213,7 +211,7 @@ where
             .spawn_local_with_handle(async move {
                 pin_mut!(stream);
                 while let Some(action) = stream.next().await {
-                    effects.send(action);
+                    effects.action(action);
                 }
             })
             .ok();
@@ -246,7 +244,7 @@ where
 
             async move {
                 delay.await;
-                action.clone().into()
+                action.clone()
             }
         }))
     }
@@ -255,7 +253,7 @@ where
 impl<Action> Inner<Action> {
     fn new(spawner: LocalSpawner) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
-            effects: Default::default(),
+            actions: Default::default(),
             now: Instant::now().into(),
             spawner,
         }))
