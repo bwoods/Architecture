@@ -2,3 +2,4 @@ target/
 Cargo.lock
 .idea
 src/views/output/snapshots/*.svg
+src/views/ui/font/typography/*.svg
