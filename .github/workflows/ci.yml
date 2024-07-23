@@ -1,0 +1,21 @@
+name: Continuous integration # https://github.com/dtolnay/rust-toolchain
+
+on:
+  pull_request:
+    branches: [ "develop" ]
+  push:
+    paths:
+      - ".github/workflows/ci.yml"
+      - "**/*.rs"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  tests:
+    name: cargo test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --all --all-features 

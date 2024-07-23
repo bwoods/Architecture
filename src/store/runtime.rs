@@ -168,7 +168,7 @@ pub mod tests {
 
     #[test]
     #[cfg(not(miri))]
-    #[timeout(1000)]
+    #[timeout(10000)]
     /// # Note
     /// If this test **timeout**s, the [`join`] in [`Store::into_inner`] is hanging
     ///
