@@ -11,7 +11,7 @@ This crate attempts to do the same to the Swift Composable Architecture itself b
 <h2>Learn More</h2>
 <p>The Composable Architecture was designed over the course of many episodes on <a href='https://www.pointfree.co/'>Point•Free</a>, a video series exploring functional programming and the Swift language, hosted by Brandon Williams and Stephen Celis.</p>
 <p>You can watch all of the episodes <a href='https://www.pointfree.co/collections/composable-architecture'>here</a>, as well as a dedicated, multipart tour of the architecture from scratch: <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep100-a-tour-of-the-composable-architecture-part-1'>part 1</a>, <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep101-a-tour-of-the-composable-architecture-part-2'>part 2</a>, <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep102-a-tour-of-the-composable-architecture-part-3'>part 3</a> and <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep103-a-tour-of-the-composable-architecture-part-4'>part 4</a>.</p>
-<p><img src="https://d3rccdn33rt8ze.cloudfront.net/episodes/0069.jpeg" referrerpolicy="no-referrer"></p>
+<p><img src="https://raw.githubusercontent.com/bwoods/Architecture/develop/about/images/Brandon%20Williams%20and%20Stephen%20Celis.jpeg" referrerpolicy="no-referrer"></p>
 </blockquote>
 </details>
 

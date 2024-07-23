@@ -21,6 +21,10 @@ cargo semver-checks --baseline-rev v0.6.0 || exit
 
 If there are any [detected violations](https://github.com/obi1kenobi/cargo-semver-checks) of SemVar, the crate should not be published until the version number has been updated accordingly. Or if the change was accidental, the breakage should be fixed.
 
+> [!TIP]
+>
+> If the version number does need to be updated, remember to change it in the [top-level README](../README.md) as well.
+
 
 
 ## Generating the Documentation
