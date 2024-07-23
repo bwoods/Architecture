@@ -17,6 +17,9 @@ pub mod dependencies;
 #[cfg(all(feature = "unstable", feature = "views"))]
 pub mod views;
 
+#[path = "../about/mod.rs"]
+pub mod about;
+
 /// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other
 /// `Action`s.
 ///
