@@ -34,7 +34,7 @@ A fresh build of all of the crates documentation is performed; ensuring that no 
 ~~~sh
 # These steps should be done within the 'about' directory
 cd "$(git rev-parse --show-toplevel)/about" || exit
-rm -rf ../target/doc/
+echo ".lock" > .git/info/exclude # ignore the lock file
 ~~~
 
 The nightly version of **rustdoc** is used so that the unstable `feature(doc_auto_cfg)` can be used to [indicate feature-gated items in documentation](https://github.com/rust-random/rand/issues/986). Look for the `docsrs` flag in the crate source to see how it is used.
@@ -54,7 +54,7 @@ echo "<meta http-equiv='refresh' content='0; url=composable'>" \
 
 ### Pushing to the documentation branch
 
-Now that the documentation has been generated it must be push to the appropriate branch on GitHub.
+Now that the documentation has been generated it must be push to the [appropriate branch](https://github.com/bwoods/Architecture/tree/docs.rs) on GitHub.
 
 ~~~sh
 cd ../target/doc/

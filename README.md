@@ -79,7 +79,7 @@ Furthermore, the optional `async` handling is done without dependence on a runti
 To use Composable, place the following line under the `[dependencies]` section in your `Cargo.toml`:
 
 ```toml
-composable = "0.6"
+composable = { version = "0.6", git = "https://github.com/bwoods/Architecture.git" }
 ```
 
 
@@ -89,7 +89,7 @@ composable = "0.6"
 - `unstable`: enable features that are still heavily under development. Unreleased features include:
   
   - `views`: immediate-mode user interface elements.  
-    See [the module level documentation][views] for more.
+    See [the module level documentation](https://bwoods.github.io/Architecture/composable/views/index.html) for more.
   
   Note that changes to `unstable` code will **never** be considered a semver breaking change.
 
