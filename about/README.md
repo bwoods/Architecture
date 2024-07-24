@@ -23,7 +23,9 @@ If there are any [detected violations](https://github.com/obi1kenobi/cargo-semve
 
 > [!TIP]
 >
-> If the version number does need to be updated, remember to change it in the [top-level README](../README.md) as well.
+> - If the version number does need to be updated, remember to change it in the [top-level README](../README.md) as well.
+> - `cargo semver-checks` itself can be updated with `cargo install-update -a`.
+>   - Assuming `cargo install cargo-update` was installed.
 
 
 

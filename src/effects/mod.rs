@@ -28,9 +28,9 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     /// The `Action` type sent by this `Effects`.
     type Action;
 
-    /// An effect that immediately sends an [`Action`][`Self::Action`] through
+    /// An effect that sends an [`Action`][`Self::Action`] through
     /// the `Store`’s [`Reducer`][`crate::Reducer`].
-    #[doc(alias = "Effects::send")]
+    #[doc(alias = "send")]
     fn action(&self, action: impl Into<<Self as Effects>::Action>);
 
     /// A [`Task`] represents asynchronous work that will then [`send`][`crate::Store::send`]

@@ -193,6 +193,7 @@ struct Inner<Action> {
     now: Instant,
 }
 
+#[doc(hidden)]
 impl<Action> Effects for Rc<RefCell<Inner<Action>>>
 where
     Action: Debug + 'static,
