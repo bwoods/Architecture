@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"composable":[["impl&lt;T: <a class=\"trait\" href=\"composable/dependencies/trait.DependencyDefault.html\" title=\"trait composable::dependencies::DependencyDefault\">DependencyDefault</a>&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html\" title=\"trait core::convert::AsRef\">AsRef</a>&lt;T&gt; for <a class=\"struct\" href=\"composable/dependencies/struct.Dependency.html\" title=\"struct composable::dependencies::Dependency\">Dependency</a>&lt;T&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

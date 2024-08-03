@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Direction"],"struct":["Font","FontConfig","Glyphs","Language","Script"]};

@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"composable":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a> for <a class=\"enum\" href=\"composable/views/gesture/enum.Response.html\" title=\"enum composable::views::gesture::Response\">Response</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

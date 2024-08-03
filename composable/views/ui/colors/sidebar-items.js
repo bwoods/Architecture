@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["primary_background","primary_content","primary_shapes","quaternary_background","quaternary_content","quaternary_shapes","secondary_background","secondary_content","secondary_shapes","tertiary_background","tertiary_content","tertiary_shapes"],"mod":["gray"]};

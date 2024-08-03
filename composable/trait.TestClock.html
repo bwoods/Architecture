@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="By implementing the `TestClock` trait, `TestStore` can be used to test `Reducer`s that utilize tasks, futures, or streams."><title>TestClock in composable - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (c1a6199e9 2024-07-24)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable/index.html">composable</a><span class="version">0.6.0</span></h2></div><h2 class="location"><a href="#">TestClock</a></h2><div class="sidebar-elems"><section><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.advance">advance</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><h2><a href="index.html">In crate composable</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Trait <a href="index.html">composable</a>::<wbr><a class="trait" href="#">TestClock</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/composable/store/testing/clock.rs.html#85-87">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>pub trait TestClock {
+    // Required method
+    fn <a href="#tymethod.advance" class="fn">advance</a>(&amp;mut self, duration: <a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>);
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>By implementing the <code>TestClock</code> trait, <a href="struct.TestStore.html" title="struct composable::TestStore"><code>TestStore</code></a> can be used to test
+<code>Reducer</code>s that utilize <a href="effects/trait.Scheduler.html" title="trait composable::effects::Scheduler">tasks</a>, <a href="effects/trait.Effects.html#method.future" title="method composable::effects::Effects::future">futures</a>, or <a href="effects/trait.Effects.html#method.stream" title="method composable::effects::Effects::stream">streams</a>.</p>
+<p>This <a href="effects/trait.Scheduler.html#method.debounce" title="method composable::effects::Scheduler::debounce"><code>debounce</code></a> example exercises scheduling and task cancellation; all
+with deterministic control of over the (simulated) passage of time.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Debug, Default)]
+ </span><span class="kw">struct </span>State {
+     previous: <span class="prelude-ty">Option</span>&lt;Task&gt;,
+     n: usize,
+ }
+
+<span class="attr">#[derive(Clone, Debug, PartialEq)]
+</span><span class="kw">enum </span>Action {
+    Send,
+    Recv,
+}
+
+<span class="kw">use </span>Action::<span class="kw-2">*</span>;
+
+<span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+    <span class="kw">type </span>Output = <span class="self">Self</span>;
+
+    <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+        <span class="kw">match </span>action {
+            Send =&gt; {
+                send.debounce(
+                    Recv,
+                    <span class="kw-2">&amp;mut </span><span class="self">self</span>.previous,
+                    Interval::Trailing(Duration::from_secs(<span class="number">4</span>)),
+                );
+            }
+            Recv =&gt; {
+                <span class="self">self</span>.n += <span class="number">1</span>;
+            }
+        }
+    }
+}
+
+<span class="kw">let </span><span class="kw-2">mut </span>store = TestStore::&lt;State&gt;::default();
+<span class="kw">let </span>no_change: <span class="kw">fn</span>(<span class="kw-2">&amp;mut </span>State) = |State| {};
+
+store.send(Send, no_change);
+store.advance(Duration::from_secs(<span class="number">3</span>));
+
+store.send(Send, no_change);
+store.advance(Duration::from_secs(<span class="number">8</span>));
+store.recv(Recv, |state| state.n = <span class="number">1</span>);
+
+store.send(Send, no_change);
+store.advance(Duration::from_secs(<span class="number">1</span>));
+store.advance(Duration::from_secs(<span class="number">1</span>));
+store.advance(Duration::from_secs(<span class="number">1</span>));
+store.advance(Duration::from_secs(<span class="number">1</span>));
+store.recv(Recv, |state| state.n = <span class="number">2</span>);</code></pre></div>
+</div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><section id="tymethod.advance" class="method"><a class="src rightside" href="../src/composable/store/testing/clock.rs.html#86">source</a><h4 class="code-header">fn <a href="#tymethod.advance" class="fn">advance</a>(&amp;mut self, duration: <a class="struct" href="https://doc.rust-lang.org/nightly/core/time/struct.Duration.html" title="struct core::time::Duration">Duration</a>)</h4></section></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-TestClock-for-TestStore%3CState%3E" class="impl"><a class="src rightside" href="../src/composable/store/testing/mod.rs.html#62-83">source</a><a href="#impl-TestClock-for-TestStore%3CState%3E" class="anchor">§</a><h3 class="code-header">impl&lt;State: <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt; <a class="trait" href="trait.TestClock.html" title="trait composable::TestClock">TestClock</a> for <a class="struct" href="struct.TestStore.html" title="struct composable::TestStore">TestStore</a>&lt;State&gt;<div class="where">where
+    &lt;State as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>: <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a>,</div></h3></section></div><script src="../trait.impl/composable/store/testing/clock/trait.TestClock.js" async></script></section></div></main></body></html>

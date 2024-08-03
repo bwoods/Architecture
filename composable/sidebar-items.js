@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Interval"],"mod":["about","dependencies","derive_macros","effects","views"],"struct":["Store","Task","TestStore"],"trait":["Effects","Reducer","TestClock"]};

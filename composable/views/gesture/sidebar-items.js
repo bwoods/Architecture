@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Response"],"fn":["recognizer"],"struct":["Id","Values"],"type":["State"]};

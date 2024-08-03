@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A Composable Architecture"><title>composable - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (c1a6199e9 2024-07-24)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable/index.html">composable</a><span class="version">0.6.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#traits">Traits</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">composable</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/composable/lib.rs.html#1-43">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="a-composable-architecture"><a class="doc-anchor" href="#a-composable-architecture">§</a>A Composable Architecture</h2>
+<p>The Swift Composable Architecture library improves upon previous Redux-inspired patterns by leveraging the capabilities of the Swift language to achieve better <strong>Type Safety</strong>, <strong>Ergonomics</strong> and <strong>Performance</strong>.</p>
+<p>This crate attempts to do the same to the Swift Composable Architecture itself by further leveraging the capabilities of the Rust language and ecosystem.</p>
+<details>
+<summary><strong>What is the Swift Composable Architecture?</strong></summary>
+<blockquote>
+<p>The <a href='https://github.com/pointfreeco/swift-composable-architecture'>Composable Architecture</a> (TCA, for short) is a library for building applications in a consistent and understandable way, with composition, testing, and ergonomics in mind. It can be used in SwiftUI, UIKit, and more, and on any Apple platform (iOS, macOS, tvOS, and watchOS).</p>
+<h2>Learn More</h2>
+<p>The Composable Architecture was designed over the course of many episodes on <a href='https://www.pointfree.co/'>Point•Free</a>, a video series exploring functional programming and the Swift language, hosted by Brandon Williams and Stephen Celis.</p>
+<p>You can watch all of the episodes <a href='https://www.pointfree.co/collections/composable-architecture'>here</a>, as well as a dedicated, multipart tour of the architecture from scratch: <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep100-a-tour-of-the-composable-architecture-part-1'>part 1</a>, <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep101-a-tour-of-the-composable-architecture-part-2'>part 2</a>, <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep102-a-tour-of-the-composable-architecture-part-3'>part 3</a> and <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep103-a-tour-of-the-composable-architecture-part-4'>part 4</a>.</p>
+<p><img src="https://raw.githubusercontent.com/bwoods/Architecture/develop/about/images/Brandon%20Williams%20and%20Stephen%20Celis.jpeg" referrerpolicy="no-referrer"></p>
+</blockquote>
+</details>
+<p>The API has diverged to better reflect the different strengths (and weaknesses) of Rust and Swift, but the <a href="https://pointfreeco.github.io/swift-composable-architecture/main/documentation/composablearchitecture/">core ideals</a> are the same.</p>
+<ul>
+<li>
+<p><strong>State management</strong></p>
+<p>Using <code>State</code>s and <code>Reducer</code>s to manage Rust’s restrictions on <a href="https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability">Variables and Mutability</a>…</p>
+</li>
+<li>
+<p><strong>Composition</strong></p>
+</li>
+<li>
+<p><strong>Side effects</strong></p>
+</li>
+<li>
+<p><strong>Testing</strong></p>
+</li>
+<li>
+<p><strong>Ergonomics</strong></p>
+</li>
+</ul>
+<h3 id="license"><a class="doc-anchor" href="#license">§</a>License</h3>
+<p>Distributed under the terms of both the MIT license and the Apache License (Version 2.0)</p>
+<p>See <a href="LICENSE-APACHE.md">LICENSE-APACHE</a> and <a href="LICENSE-MIT.md">LICENSE-MIT</a> for details.</p>
+<h4 id="contribution"><a class="doc-anchor" href="#contribution">§</a>Contribution</h4>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.</p>
+<h2 id="why-use-composable"><a class="doc-anchor" href="#why-use-composable">§</a>Why use Composable?</h2>
+<p>A composable architecture is based around…</p>
+<blockquote>
+<h4 id="note"><a class="doc-anchor" href="#note">§</a>Note</h4>
+<p>If you have already used another unidirectional data flow architecture for application state management, the main take-away is that the State-Reducer pattern is a great fit to Rust’s restrictions on <a href="https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability">Variables and Mutability</a>:</p>
+<ul>
+<li>Rust requires mutable references to be unique</li>
+<li>State mutations may only happen within a Reducer</li>
+</ul>
+</blockquote>
+<p>As for <em>this crate</em> specifically. Features include:</p>
+<ul>
+<li>
+<p><strong>Small</strong></p>
+<p>The core functionality is under 2000 lines of code and has minimal dependancies.<sup id="fnref1"><a href="#fn1">1</a></sup></p>
+</li>
+<li>
+<p><strong>Fast</strong></p>
+<p><code>Store::send</code> takes less than 20 nanoseconds.<br />
+<code>Effects::action</code>s are 5–10× faster.</p>
+</li>
+<li>
+<p><strong>Reliable</strong></p>
+<p>No unsafe code.</p>
+</li>
+</ul>
+<p>Furthermore, the optional <code>async</code> handling is done without dependence on a runtime. A <code>Store</code> runs its <code>Reducer</code> entirely within a single thread. At the same time, <code>Effects</code> make it easy for an application to run code, concurrently or in parallel, that feeds its results back into the appropriate <code>Reducer</code>.</p>
+<h3 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h3>
+<p>To use Composable, place the following line under the <code>[dependencies]</code> section in your <code>Cargo.toml</code>:</p>
+<div class="example-wrap"><pre class="language-toml"><code>composable = { version = &quot;0.6&quot;, git = &quot;https://github.com/bwoods/Architecture.git&quot; }
+</code></pre></div><h4 id="optional-features"><a class="doc-anchor" href="#optional-features">§</a>Optional Features</h4>
+<hr />
+<ul>
+<li>
+<p><code>unstable</code>: enable features that are still heavily under development. Unreleased features include:</p>
+<ul>
+<li><code>views</code>: immediate-mode user interface elements.<br />
+See <a href="https://bwoods.github.io/Architecture/composable/views/index.html">the module level documentation</a> for more.</li>
+</ul>
+<p>Note that changes to <code>unstable</code> code will <strong>never</strong> be considered a semver breaking change.</p>
+</li>
+</ul>
+<div class="footnotes"><hr><ol><li id="fn1"><p>As counted with <code>tokei --exclude src/views/ --exclude examples --exclude benches</code>.&nbsp;<a href="#fnref1">↩</a></p></li></ol></div></div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><code>pub use <a class="mod" href="derive_macros/index.html" title="mod composable::derive_macros">derive_macros</a>::*;</code></div></li></ul><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="about/index.html" title="mod composable::about">about</a></div><div class="desc docblock-short"><strong>Getting Started</strong></div></li><li><div class="item-name"><a class="mod" href="dependencies/index.html" title="mod composable::dependencies">dependencies</a></div><div class="desc docblock-short">Ergonomic dependency handling.</div></li><li><div class="item-name"><a class="mod" href="derive_macros/index.html" title="mod composable::derive_macros">derive_macros</a></div><div class="desc docblock-short">Derive macros used to ease the creation of recursive reducers.</div></li><li><div class="item-name"><a class="mod" href="effects/index.html" title="mod composable::effects">effects</a></div><div class="desc docblock-short">Additional work to be done after performing an action.</div></li><li><div class="item-name"><a class="mod" href="views/index.html" title="mod composable::views">views</a><span class="stab portability" title="Available on crate features `unstable` and `views` only"><code>unstable</code> and <code>views</code></span></div><div class="desc docblock-short">Optional view feature.</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Store.html" title="struct composable::Store">Store</a></div><div class="desc docblock-short">The state container for the application.</div></li><li><div class="item-name"><a class="struct" href="struct.Task.html" title="struct composable::Task">Task</a></div><div class="desc docblock-short">Asynchronous work being performed by a <code>Store</code>.</div></li><li><div class="item-name"><a class="struct" href="struct.TestStore.html" title="struct composable::TestStore">TestStore</a></div><div class="desc docblock-short">A state container for the application testing.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.Interval.html" title="enum composable::Interval">Interval</a></div><div class="desc docblock-short">When a <a href="effects/trait.Scheduler.html" title="trait composable::effects::Scheduler"><code>Scheduler</code></a> uses a repeating interval, that interval can begin immediately, a <code>Leading</code>
+interval, or it may begin after the first delay, a <code>Trailing</code> interval.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a></div><div class="desc docblock-short"><code>Effects</code> are used within <code>Reducer</code>s to propagate <code>Action</code>s as side-effects of performing other
+<code>Action</code>s.</div></li><li><div class="item-name"><a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a></div><div class="desc docblock-short"><code>Reducer</code>s are responsible for updating a <code>Store</code>’s state in response to its <code>Action</code>s.</div></li><li><div class="item-name"><a class="trait" href="trait.TestClock.html" title="trait composable::TestClock">TestClock</a></div><div class="desc docblock-short">By implementing the <code>TestClock</code> trait, <a href="struct.TestStore.html" title="struct composable::TestStore"><code>TestStore</code></a> can be used to test
+<code>Reducer</code>s that utilize <a href="effects/trait.Scheduler.html" title="trait composable::effects::Scheduler">tasks</a>, <a href="effects/trait.Effects.html#method.future" title="method composable::effects::Effects::future">futures</a>, or <a href="effects/trait.Effects.html#method.stream" title="method composable::effects::Effects::stream">streams</a>.</div></li></ul></section></div></main></body></html>

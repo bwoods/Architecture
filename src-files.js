@@ -1,0 +1,4 @@
+var srcIndex = new Map(JSON.parse('[\
+["composable",["",[["about",[],["changelog.rs","mod.rs"]],["dependencies",[],["guard.rs","mod.rs","refs.rs","values.rs"]],["derive_macros",[],["mod.rs"]],["effects",[],["delay.rs","mod.rs","scheduler.rs","task.rs"]],["reducer",[],["mod.rs"]],["store",[["testing",[],["clock.rs","mod.rs"]]],["channel.rs","mod.rs","runtime.rs"]],["views",[["gesture",[],["mod.rs","recognizer.rs","tap.rs"]],["layout",[],["mod.rs","spacing.rs"]],["modifiers",[],["fixed.rs","mod.rs","offset.rs","padding.rs"]],["output",[],["gpu.rs","mod.rs","svg.rs"]],["shapes",[],["mod.rs","rounded.rs"]],["text",[],["font.rs","mod.rs"]],["ui",[["colors",[],["gray.rs","mod.rs","theme.rs"]],["font",[["typography",[],["mod.rs","scale.rs"]]],["mod.rs"]]],["accessibility.rs","mod.rs","spacer.rs"]]],["mod.rs"]]],["lib.rs"]]]\
+]'));
+createSrcSidebar();

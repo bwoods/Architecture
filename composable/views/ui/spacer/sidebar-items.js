@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["L","M","S","XL","XS","XXL","XXS","XXXL","default","empty","fill","fixed","height","width"],"mod":["spacing"]};

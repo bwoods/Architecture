@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Derive macros used to ease the creation of recursive reducers."><title>composable::derive_macros - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (c1a6199e9 2024-07-24)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../composable/index.html">composable</a><span class="version">0.6.0</span></h2></div><h2 class="location"><a href="#">Module derive_macros</a></h2><div class="sidebar-elems"><section><ul class="block"><li><a href="#reexports">Re-exports</a></li><li><a href="#traits">Traits</a></li><li><a href="#derives">Derive Macros</a></li></ul></section><h2><a href="../index.html">In crate composable</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../index.html">composable</a>::<wbr><a class="mod" href="#">derive_macros</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../../src/composable/derive_macros/mod.rs.html#1-255">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Derive macros used to ease the creation of recursive reducers.</p>
+<ul>
+<li><a href="derive.RecursiveReducer.html" title="derive composable::derive_macros::RecursiveReducer"><code>RecursiveReducer</code></a><br />
+<code>#[derive(RecursiveReducer)]</code> on a <code>enum</code> or <code>struct</code> that contains other <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a>
+types will derive a <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a> implementation for it.</li>
+<li><a href="#reexports"><code>TryInto</code></a><br />
+<code>#[derive(TryInto)]</code> on a <code>Action</code> whose variants contain another <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a>’s <code>Action</code>s
+allows an attempted conversion to…</li>
+<li><a href="#reexports"><code>From</code></a><br />
+<code>#[derive(TryInto)]</code> on a <code>Action</code> whose variants contain another <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a>’s <code>Action</code>s
+allows an attempted conversion from…</li>
+</ul>
+<p>These macros produce efficient implementations of the <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a>, <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html" title="trait core::convert::TryInto"><code>std::convert::TryInto</code></a>
+and <a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From"><code>std::convert::From</code></a> traits so that they do not have to be implemented manually.</p>
+<h6 id="automatic-derived-reducers"><a class="doc-anchor" href="#automatic-derived-reducers">§</a>Automatic Derived Reducers</h6>
+<p>Two other types are valid <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a>s whenever they contain a <a href="../trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a>.</p>
+<ul>
+<li><a href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option"><code>Option</code></a></li>
+<li><a href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box"><code>Box</code></a></li>
+</ul>
+<p>These do not require the <a href="derive.RecursiveReducer.html" title="derive composable::derive_macros::RecursiveReducer"><code>RecursiveReducer</code></a> and <a href="../trait.Reducer.html#foreign-impls" title="trait composable::Reducer">automatically apply</a>.</p>
+<h2 id="composite-reducers"><a class="doc-anchor" href="#composite-reducers">§</a>Composite Reducers</h2>
+<p>A <code>RecursiveReducer</code> <strong><code>struct</code></strong> represents a parent-child relationship between <code>Reducer</code>s.
+This is the most common use of <code>RecursiveReducer</code> in large applications and forms the core
+“Composability” of the Composable Architecture.</p>
+<p>The application is broken up into different <code>mod</code>ules representing the different Domains or
+Features of the application; each with its own <code>Action</code>s and <code>State</code>.</p>
+<p>These <code>Reducer</code>s are then collected into various composite <code>Reducer</code>s that contain and
+coordinate between them.</p>
+<p>Each composite <code>Reducer</code> is written with the knowledge of its own <code>Action</code>s and the <code>Action</code>s
+of its immediate children. The <code>Action</code>s of its parent are unknown to it and (by convention) it
+does not traffic in the <code>Action</code>s of its grandchildren.</p>
+<p>Deciding which Domains need to be coordinated between, and thus should be siblings under a
+parent Domains, is the art of designing the application with an architecture like this one.</p>
+<p>Even though the application <code>struct</code> recursively contains the <code>State</code>s of all of its Features
+it usually does not end up being very “tall.”</p>
+<p>See <a href="../index.html" title="mod composable">Unidirectional Event Architecture</a> for more.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">mod </span>A {
+    <span class="attr">#[derive(Default)]
+    </span><span class="kw">pub struct </span>State { <span class="comment">/* … */ </span>}
+
+    <span class="attr">#[derive(Clone)] </span><span class="comment">// ⒈
+    </span><span class="kw">pub enum </span>Action { <span class="comment">/* … */ </span>}
+
+    <span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+        <span class="kw">type </span>Action = Action;
+        <span class="kw">type </span>Output = <span class="self">Self</span>;
+         
+        <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+            <span class="kw">match </span>action { <span class="comment">/* … */ </span>}
+        }
+    }
+}
+
+<span class="kw">mod </span>B {
+    <span class="attr">#[derive(Default)]
+    </span><span class="kw">pub struct </span>State;
+
+    <span class="attr">#[derive(Clone)] </span><span class="comment">// ⒈
+    </span><span class="kw">pub enum </span>Action { <span class="comment">/* … */ </span>}
+
+    <span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+        <span class="kw">type </span>Action = Action;
+        <span class="kw">type </span>Output = <span class="self">Self</span>;
+
+        <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+            <span class="kw">match </span>action { <span class="comment">/* … */ </span>}
+        }
+    }
+}
+
+<span class="attr">#[derive(Default, RecursiveReducer)] </span><span class="comment">// ⒉
+</span><span class="kw">struct </span>State {
+    a: A::State,
+    b: B::State,
+}
+
+<span class="attr">#[derive(Clone, From, TryInto)] </span><span class="comment">// ⒊
+</span><span class="kw">enum </span>Action {
+    SomeAction, <span class="comment">// parent actions
+    </span>SomeOtherAction,
+
+    A(A::Action), <span class="comment">// ⒋
+    </span>B(B::Action),
+}
+
+<span class="kw">impl </span>RecursiveReducer <span class="kw">for </span>State { <span class="comment">// ⒌
+    </span><span class="kw">type </span>Action = Action;
+
+    <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+        <span class="kw">match </span>action {
+            Action::SomeAction =&gt; { <span class="comment">/* … */ </span>}
+            Action::SomeOtherAction =&gt; { <span class="comment">/* … */ </span>}
+
+            <span class="comment">// in this example, the parent reducer has
+            // no explicit handling of any child actions
+            </span><span class="kw">_ </span>=&gt; {}
+        }
+    }
+}
+</code></pre></div>
+<ol>
+<li>
+<p>Now that <code>Action</code>s are being passed to multiple <code>Reducers</code> they must be <code>Clone</code>.</p>
+</li>
+<li>
+<p>The <code>RecursiveReducer</code> derive macro constructs a recursive <code>Reducer</code> from the <code>struct</code>.</p>
+</li>
+<li>
+<p>The <code>From</code> and <code>TryInfo</code> derive macros ensure that conversions work, when they should,
+between parent and child <code>Action</code>s. These conversions utilize #4…</p>
+</li>
+<li>
+<p>The parent has one (and only one) <code>Action</code> for the <code>Action</code>s of each of its children.</p>
+</li>
+<li>
+<p>Finally, an implementation of the <code>RecursiveReducer</code> trait containing the parent’s <code>reduce</code>
+method. <code>RecursiveReducer::reduce</code> is run before the <code>Reducer::reduce</code> methods of its
+fields. Resulting in:</p>
+<ul>
+<li><code>self.reduce()</code>, then</li>
+<li><code>self.a.reduce()</code>, then</li>
+<li><code>self.b.reduce()</code>.</li>
+</ul>
+</li>
+</ol>
+<h4 id="ignoring-fields"><a class="doc-anchor" href="#ignoring-fields">§</a>Ignoring fields</h4>
+<p>Compound <code>Reducer</code>s often contain fields other than the child <code>Reducer</code>s. After all, it has
+its own <code>Reducer</code> and that <code>Reducer</code> may need its own state.</p>
+<p>The <code>RecursiveReducer</code> macro comes with an associated attribute that allows it to skip
+<code>struct</code> members that should not ne made part of the <code>Reducer</code> recursion.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(RecursiveReducer)]
+</span><span class="kw">struct </span>State {
+    a: A::State,
+    b: B::State,
+
+    <span class="attr">#[reducer(skip)]
+    </span>c: Vec&lt;u32&gt;,
+}</code></pre></div>
+<h2 id="alternate-reducers"><a class="doc-anchor" href="#alternate-reducers">§</a>Alternate Reducers</h2>
+<p>A <code>RecursiveReducer</code> <strong><code>enum</code></strong> represents a single state that is best
+represented by an enumeration a separate reducers.</p>
+<p><strong>Alternate <code>Reducer</code>s</strong> are less common than <strong>Composite <code>Reducer</code>s</strong> so a more concrete example may
+help…</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(RecursiveReducer)]
+</span><span class="kw">enum </span>State {
+    LoggedIn(authenticated::State),
+    LoggedOut(unauthenticated::State),
+}
+
+<span class="attr">#[derive(Clone, From, TryInto)]
+</span><span class="kw">enum </span>Action {
+    LoggedIn(authenticated::Action),
+    LoggedOut(unauthenticated::Action),
+}
+
+<span class="kw">impl </span>RecursiveReducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+
+    <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+        <span class="comment">// logic independent of the user’s authentication
+    </span>}
+}</code></pre></div>
+<p><code>authenticated::Action</code>s will only run when the state is <code>LoggedIn</code> and vice-versa..</p>
+<hr />
+<br />
+<p>Now, the <a href="#automatic-derived-reducers">automatic derive reducer</a> behavior of <a href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option"><code>Option</code></a> is easy to described.
+It behaves is as if it were:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(RecursiveReducer)]
+</span><span class="kw">enum </span><span class="prelude-ty">Option</span>&lt;T: Reducer&gt; {
+    <span class="attr">#[reducer(skip)]
+    </span><span class="prelude-val">None</span>,
+    <span class="prelude-val">Some</span>(T),
+}</code></pre></div>
+<p>Although, currently, the <code>RecursiveReducer</code> macro does not work with generic parameters on the
+type it is attempting to derive the <code>Reducer</code> trait for.</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name" id="reexport.From"><code>pub use derive_more::From;</code></div></li><li><div class="item-name" id="reexport.TryInto"><code>pub use derive_more::TryInto;</code></div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.RecursiveReducer.html" title="trait composable::derive_macros::RecursiveReducer">RecursiveReducer</a></div><div class="desc docblock-short">See the <a href="derive.RecursiveReducer.html" title="derive composable::derive_macros::RecursiveReducer"><code>RecursiveReducer</code></a> macro for example usage.</div></li></ul><h2 id="derives" class="section-header">Derive Macros<a href="#derives" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="derive" href="derive.RecursiveReducer.html" title="derive composable::derive_macros::RecursiveReducer">RecursiveReducer</a></div><div class="desc docblock-short">Compiler Errors</div></li></ul></section></div></main></body></html>

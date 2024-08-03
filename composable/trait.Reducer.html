@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`Reducer`s are responsible for updating a `Store`’s state in response to its `Action`s."><title>Reducer in composable - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (c1a6199e9 2024-07-24)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable/index.html">composable</a><span class="version">0.6.0</span></h2></div><h2 class="location"><a href="#">Reducer</a></h2><div class="sidebar-elems"><section><h3><a href="#required-associated-types">Required Associated Types</a></h3><ul class="block"><li><a href="#associatedtype.Action">Action</a></li><li><a href="#associatedtype.Output">Output</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.reduce">reduce</a></li></ul><h3><a href="#foreign-impls">Implementations on Foreign Types</a></h3><ul class="block"><li><a href="#impl-Reducer-for-Box%3CT%3E">Box&#60;T&#62;</a></li><li><a href="#impl-Reducer-for-Option%3CT%3E">Option&#60;T&#62;</a></li></ul><h3><a href="#object-safety">Object Safety</a></h3><h3><a href="#implementors">Implementors</a></h3></section><h2><a href="index.html">In crate composable</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Trait <a href="index.html">composable</a>::<wbr><a class="trait" href="#">Reducer</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/composable/reducer/mod.rs.html#6-60">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>pub trait Reducer {
+    type <a href="#associatedtype.Action" class="associatedtype">Action</a>;
+    type <a href="#associatedtype.Output" class="associatedtype">Output</a>;
+
+    // Required method
+    fn <a href="#tymethod.reduce" class="fn">reduce</a>(&amp;mut self, action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>, send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;);
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>Reducer</code>s are responsible for updating a <code>Store</code>’s state in response to its <code>Action</code>s.</p>
+</div></details><h2 id="required-associated-types" class="section-header">Required Associated Types<a href="#required-associated-types" class="anchor">§</a></h2><div class="methods"><details class="toggle" open><summary><section id="associatedtype.Action" class="method"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#8">source</a><h4 class="code-header">type <a href="#associatedtype.Action" class="associatedtype">Action</a></h4></section></summary><div class="docblock"><p>All of the possible actions that can be used to modify state.</p>
+</div></details><details class="toggle" open><summary><section id="associatedtype.Output" class="method"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#52">source</a><h4 class="code-header">type <a href="#associatedtype.Output" class="associatedtype">Output</a></h4></section></summary><div class="docblock"><p>Both unit tests and command line applications often need to return their <code>Store</code>’s final
+state. Therefore <code>Store</code>’s <a href="struct.Store.html#method.into_inner" title="method composable::Store::into_inner"><code>into_inner</code></a> method shuts down the <code>Store</code> and converts its
+<code>Reducer</code> into its <code>Output</code> type.</p>
+<p>Using a separate <code>Output</code> type, rather than returning the <code>Reducer</code> itself, allows the
+<code>Store</code>s to support <code>Reducer</code> types that are not <a href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send"><code>Send</code></a>.</p>
+<ul>
+<li><code>Reducer</code>s that do not need to support <a href="struct.Store.html#method.into_inner" title="method composable::Store::into_inner"><code>into_inner</code></a> should use declare
+<code>type Output = Self;</code> as it is a simple, recognizable default.</li>
+<li>A <code>Reducer</code> that <em>is</em> <code>Send</code> can also default to <code>type Output = Self;</code>.</li>
+<li>Otherwise, the <code>Reducer</code> will need to declare an <code>Output</code> type that <em>is</em> <code>Send</code> and
+that can be crated <a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From"><code>From</code></a> the <code>Reducer</code>’s state.</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">struct </span>State {
+    n: Rc&lt;Cell&lt;usize&gt;&gt;, <span class="comment">// Rc&lt;Cell&lt;…&gt;&gt; is not Send
+</span>};
+
+<span class="kw">enum </span>Action { <span class="comment">/* … */ </span>}
+
+<span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+    <span class="kw">type </span>Output = usize; <span class="comment">// but the usize itself _is_
+
+    </span><span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: <span class="self">Self</span>::Action, send: <span class="kw">impl </span>Effects&lt;<span class="self">Self</span>::Action&gt;) { <span class="comment">/**/ </span>}
+}
+
+<span class="kw">impl </span>From&lt;State&gt; <span class="kw">for </span>usize {
+    <span class="kw">fn </span>from(value: State) -&gt; <span class="self">Self </span>{
+        Cell::into_inner(Rc::into_inner(value.n).unwrap_or_default())
+    }
+}</code></pre></div>
+<p>In short, you can use <code>type Output = Self;</code> until the compiler says that you can’t.</p>
+</div></details></div><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.reduce" class="method"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#59">source</a><h4 class="code-header">fn <a href="#tymethod.reduce" class="fn">reduce</a>(&amp;mut self, action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>, send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;)</h4></section></summary><div class="docblock"><p>Updates the <code>Reducer</code>’s state in response to the action received.</p>
+<p>Additional <code>Action</code>s that need to be performed as a side-effect of an <code>Action</code> should be
+<a href="effects/trait.Effects.html" title="trait composable::effects::Effects">invoked</a> on <code>effects</code>.
+The logic of the feature is performed by mutating its current <code>State</code> with <code>Action</code>s.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Clone, Debug, Default, PartialEq)]
+</span><span class="kw">struct </span>State {
+    n: usize,
+}
+
+<span class="attr">#[derive(Debug, PartialEq)]
+</span><span class="kw">enum </span>Action {
+    Increment,
+    Decrement,
+}</code></pre></div>
+<p>This is most easily done by implementing the <a href="trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a> trait directly on it’s <code>State</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>Action::<span class="kw-2">*</span>;
+<span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+    <span class="kw">type </span>Output = usize;
+
+    <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, _send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+        <span class="kw">match </span>action {
+            Increment =&gt; {
+                <span class="self">self</span>.n += <span class="number">1</span>;
+            }
+            Decrement =&gt; {
+                <span class="self">self</span>.n -= <span class="number">1</span>;
+            }
+        }
+    }
+}</code></pre></div>
+<p>The <code>reduce</code> method’s first responsibility is to mutate the feature’s current state given an <code>action</code>. Its second responsibility is to trigger effects that feed
+their actions back into the system. Currently <code>reduce</code> does not need to run any effects so <code>_effects</code> goes unused.</p>
+<p>If the action does need side effects, then more would need to be done. For example, if <code>reduce</code> always maintained an even number for the <code>State</code>, then
+each <code>Increment</code> and <code>Decrement</code> would need an effect to follow:<sup id="fnref1"><a href="#fn1">1</a></sup></p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>Action::<span class="kw-2">*</span>;
+<span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+    <span class="kw">type </span>Output = usize;
+
+    <span class="comment">// This reducer ensures the value is always an even number
+    </span><span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action&gt;) {
+        <span class="kw">match </span>action {
+            Increment =&gt; {
+                <span class="self">self</span>.n += <span class="number">1</span>;
+                <span class="kw">if </span><span class="self">self</span>.n % <span class="number">2 </span>== <span class="number">1 </span>{
+                    send.action(Increment); <span class="comment">// ⬅︎
+                </span>}
+            }
+            Decrement =&gt; {
+                <span class="self">self</span>.n -= <span class="number">1</span>;
+                <span class="kw">if </span><span class="self">self</span>.n % <span class="number">2 </span>== <span class="number">1 </span>{
+                    send.action(Decrement); <span class="comment">// ⬅︎
+                </span>}
+            }
+        }
+    }
+}</code></pre></div>
+<ul>
+<li>See <a href="struct.TestStore.html" title="struct composable::TestStore"><code>TestStore</code></a> for a more complete test of this example.</li>
+<li>See <a href="trait.Effects.html" title="trait composable::Effects"><code>Effects</code></a> for all of the effects that can be used within a <code>Reducer</code>.</li>
+</ul>
+<div class="footnotes"><hr><ol><li id="fn1"><p><small>Granted, real code could just adjust the values by two. It <em>is</em> a contrived example to show how to use <code>effects</code>, after all.</small>&nbsp;<a href="#fnref1">↩</a></p></li></ol></div></div></details></div><h2 id="object-safety" class="section-header">Object Safety<a href="#object-safety" class="anchor">§</a></h2><div class="object-safety-info">This trait is <b>not</b> <a href="https://doc.rust-lang.org/nightly/reference/items/traits.html#object-safety">object safe</a>.</div><h2 id="foreign-impls" class="section-header">Implementations on Foreign Types<a href="#foreign-impls" class="anchor">§</a></h2><details class="toggle implementors-toggle"><summary><section id="impl-Reducer-for-Option%3CT%3E" class="impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#72-82">source</a><a href="#impl-Reducer-for-Option%3CT%3E" class="anchor">§</a><h3 class="code-header">impl&lt;T: <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt; <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a> for <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;</h3></section></summary><div class="impl-items"><section id="associatedtype.Action-1" class="associatedtype trait-impl"><a href="#associatedtype.Action-1" class="anchor">§</a><h4 class="code-header">type <a href="#associatedtype.Action" class="associatedtype">Action</a> = &lt;T as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a></h4></section><section id="associatedtype.Output-1" class="associatedtype trait-impl"><a href="#associatedtype.Output-1" class="anchor">§</a><h4 class="code-header">type <a href="#associatedtype.Output" class="associatedtype">Output</a> = <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&lt;T as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Output" title="type composable::Reducer::Output">Output</a>&gt;</h4></section><section id="method.reduce" class="method trait-impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#77-81">source</a><a href="#method.reduce" class="anchor">§</a><h4 class="code-header">fn <a href="#tymethod.reduce" class="fn">reduce</a>(&amp;mut self, action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>, send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;)</h4></section></div></details><details class="toggle implementors-toggle"><summary><section id="impl-Reducer-for-Box%3CT%3E" class="impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#62-70">source</a><a href="#impl-Reducer-for-Box%3CT%3E" class="anchor">§</a><h3 class="code-header">impl&lt;T: <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt; <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a> for <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;T&gt;</h3></section></summary><div class="impl-items"><section id="associatedtype.Action-2" class="associatedtype trait-impl"><a href="#associatedtype.Action-2" class="anchor">§</a><h4 class="code-header">type <a href="#associatedtype.Action" class="associatedtype">Action</a> = &lt;T as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a></h4></section><section id="associatedtype.Output-2" class="associatedtype trait-impl"><a href="#associatedtype.Output-2" class="anchor">§</a><h4 class="code-header">type <a href="#associatedtype.Output" class="associatedtype">Output</a> = &lt;T as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Output" title="type composable::Reducer::Output">Output</a></h4></section><section id="method.reduce-1" class="method trait-impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#67-69">source</a><a href="#method.reduce-1" class="anchor">§</a><h4 class="code-header">fn <a href="#tymethod.reduce" class="fn">reduce</a>(&amp;mut self, action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>, send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;)</h4></section></div></details><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../trait.impl/composable/reducer/trait.Reducer.js" data-ignore-extern-crates="alloc,core" async></script></section></div></main></body></html>

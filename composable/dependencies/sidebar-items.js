@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["with_dependencies","with_dependency"],"struct":["Dependency"],"trait":["DependencyDefault"]};

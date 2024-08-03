@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Changelog"><title>composable::about::changelog - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-5ca6ca2a1f83705a.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0-nightly (c1a6199e9 2024-07-24)" data-channel="nightly" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../composable/index.html">composable</a><span class="version">0.6.0</span></h2></div><h2 class="location"><a href="#">Module changelog</a></h2><div class="sidebar-elems"><h2><a href="../index.html">In composable::about</a></h2></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Module <a href="../../index.html">composable</a>::<wbr><a href="../index.html">about</a>::<wbr><a class="mod" href="#">changelog</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../../../src/composable/about/changelog.rs.html#1">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="changelog"><a class="doc-anchor" href="#changelog">§</a>Changelog</h2>
+<p>Please keep one empty line before and after all headers. (This is required for <code>git</code> to produce a conflict when a release is made while a PR is open and the PR’s changelog entry would go into the wrong section).</p>
+<p>And please only add new entries to the top of this list, right below the <code># Unreleased</code> header.</p>
+<blockquote>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>/<a href="https://common-changelog.org">Common Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+</blockquote>
+<h3 id="unreleased"><a class="doc-anchor" href="#unreleased">§</a>Unreleased</h3><h4 id="added"><a class="doc-anchor" href="#added">§</a>Added</h4><h4 id="removed"><a class="doc-anchor" href="#removed">§</a>Removed</h4><h4 id="changed"><a class="doc-anchor" href="#changed">§</a>Changed</h4><h4 id="fixed"><a class="doc-anchor" href="#fixed">§</a>Fixed</h4><h3 id="060---2024-07-22"><a class="doc-anchor" href="#060---2024-07-22">§</a>0.6.0 - 2024-07-22</h3><h4 id="added-1"><a class="doc-anchor" href="#added-1">§</a>Added</h4>
+<ul>
+<li>Asynchronous <code>Effects</code> that where removed in version 0.5 have been restored. They now run in a <a href="https://maciej.codes/2022-06-09-local-async.html">Local Async Executor</a>, rather than a mulit-threaded one,</li>
+<li>The <code>views</code> feature is gated behind a new <code>unstable</code> feature flag. Development on <code>View</code>s may now continue without causing SemVar issues.<br />
+Unstable features <strong>are not</strong> considered when determining versioning.</li>
+</ul>
+<h4 id="removed-1"><a class="doc-anchor" href="#removed-1">§</a>Removed</h4>
+<ul>
+<li><code>View</code>s are being rebuilt to better reflect the (new) separation between features:
+<ul>
+<li><code>views</code>: the building blocks for creating UI elements around <code>Action</code>s, <code>State</code> and <code>Reducer</code>s.</li>
+<li><code>default_ui</code>: a useful set of pre-built UI elements usable as-is, or as examples of how to build more complex elements.</li>
+</ul>
+</li>
+</ul>
+<h4 id="changed-1"><a class="doc-anchor" href="#changed-1">§</a>Changed</h4>
+<ul>
+<li><strong>Breaking:</strong> All traits and structs have been redesigned around the <code>return_position_impl_trait_in_trait</code> feature.</li>
+<li><strong>Breaking:</strong> <code>Effects::send</code> is now <code>Effects::action</code>; as <code>action</code>s, <code>future</code>s , and <code>stream</code>s are the main types of <code>Effects</code>.</li>
+<li><code>View</code> drawing is governed by an <code>Output</code> trait; sending geometry to the GPU is now just <em>one</em> of the options available.</li>
+<li>Gesture states are now expressed as <code>.active</code>, <code>.hover</code>, <code>.focus</code> to match the W3C’s <a href="https://www.w3.org/TR/selectors-3/#the-user-action-pseudo-classes-hover-act">user action pseudo classes</a> as they are more widely known than the terms used in original <strong>Immediate-Mode Graphical User Interfaces</strong> <a href="https://www.youtube.com/watch?v=Z1qyvQsjK5Y&amp;t=731s">presentation</a> by Casey Muratori.</li>
+<li>The <a href="https://rsms.me/inter/">Inter font</a> has been updated to version 4.0.</li>
+</ul>
+<h4 id="fixed-1"><a class="doc-anchor" href="#fixed-1">§</a>Fixed</h4>
+<ul>
+<li>Better documentation and automated testing throughout.</li>
+<li>Shape plans are cached for text layout.</li>
+</ul>
+</div></details></section></div></main></body></html>

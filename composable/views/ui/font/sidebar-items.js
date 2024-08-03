@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["with_default_fonts"],"mod":["body","label","title"],"struct":["Inter"]};

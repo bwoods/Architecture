@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["L","M","S","XL","XS","XXL","XXS","XXXL"]};
