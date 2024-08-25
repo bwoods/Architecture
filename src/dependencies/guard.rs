@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-
 use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::HashMap;

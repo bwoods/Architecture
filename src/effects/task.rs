@@ -36,19 +36,21 @@ impl Task {
 
     pub(crate) fn new<Action: 'static, S: Stream<Item = Action> + 'static>(stream: S) -> Self {
         // Only called by “root” `Effects`, so it will be the same `Action` as used by the `Store`
-        let handle = Dependency::<Executor<Result<Action, Thread>>>::new() //
-            .and_then(|executor| match executor.actions.upgrade() {
-                None => None,
-                Some(sender) => executor
-                    .spawner
-                    .spawn_local_with_handle(async move {
-                        pin_mut!(stream);
-                        while let Some(action) = stream.next().await {
-                            sender.send(Ok(action));
-                        }
-                    })
-                    .ok(),
-            });
+        let handle =
+            Dependency::<Executor<Result<Action, Thread>>>::new().and_then(
+                |executor| match executor.actions.upgrade() {
+                    None => None,
+                    Some(sender) => executor
+                        .spawner
+                        .spawn_local_with_handle(async move {
+                            pin_mut!(stream);
+                            while let Some(action) = stream.next().await {
+                                sender.send(Ok(action));
+                            }
+                        })
+                        .ok(),
+                },
+            );
 
         Task {
             handle, // may return a `Task { handle: None }` while the `Store` is shutting down

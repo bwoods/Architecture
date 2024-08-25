@@ -33,7 +33,8 @@ pub fn build() -> Result<(Menu, EventLoop<Action>), EventLoopError> {
             use windows_sys::Win32::UI::WindowsAndMessaging::{TranslateAcceleratorW, MSG};
             unsafe {
                 let msg = msg as *const MSG;
-                let translated = TranslateAcceleratorW((*msg).hwnd, menu_bar.haccel(), msg);
+                let haccel = menu_bar.haccel() as *mut std::ffi::c_void;
+                let translated = TranslateAcceleratorW((*msg).hwnd, haccel, msg);
                 translated == 1
             }
         });

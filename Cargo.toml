@@ -19,14 +19,14 @@ default_ui = ["views"]
 
 [dependencies]
 derive_reducers = { path = "src/derive_macros/derive_reducers" }
-derive_more = { version = "0.99.18", features = ["from", "try_into"], default-features = false }
+derive_more = { version = "1.0.0", features = ["from", "try_into"], default-features = false }
 futures = { version = "0.3.30", features = ["executor"] }
 pin-project = "1.1.5"
 
 # view feature dependencies
-rustybuzz = { version = "0.17.0", optional = true }
+rustybuzz = { version = "0.18.0", optional = true }
 lyon = { version = "1.0.1", optional = true, default-features = false }
-usvg = { version = "0.42.0", optional = true, default-features = false }
+usvg = { version = "0.43.0", optional = true, default-features = false }
 svg = { version = "0.17.0", optional = true, default-features = false }
 
 
@@ -35,16 +35,17 @@ ntest_timeout = "0.9.3"
 divan = "0.1.14"
 insta = "1.39.0"
 
-winit = { version = "0.30.3", features = ["rwh_05"] }
+winit = { version = "0.30.5", features = ["rwh_05"] }
 meshopt = "0.3.0"
 muda = "0.13.5"
-wgpu = "22.0.0"
+wgpu = "22.1.0"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows-sys]
-version = "0.52.0"
+features = ["Win32_UI", "Win32_UI_WindowsAndMessaging"]
+version = "0.59.0"
 
 [target.'cfg(target_os = "macos")'.dependencies.cocoa]
-version = "0.25.0"
+version = "0.26.0"
 
 [package.metadata.docs.rs] # when docs.rs builds the documentation…
 rustdoc-args = ["--cfg", "docsrs"] # show feature flags
@@ -77,7 +78,6 @@ harness = false
 name = "font_parsing"
 required-features = ["unstable", "default_ui"]
 harness = false
-
 
 [[example]]
 name = "winit"

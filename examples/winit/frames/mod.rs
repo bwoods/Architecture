@@ -34,24 +34,25 @@ impl Reducer for State {
     type Output = Self;
 
     fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
+        use Action::*;
         match action {
-            Action::Resize { width, height } => {
+            Resize { width, height } => {
                 self.wgpu.resize(width, height);
 
                 send.throttle(
-                    Action::Redraw,
+                    Redraw,
                     &mut self.resizing,
                     Interval::Leading(Duration::from_secs_f32(1.0 / 100.0)),
                 );
             }
-            Action::Redraw => with_dependency(self.wgpu.transform(), || {
+            Redraw => with_dependency(self.wgpu.transform(), || {
                 let mut output = Output::new(8.0);
                 self.view(send).draw(self.wgpu.bounds(), &mut output);
 
                 let (vertices, indices) = output.into_inner();
                 self.wgpu.render(&vertices, &indices).ok();
             }),
-            Action::Header(_) => {
+            Header(_) => {
                 //
             }
         }
