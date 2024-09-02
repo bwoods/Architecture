@@ -1,56 +1,29 @@
-[package]
-name = "composable"
+[workspace]
+resolver = "2"
+members = [
+    "composable-architecture",
+    "composable-views"
+]
+
+[workspace.package]
 version = "0.6.0"
 edition = "2021"
-
-readme = "README.md"
 license = "MIT OR Apache-2.0"
-include = ["LICENSE-APACHE.md", "LICENSE-MIT.md"]
 
 
-[features]
-# Features (in development) that are not yet part of SemVer.
-unstable = []
-
-# Unreleased: View drawing and events.
-views = ["lyon", "svg", "rustybuzz"]
-default_ui = ["views"]
-
-
-[dependencies]
-derive_reducers = { path = "src/derive_macros/derive_reducers" }
-derive_more = { version = "1.0.0", features = ["from", "try_into"], default-features = false }
+[workspace.dependencies]
+composable = { path = "composable-architecture" }
+composable-views = { path = "composable-views" }
 futures = { version = "0.3.30", features = ["executor"] }
-pin-project = "1.1.5"
 
-# view feature dependencies
-rustybuzz = { version = "0.18.0", optional = true }
-lyon = { version = "1.0.1", optional = true, default-features = false }
-usvg = { version = "0.43.0", optional = true, default-features = false }
-svg = { version = "0.17.0", optional = true, default-features = false }
-
-
-[dev-dependencies]
+# dev-dependencies
 ntest_timeout = "0.9.3"
 divan = "0.1.14"
 insta = "1.39.0"
 
-winit = { version = "0.30.5", features = ["rwh_05"] }
-meshopt = "0.3.0"
-muda = "0.13.5"
-wgpu = "22.1.0"
 
-[target.'cfg(target_os = "windows")'.dependencies.windows-sys]
-features = ["Win32_UI", "Win32_UI_WindowsAndMessaging"]
-version = "0.59.0"
-
-[target.'cfg(target_os = "macos")'.dependencies.cocoa]
-version = "0.26.0"
-
-[package.metadata.docs.rs] # when docs.rs builds the documentation…
-rustdoc-args = ["--cfg", "docsrs"] # show feature flags
-all-features = true
-
+#[profile.dev]
+#opt-level = 1
 
 [profile.release]
 codegen-units = 1
@@ -59,26 +32,10 @@ debug = false
 strip = true
 lto = "fat"
 
-[profile.profiling]
+[profile.bench]
 inherits = "release"
 debug = true
 strip = false
 
 [profile.dev.package."*"]
 opt-level = 3
-
-
-[workspace]
-
-[[bench]]
-name = "sends"
-harness = false
-
-[[bench]]
-name = "font_parsing"
-required-features = ["unstable", "default_ui"]
-harness = false
-
-[[example]]
-name = "winit"
-required-features = ["unstable", "default_ui"]

@@ -1,0 +1,55 @@
+[package]
+name = "composable-views"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[features]
+default = ["ui"]
+ui = []
+
+
+[dependencies]
+composable.workspace = true
+rustybuzz = "0.18.0"
+lyon = "1.0.1"
+usvg = "0.43.0"
+svg = "0.17.0"
+
+
+[dev-dependencies]
+futures.workspace = true
+insta.workspace = true
+
+ntest_timeout.workspace = true
+divan.workspace = true
+
+# examples
+#iui = { path = "examples/iui/libui-rs/iui" }
+#ui-sys = { path = "examples/iui/libui-rs/ui-sys" }
+bladeink = "1.0.4"
+jumpcut = "0.7.1"
+
+winit = "0.30.5"
+meshopt = "0.3.0"
+muda = "0.14.1"
+wgpu = "22.1.0"
+
+# platforms
+[target.'cfg(target_os = "windows")'.dependencies.windows-sys]
+features = ["Win32_UI", "Win32_UI_WindowsAndMessaging"]
+version = "0.59.0"
+[target.'cfg(target_os = "macos")'.dependencies.cocoa]
+version = "0.26.0"
+
+
+[[bench]]
+name = "font_parsing"
+harness = false
+
+
+[[example]]
+name = "winit"
+
+#[[example]]
+#name = "iui"

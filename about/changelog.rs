@@ -1,1 +1,1 @@
-#![doc = include_str!("../CHANGELOG.md")]
+#![doc = include_str!("CHANGELOG.md")]
