@@ -25,8 +25,8 @@ ntest_timeout.workspace = true
 divan.workspace = true
 
 # examples
-#iui = { path = "examples/iui/libui-rs/iui" }
-#ui-sys = { path = "examples/iui/libui-rs/ui-sys" }
+iui = { path = "examples/iui/libui-rs/iui" }
+ui-sys = { path = "examples/iui/libui-rs/ui-sys" }
 bladeink = "1.0.4"
 jumpcut = "0.7.1"
 
@@ -51,5 +51,5 @@ harness = false
 [[example]]
 name = "winit"
 
-#[[example]]
-#name = "iui"
+[[example]]
+name = "iui"
