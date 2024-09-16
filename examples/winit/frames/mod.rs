@@ -6,8 +6,8 @@ mod header;
 
 pub struct State {
     wgpu: wgpu::Surface<'static>,
+    window: window::WindowId,
     proxy: window::EventLoopProxy,
-    window: window::Id,
 
     header: header::State,
 }
@@ -43,7 +43,7 @@ impl State {
     pub fn new(
         wgpu: wgpu::Surface<'static>,
         proxy: window::EventLoopProxy,
-        window: window::Id,
+        window: window::WindowId,
     ) -> Self {
         Self {
             wgpu,
