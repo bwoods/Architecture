@@ -230,7 +230,7 @@ impl<'a> FontConfig<'a> {
 
         let script = self
             .script
-            .or_else(|| Script::from_iso15924_tag(Tag::from_bytes(b"Latn")));
+            .or_else(|| Script::from_iso15924_tag(Tag::from_bytes(b"Zzzz")));
 
         let plan = ShapePlan::new(
             &self.face,
