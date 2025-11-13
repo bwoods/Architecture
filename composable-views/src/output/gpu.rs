@@ -1,36 +1,49 @@
 //! GPU [`Output`] for `Views`
+
+use crate::Transform;
+use log::{trace, warn};
 use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::path::{BuilderImpl as Builder, Path};
 use lyon::tessellation::{
     FillGeometryBuilder, FillOptions, FillTessellator, FillVertex, GeometryBuilder,
     GeometryBuilderError, VertexId,
 };
-
-use crate::Transform;
+use std::mem::replace;
 
 ///
 pub struct Output {
+    builder: NoAttributes<Transformed<Builder, Transform>>,
     storage: Storage,
     options: FillOptions,
-    builder: NoAttributes<Transformed<Builder, Transform>>,
+    width: f32,
+    height: f32,
 }
 
 impl Output {
     /// Creates an indexed-triangle data `Output`.
-    pub fn new(rounding: f32) -> Self {
-        let builder = Self::builder();
+    ///
+    /// ## Note
+    /// The output is stored in [Normalized Device Coordinates][W3].
+    ///
+    /// [W3]: https://www.w3.org/TR/webgpu/#coordinate-systems
+    pub fn new(rounding: f32, width: f32, height: f32) -> Self {
+        let builder = Path::builder().transformed(Default::default());
         let storage = Storage::default();
-
-        let options = FillOptions::non_zero().with_tolerance(if rounding > 0.0 {
-            rounding
-        } else {
-            FillOptions::DEFAULT_TOLERANCE
-        });
+        let options = FillOptions::non_zero()
+            // .with_intersections(true)
+            .with_tolerance(if rounding > 0.0 {
+                rounding
+            } else {
+                warn!(target: module_path!(), "rounding should be >= 0, not {rounding}");
+                FillOptions::DEFAULT_TOLERANCE
+            });
 
         Self {
+            builder,
             storage,
             options,
-            builder,
+            width,
+            height,
         }
     }
 
@@ -39,20 +52,26 @@ impl Output {
     /// - indices are stored as 32-bit offsets
     ///
     /// ## Example
-    /// A WGSL shader that consumes this `Output`’s output:
+    /// An example WGSL shader that consumes this `Output`’s output:
     ///
     /// ```wgsl
-    #[doc = include_str!("../../examples/winit/gpu/shader.wgsl")]
+    #[doc = include_str!("../../../examples/play/rendering/shader.wgsl")]
     /// ```
+    /// ## Note
+    /// The output is stored in [Normalized Device Coordinates][W3].
+    ///
+    /// [W3]: https://www.w3.org/TR/webgpu/#coordinate-systems
     #[allow(clippy::type_complexity)]
     pub fn into_inner(mut self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
         self.tessellate();
         self.storage.into_inner()
     }
 
-    #[inline(never)]
     fn tessellate(&mut self) {
-        let builder = std::mem::replace(&mut self.builder, Self::builder());
+        let builder = replace(
+            &mut self.builder,
+            Path::builder().transformed(Default::default()),
+        );
 
         let path = builder.build();
         let mut tessellator = FillTessellator::default();
@@ -61,21 +80,28 @@ impl Output {
             .expect("tessellate_path");
     }
 
-    fn builder() -> NoAttributes<Transformed<Builder, Transform>> {
-        Path::builder().transformed(Default::default())
+    fn transform(&self, outer: &Transform) -> Transform {
+        let normalized = Transform::translation(-1.0, -1.0)
+            .then_scale(32767.0, -32767.0) // unpack2x16snorm(xy)
+            .pre_scale(2.0 / self.width, 2.0 / self.height); // doing the variable values last…
+
+        outer.then(&normalized)
     }
 }
 
 impl super::Output for Output {
-    #[inline]
-    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
+    fn begin(&mut self, rgba: [u8; 4], transform: &Transform) {
         if rgba != self.storage.rgba {
-            self.tessellate();
+            self.tessellate(); // before the color change…
+            self.storage.rgba = rgba;
         }
 
-        self.storage.rgba = rgba;
-        self.builder.inner_mut().set_transform(*transform);
+        let transform = self.transform(transform);
+        self.builder.inner_mut().set_transform(transform);
+    }
 
+    #[inline]
+    fn move_to(&mut self, x: f32, y: f32) {
         self.builder.begin((x, y).into());
     }
 
@@ -113,7 +139,7 @@ struct Storage {
 impl Storage {
     #[allow(clippy::type_complexity)]
     pub fn into_inner(self) -> (Vec<(i16, i16, [u8; 4])>, Vec<u32>) {
-        // eprintln!("{} vertices", self.vertices.len());
+        trace!(target: module_path!(), "{} vertices", self.vertices.len());
         (self.vertices, self.indices)
     }
 }

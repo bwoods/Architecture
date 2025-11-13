@@ -1,7 +1,7 @@
+use composable::Effects;
+use composable::Reducer;
 use divan::{bench as benchmark, main as run_benchmarks};
-use futures::{future, stream, StreamExt};
-
-use composable::{Effects, Reducer, Store};
+use futures::{StreamExt, future, stream};
 
 fn main() {
     run_benchmarks();
@@ -19,10 +19,9 @@ enum Action {
 
 impl Reducer for State {
     type Action = Action;
-    type Output = usize;
 
     #[inline(never)]
-    fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
+    fn reduce(&mut self, action: Action, send: impl Effects<Action = Self::Action>) {
         use Action::*;
 
         match action {
@@ -53,6 +52,7 @@ const N: usize = 100000;
 mod one_hundred_thousand {
     #[allow(unused_imports)]
     use super::*;
+    use composable::Store;
 
     #[benchmark(min_time = 1)]
     fn external_sends() {
@@ -61,7 +61,7 @@ mod one_hundred_thousand {
             store.send(std::hint::black_box(Action::A));
         }
 
-        let n = store.into_inner();
+        let n: usize = store.into_inner();
         assert_eq!(n, N);
     }
 
@@ -70,7 +70,7 @@ mod one_hundred_thousand {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::B));
 
-        let n = store.into_inner();
+        let n: usize = store.into_inner();
         assert_eq!(n, N);
     }
 
@@ -79,7 +79,7 @@ mod one_hundred_thousand {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::C));
 
-        let n = store.into_inner();
+        let n: usize = store.into_inner();
         assert_eq!(n, N);
     }
 
@@ -88,7 +88,7 @@ mod one_hundred_thousand {
         let store = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::D));
 
-        let n = store.into_inner();
+        let n: usize = store.into_inner();
         assert_eq!(n, N);
     }
 }

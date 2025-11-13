@@ -1,9 +1,8 @@
-use proc_macro::TokenStream;
-
+use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{DataStruct, Ident};
 
-pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
+pub fn derive_macro(_identifier: Ident, data: DataStruct) -> TokenStream {
     let child_reducers = data
         .fields
         .iter()
@@ -12,12 +11,13 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
                 !attr.path().is_ident("reducer")
                     || attr
                         .parse_args::<Ident>()
-                        .map(|arg| arg != "skip")
+                        .map(|arg| arg != "ignore")
                         .unwrap_or(true)
             })
         })
         .map(|field| {
             let name = &field.ident;
+
             quote! {
                 if let Ok(action) = action.clone().try_into() {
                     composable::Reducer::reduce(&mut self.#name, action, send.scope());
@@ -25,25 +25,37 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
             }
         });
 
-    let expanded = quote! {
+    // let trait_impl = quote! {
+    //     trait Recurse {
+    //         type Action;
+    //
+    //         fn reduce(&mut self,action: Self::Action,send: impl composable::Effects<Action = Self::Action>);
+    //     }
+    //
+    //     #[automatically_derived]
+    //     impl Recurse for #identifier
+    //         where <Self as composable::Reducer>::Action: Clone
+    //     {
+    //         type Action = <Self as composable::Reducer>::Action;
+    //
+    //         fn reduce(&mut self, action: Self::Action, send: impl composable::Effects<Action = Self::Action>) {
+    //             #( #child_reducers )*
+    //
+    //             Self::recurse(self, action, send);
+    //         }
+    //     }
+    // };
+
+    let trait_impl = quote! {
         #[automatically_derived]
-        impl composable::Reducer for #identifier
-            where <Self as RecursiveReducer>::Action: Clone
+        impl State
+            where <Self as composable::Reducer>::Action: Clone
         {
-            type Action = <Self as RecursiveReducer>::Action;
-            type Output = Self;
-
-            fn reduce(
-                &mut self,
-                action: Self::Action,
-                send: impl composable::Effects<Self::Action>,
-            ) {
+            fn recurse(&mut self, action: <Self as composable::Reducer>::Action, send: impl composable::Effects<Action = <Self as composable::Reducer>::Action>) {
                 #( #child_reducers )*
-
-                <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
             }
         }
     };
 
-    TokenStream::from(expanded)
+    trait_impl
 }

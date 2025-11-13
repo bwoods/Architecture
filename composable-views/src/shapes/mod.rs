@@ -1,18 +1,16 @@
-use crate::{Bounds, Output, Size, Transform, View};
-use composable::dependencies::Dependency;
-
+use crate::{Bounds, Output, Size, View};
 use std::cell::Cell;
 
 mod rounded;
 
-pub trait Path: Sized {
-    fn draw(&self, x: f32, y: f32, w: f32, h: f32, transform: &Transform, onto: &mut impl Output);
+pub trait Path: Clone + Sized {
+    fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output);
 
-    fn fill(self) -> Shape<Self> {
+    fn fill(self) -> impl View {
         self.fixed(f32::INFINITY, f32::INFINITY)
     }
 
-    fn fixed(self, width: f32, height: f32) -> Shape<Self> {
+    fn fixed(self, width: f32, height: f32) -> impl View {
         Shape {
             size: Size::new(width, height).into(),
             path: self,
@@ -27,16 +25,18 @@ pub trait Path: Sized {
 /// > c ≈ 0.5519703814011128603134107
 ///
 /// [site]: https://spencermortensen.com/articles/least-squares-bezier-circle/
-pub(crate) const K: f32 = 0.4480296; // 1 - 0.5519703814011128603134107 rounded to f32
+#[allow(clippy::excessive_precision)]
+pub(crate) const K: f32 = 1.0 - 0.5519703814011128603134107;
 
+#[derive(Clone)]
 pub struct Rectangle {
     pub rgba: [u8; 4],
 }
 
 impl Path for Rectangle {
     #[inline(always)]
-    fn draw(&self, x: f32, y: f32, w: f32, h: f32, transform: &Transform, onto: &mut impl Output) {
-        rounded::rectangle(x, y, w, h, 0.0, 0.0, 0.0, self.rgba, transform, onto);
+    fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output) {
+        rounded::rectangle(x, y, w, h, 0.0, 0.0, 0.0, self.rgba, onto);
     }
 }
 
@@ -50,6 +50,7 @@ impl Rectangle {
     }
 }
 
+#[derive(Clone)]
 pub struct RoundedRectangle {
     rgba: [u8; 4],
     rx: f32,
@@ -58,8 +59,8 @@ pub struct RoundedRectangle {
 
 impl Path for RoundedRectangle {
     #[inline(always)]
-    fn draw(&self, x: f32, y: f32, w: f32, h: f32, transform: &Transform, onto: &mut impl Output) {
-        rounded::rectangle(x, y, w, h, self.rx, self.ry, K, self.rgba, transform, onto);
+    fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output) {
+        rounded::rectangle(x, y, w, h, self.rx, self.ry, K, self.rgba, onto);
     }
 }
 
@@ -73,6 +74,7 @@ impl RoundedRectangle {
     }
 }
 
+#[derive(Clone)]
 pub struct ContinuousRoundedRectangle {
     rgba: [u8; 4],
     rx: f32,
@@ -81,42 +83,44 @@ pub struct ContinuousRoundedRectangle {
 
 impl Path for ContinuousRoundedRectangle {
     #[inline(always)]
-    fn draw(&self, x: f32, y: f32, w: f32, h: f32, transform: &Transform, onto: &mut impl Output) {
+    fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output) {
         // continuous corners are much smaller than circular ones; scale them up a bit
         let c = std::f32::consts::E;
         let rx = (self.rx * c).min(w / 2.0);
         let ry = (self.ry * c).min(h / 2.0);
-        rounded::rectangle(x, y, w, h, rx, ry, 0.0, self.rgba, transform, onto);
+        rounded::rectangle(x, y, w, h, rx, ry, 0.0, self.rgba, onto);
     }
 }
 
+#[derive(Clone)]
 pub struct Ellipse {
     pub rgba: [u8; 4],
 }
 
 impl Path for Ellipse {
     #[inline(always)]
-    fn draw(&self, x: f32, y: f32, w: f32, h: f32, transform: &Transform, onto: &mut impl Output) {
+    fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output) {
         let rx = w / 2.0;
         let ry = h / 2.0;
-        rounded::rectangle(x, y, w, h, rx, ry, K, self.rgba, transform, onto);
+        rounded::rectangle(x, y, w, h, rx, ry, K, self.rgba, onto);
     }
 }
 
+#[derive(Clone)]
 pub struct Circle {
     pub rgba: [u8; 4],
 }
 
 impl Path for Circle {
     #[inline(always)]
-    fn draw(&self, x: f32, y: f32, w: f32, h: f32, transform: &Transform, onto: &mut impl Output) {
+    fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output) {
         let r = f32::min(w, h) / 2.0;
-        rounded::rectangle(x, y, w, h, r, r, K, self.rgba, transform, onto);
+        rounded::rectangle(x, y, w, h, r, r, K, self.rgba, onto);
     }
 }
 
 #[doc(hidden)]
-pub struct Shape<T> {
+pub(crate) struct Shape<T> {
     size: Cell<Size>,
     path: T,
 }
@@ -126,7 +130,7 @@ impl<T: Path> View for Shape<T> {
     fn size(&self) -> Size {
         let size = self.size.get();
 
-        match (size.width.is_finite(), size.height.is_finite()) {
+        match (size.width != f32::INFINITY, size.height != f32::INFINITY) {
             (true, true) => size,
             (false, false) => Size::zero(),
             (true, false) => Size::new(size.width, 0.0),
@@ -145,14 +149,8 @@ impl<T: Path> View for Shape<T> {
             (false, true) => Size::new(bounds.width(), current.height),
         };
 
-        self.path.draw(
-            bounds.min.x,
-            bounds.min.y,
-            size.width,
-            size.height,
-            &Dependency::<Transform>::get_or_default(),
-            onto,
-        );
+        self.path
+            .draw(bounds.min.x, bounds.min.y, size.width, size.height, onto);
     }
 
     #[inline(always)]
@@ -178,8 +176,14 @@ impl<T: Path> View for Shape<T> {
 
     #[inline(always)]
     #[allow(clippy::bool_comparison)]
-    fn needs_layout(&self) -> bool {
-        self.size.get().is_finite() == false
+    fn needs_layout_x(&self) -> bool {
+        self.size.get().width == f32::INFINITY
+    }
+
+    #[inline(always)]
+    #[allow(clippy::bool_comparison)]
+    fn needs_layout_y(&self) -> bool {
+        self.size.get().height == f32::INFINITY
     }
 
     #[inline]

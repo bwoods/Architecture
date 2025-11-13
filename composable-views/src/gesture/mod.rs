@@ -1,10 +1,8 @@
+use composable_dependencies::DependencyDefault;
 use std::cell::Cell;
-
-use composable::dependencies::DependencyDefault;
 
 mod recognizer;
 pub use recognizer::*;
-
 pub use std::num::NonZeroU128 as Id;
 
 mod tap;

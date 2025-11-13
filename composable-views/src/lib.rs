@@ -1,20 +1,17 @@
-use std::cell::Cell;
-use std::ops::Deref;
-
-pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
-
 pub use gesture::{Id, TapGesture, Target};
 pub use layout::{Layout, Spacer};
+pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 pub use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
 pub use modifiers::padding::Padding;
-pub use output::{gpu, svg, Output};
-pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Rectangle, RoundedRectangle};
-pub use shapes::{Path, Shape};
+pub use output::{Output, gpu, svg};
+pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Path, Rectangle, RoundedRectangle};
+use std::ops::Deref;
 #[doc(inline)]
 pub use text::Text;
 pub use ui_id::ui_id;
 
-use composable::{Effects, From, TryInto};
+use crate::modifiers::background::Background;
+use composable::*;
 
 /// Alias for `euclid::default::SideOffsets2D<f32>`
 pub type Offsets = lyon::geom::euclid::default::SideOffsets2D<f32>;
@@ -28,6 +25,21 @@ mod layout;
 mod modifiers;
 
 mod shapes;
+
+/// Warnings logged by `View` modifiers should only be logged once, not on _every_ draw cycle.
+#[allow(unused_macros)]
+macro_rules! warn_once {
+    ( $( $x:expr ),+ ) => {
+        if cfg!(debug_assertions) {
+            static ONCE: std::sync::Once = std::sync::Once::new();
+            let caller = std::panic::Location::caller();
+
+            ONCE.call_once(|| {
+                log::warn!("{}", format!("{}: {}", caller, $( $x )*));
+            });
+        }
+    };
+}
 
 /// User interface element and modifiers to re-configure it.
 pub trait View: Sized {
@@ -87,6 +99,14 @@ pub trait View: Sized {
         self.padding(pad, pad, pad, pad)
     }
 
+    /// Add a background shape to the `View`
+    fn background<P>(self, path: P) -> Background<Self, P> {
+        Background {
+            view: self,
+            background: path,
+        }
+    }
+
     /// Set the size of the `View` to a fixed value.
     fn fixed(self, width: f32, height: f32) -> impl View {
         let size = self.size();
@@ -124,7 +144,13 @@ pub trait View: Sized {
 
     #[doc(hidden)]
     #[inline(always)]
-    fn needs_layout(&self) -> bool {
+    fn needs_layout_x(&self) -> bool {
+        false
+    }
+
+    #[doc(hidden)]
+    #[inline(always)]
+    fn needs_layout_y(&self) -> bool {
         false
     }
 
@@ -134,15 +160,19 @@ pub trait View: Sized {
 
     /// Causes a tuple of `View`s to cascade horizontally, rather than vertically.
     /// ## Note
-    /// For other views, nothing changes
+    /// For other views nothing changes (and a warning will be [logged][log]).
+    ///
+    /// [log]: https://docs.rs/log/latest/log/index.html
+    #[track_caller]
     fn across(self) -> impl View {
+        warn_once!(".across() only has an affect on a tuple of views");
         self
     }
 
     fn on_tap<A, E>(self, id: Id, action: A, send: E) -> TapGesture<Self, A, E>
     where
         A: Clone,
-        E: Effects<A>,
+        E: Effects<Action = A>,
     {
         TapGesture {
             id,
@@ -161,7 +191,7 @@ pub trait View: Sized {
     ) -> Target<TapGesture<Self, A, E>>
     where
         A: Clone,
-        E: Effects<A>,
+        E: Effects<Action = A>,
     {
         Target {
             view: TapGesture {
@@ -241,10 +271,7 @@ impl<T: View, E: View> View for Result<T, E> {
 #[allow(missing_docs)]
 #[derive(Clone, Debug, From, TryInto)]
 pub enum Event {
-    Gesture(Gesture, Cell<Point>),
-    Resize { width: u32, height: u32 },
-    Rescale { scale: f32 },
-    Redraw,
+    Gesture(Gesture, Point),
 }
 
 /// touches… buttons…

@@ -1,9 +1,8 @@
 //! SVG [`Output`] for `Views`
 
-use svg::node::element::path::{Command, Position};
-use svg::{node::element::path::Data, node::element::Path, Document, Node};
-
 use crate::Transform;
+use svg::node::element::path::{Command, Position};
+use svg::{Document, Node, node::element::Path, node::element::path::Data};
 
 ///
 pub struct Output {
@@ -50,21 +49,18 @@ impl Output {
     }
 
     /// Consumes the `Output` and returns the constructed SVG string.
-    pub fn into_inner(mut self) -> String {
-        self.end_current_node();
+    pub fn into_inner(self) -> String {
         self.svg.to_string()
     }
 }
 
 impl crate::Output for Output {
-    fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
-        if !self.data.is_empty() && (rgba != self.rgba || !transform.approx_eq(&self.transform)) {
-            self.end_current_node();
-        }
-
-        self.rgba = rgba;
+    fn begin(&mut self, rgba: [u8; 4], transform: &Transform) {
         self.transform = *transform;
+        self.rgba = rgba;
+    }
 
+    fn move_to(&mut self, x: f32, y: f32) {
         self.data
             .append(Command::Move(Position::Absolute, (x, y).into()));
     }
@@ -90,5 +86,10 @@ impl crate::Output for Output {
 
     fn close(&mut self) {
         self.data.append(Command::Close);
+
+        #[allow(clippy::bool_comparison)]
+        if self.data.is_empty() == false {
+            self.end_current_node();
+        }
     }
 }

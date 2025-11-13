@@ -13,7 +13,7 @@ impl<V, A, E> View for TapGesture<V, A, E>
 where
     V: View,
     A: Clone,
-    E: Effects<A>,
+    E: Effects<Action = A>,
 {
     #[inline(always)]
     fn size(&self) -> Size {
@@ -22,15 +22,15 @@ where
 
     #[inline]
     fn event(&self, event: Event, bounds: Bounds) {
-        if let Ok((gesture, offset)) = event.try_into() {
-            if let Some(gesture::Response::UpInside) = gesture::recognizer(
+        if let Ok((gesture, offset)) = event.try_into()
+            && let Some(gesture::Response::UpInside) = gesture::recognizer(
                 self.id,
                 gesture,
-                offset.get(),
+                offset,
                 Bounds::from_origin_and_size(bounds.min, self.size()),
-            ) {
-                self.send.action(self.action.clone())
-            }
+            )
+        {
+            self.send.action(self.action.clone())
         }
     }
 
@@ -57,14 +57,15 @@ impl<V: View> View for Target<V> {
         target.min -= (self.minimum - self.size()) / 2.0;
         target.set_size(self.minimum.max(self.size()));
 
-        match &event {
-            Event::Gesture(_, location) if target.contains_inclusive(location.get()) => {
-                location.set(bounds.min);
+        match event {
+            Event::Gesture(gesture, location) if target.contains_inclusive(location) => {
+                self.view.event(
+                    Event::Gesture(gesture, location.clamp(bounds.min, bounds.max)),
+                    bounds,
+                );
             }
-            _ => {}
+            _ => self.view.event(event, bounds),
         }
-
-        self.view.event(event, bounds)
     }
 
     #[inline]

@@ -1,4 +1,5 @@
 #![allow(unused_imports)] // some of these are used in the macro
+#![allow(unused_assignments)]
 use crate::{Bounds, Event, Fixed, FixedHeight, FixedWidth, Output, Size, View};
 
 pub use spacing::Spacer;
@@ -16,7 +17,7 @@ macro_rules! tuple_impl {
         impl<$($val: View),+> View for ( $($val,)+ ) {
             #[inline]
             fn size(&self) -> Size {
-                let ( $(ref $val,)+ ) = self;
+                let &( $(ref $val,)+ ) = self;
 
                 let mut size = Size::zero();
                 $(
@@ -31,7 +32,7 @@ macro_rules! tuple_impl {
             fn event(&self, event: Event, mut bounds: Bounds) {
                 self.update_layout(self.size(), bounds);
 
-                let ( $(ref $val,)+ ) = self;
+                let &( $(ref $val,)+ ) = self;
                 $(
                     $val.event(event.clone(), bounds);
                     bounds.min.y += $val.size().height;
@@ -43,7 +44,7 @@ macro_rules! tuple_impl {
             fn draw(&self, mut bounds: Bounds, onto: &mut impl Output) {
                 self.update_layout(self.size(), bounds);
 
-                let ( $(ref $val,)+ ) = self;
+                let &( $(ref $val,)+ ) = self;
                 $(
                     $val.draw(bounds, onto);
                     bounds.min.y += $val.size().height;
@@ -73,10 +74,10 @@ macro_rules! tuple_impl {
             }
 
             fn update_layout(&self, size: Size, bounds: Bounds) {
-                let ( $(ref $val,)+ ) = self;
+                let &( $(ref $val,)+ ) = self;
 
                 let mut n = 0;
-                $( n += $val.needs_layout() as u32; )+ // effectively const
+                $( n += $val.needs_layout_y() as u32; )+
 
                 if n != 0 {
                     let mut height = 0.0;
@@ -85,6 +86,15 @@ macro_rules! tuple_impl {
                     let space = f32::max((bounds.height() - height) / n as f32, 0.0);
                     $( $val.update_layout(Size::new(0.0, space), bounds); )+
                 }
+            }
+
+            fn needs_layout_y(&self) -> bool {
+                let &( $(ref $val,)+ ) = self;
+
+                let mut n = 0;
+                $( n += $val.needs_layout_y() as u32; )+
+
+                n != 0
             }
 
             #[inline(always)]
@@ -99,7 +109,7 @@ macro_rules! tuple_impl {
         impl<$($val: View),+> View for Horizontal<( $($val,)+ )> {
             #[inline]
             fn size(&self) -> Size {
-                let ( $(ref $val,)+ ) = self.0;
+                let &( $(ref $val,)+ ) = &self.0;
 
                 let mut size = Size::zero();
                 $(
@@ -114,7 +124,7 @@ macro_rules! tuple_impl {
             fn event(&self, event: Event, mut bounds: Bounds) {
                 self.update_layout(self.size(), bounds);
 
-                let ( $(ref $val,)+ ) = self.0;
+                let &( $(ref $val,)+ ) = &self.0;
                 $(
                     $val.event(event.clone(), bounds);
                     bounds.min.x += $val.size().width;
@@ -126,7 +136,7 @@ macro_rules! tuple_impl {
             fn draw(&self, mut bounds: Bounds, onto: &mut impl Output) {
                 self.update_layout(self.size(), bounds);
 
-                let ( $(ref $val,)+ ) = self.0;
+                let &( $(ref $val,)+ ) = &self.0;
                 $(
                     $val.draw(bounds, onto);
                     bounds.min.x += $val.size().width;
@@ -156,15 +166,15 @@ macro_rules! tuple_impl {
             }
 
             #[inline(always)]
-            fn needs_layout(&self) -> bool {
-                self.0.needs_layout()
+            fn needs_layout_x(&self) -> bool {
+                self.0.needs_layout_x()
             }
 
             fn update_layout(&self, size: Size, bounds: Bounds) {
-                let ( $(ref $val,)+ ) = self.0;
+                let &( $(ref $val,)+ ) = &self.0;
 
                 let mut n = 0;
-                $( n += $val.needs_layout() as u32;)+
+                $( n += $val.needs_layout_x() as u32;)+
 
                 if n != 0 {
                     let mut width = 0.0;

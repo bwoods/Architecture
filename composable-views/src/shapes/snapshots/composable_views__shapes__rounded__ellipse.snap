@@ -1,7 +1,7 @@
 ---
-source: src/views/shapes/rounded.rs
+source: composable-views/src/shapes/rounded.rs
 expression: output.into_inner()
 ---
 <svg height="128" viewBox="0 0 256 128" width="256" xmlns="http://www.w3.org/2000/svg">
-<path d="M16,72 C16,41.08966,66.17932,16,128,16 L128,16 C189.82068,16,240,41.08966,240,72 L240,72 C240,102.91034,189.82068,128,128,128 L128,128 C66.17932,128,16,102.91034,16,72 z" fill="#000000ff" transform="matrix(1 0 0 1 0 0)"/>
+<path d="M0,56 C0,25.08966,50.17932,0,112,0 L112,0 C173.82068,0,224,25.08966,224,56 L224,56 C224,86.91034,173.82068,112,112,112 L112,112 C50.17932,112,0,86.91034,0,56 z" fill="#000000ff" transform="matrix(1 0 0 1 16 16)"/>
 </svg>

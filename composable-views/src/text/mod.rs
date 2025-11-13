@@ -1,13 +1,14 @@
-pub use font::{Direction, Font, FontConfig, Glyphs, Language, Script};
+use crate::{Bounds, Output, Size, Transform, View};
 
-use crate::{Bounds, Output, Padding, Size, Transform, View};
-use composable::dependencies::Dependency;
+pub use font::{Direction, Font, FontConfig, Glyphs, Language, Script};
 
 mod font;
 
 /// Text data
 #[doc(hidden)] // documented as views::Text
 pub struct Text<'a> {
+    #[cfg(debug_assertions)]
+    text: String,
     font: &'a Font<'a>,
     glyphs: Glyphs,
     width: f32,
@@ -55,7 +56,7 @@ impl Text<'_> {
 
     /// A line spaced view of the Text
     #[inline]
-    pub fn line_spacing(self, spacing: f32) -> Padding<Self> {
+    pub fn line_spacing(self, spacing: f32) -> impl View {
         let spacing = f32::max(0.0, spacing);
 
         let single_spacing = Text::height(&self) + self.line_gap();
@@ -69,7 +70,7 @@ impl Text<'_> {
     ///
     /// See [`line_spacing`][`Self::line_spacing`]
     #[inline(always)]
-    pub fn single_spaced(self) -> Padding<Self> {
+    pub fn single_spaced(self) -> impl View {
         let pad = self.line_gap();
         self.padding_bottom(pad)
     }
@@ -78,7 +79,7 @@ impl Text<'_> {
     ///
     /// See [`line_spacing`][`Self::line_spacing`]
     #[inline(always)]
-    pub fn double_spaced(self) -> Padding<Self> {
+    pub fn double_spaced(self) -> impl View {
         self.line_spacing(2.0)
     }
 }
@@ -91,14 +92,13 @@ impl View for Text<'_> {
 
     fn draw(&self, bounds: Bounds, output: &mut impl Output) {
         struct Builder<'a, T: Output> {
-            transform: Transform,
             output: &'a mut T,
             rgba: [u8; 4],
         }
 
         impl<F: Output> rustybuzz::ttf_parser::OutlineBuilder for Builder<'_, F> {
             fn move_to(&mut self, x: f32, y: f32) {
-                self.output.begin(x, y, self.rgba, &self.transform);
+                self.output.move_to(x, y);
             }
 
             fn line_to(&mut self, x: f32, y: f32) {
@@ -118,12 +118,12 @@ impl View for Text<'_> {
             }
         }
 
-        let transform = Dependency::<Transform>::get_or_default();
+        let mut transform = // …
+            Transform::scale(self.scale, -self.scale) // negate y-axis
+            .then_translate((0.0, self.ascender()).into()) // font baseline
+            .then_translate(bounds.min.to_vector()); // start position,
+
         let mut builder = Builder {
-            transform: Transform::scale(self.scale, -self.scale) // negate y-axis
-                .then_translate((0.0, self.ascender()).into()) // font baseline
-                .then_translate(bounds.min.to_vector()) // start position,
-                .then(&transform),
             rgba: self.rgba,
             output,
         };
@@ -132,15 +132,18 @@ impl View for Text<'_> {
         let glyphs = self.glyphs.glyph_infos().iter();
 
         for (glyph, position) in Iterator::zip(glyphs, positions) {
-            builder.transform = builder
-                .transform // “How much the glyph moves on the [X/Y]-axis before drawing it”
-                .pre_translate((position.x_offset as f32, position.y_offset as f32).into());
+            transform = transform.pre_translate(
+                // “How much the glyph moves on the [X/Y]-axis before drawing it”
+                (position.x_offset as f32, position.y_offset as f32).into(),
+            );
 
+            builder.output.begin(builder.rgba, &transform);
             self.font.outline_glyph(glyph.glyph_id, &mut builder);
 
-            builder.transform = builder
-                .transform // “How much the line advances after drawing this glyph”
-                .pre_translate((position.x_advance as f32, position.y_advance as f32).into());
+            transform = transform.pre_translate(
+                // “How much the line advances after drawing this glyph”
+                (position.x_advance as f32, position.y_advance as f32).into(),
+            );
         }
     }
 }

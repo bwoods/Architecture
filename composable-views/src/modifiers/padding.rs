@@ -17,8 +17,7 @@ impl<V: View> View for Padding<V> {
 
     #[inline(always)]
     fn event(&self, event: Event, bounds: Bounds) {
-        self.view
-            .event(event, bounds.inner_box(self.offsets))
+        self.view.event(event, bounds.inner_box(self.offsets))
     }
 
     #[inline]

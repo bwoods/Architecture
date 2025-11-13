@@ -1,0 +1,11 @@
+[package]
+name = "composable-dependencies"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[features]
+
+[dependencies]
+
+[dev-dependencies]

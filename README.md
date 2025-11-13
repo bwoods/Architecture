@@ -15,18 +15,18 @@ This crate attempts to do the same to the Swift Composable Architecture itself b
 </blockquote>
 </details>
 
-The API has diverged to better reflect the different strengths (and weaknesses) of Rust and Swift, but the [core ideals](https://pointfreeco.github.io/swift-composable-architecture/main/documentation/composablearchitecture/) are the same.
+The API has diverged to better reflect the different strengths (and weaknesses) of Rust and Swift, but
+the [core ideals](https://pointfreeco.github.io/swift-composable-architecture/main/documentation/composablearchitecture/) are the same.
 
 - **State management**
 
-  Using `State`s and `Reducer`s to manage Rust’s restrictions on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability)…
+  Using `State`s and `Reducer`s to manage Rust’s restrictions
+  on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability)…
 
 - **Composition**
 - **Side effects**
 - **Testing**
 - **Ergonomics**
-
-
 
 ## License
 
@@ -36,9 +36,8 @@ See [LICENSE-APACHE](LICENSE-APACHE.md) and [LICENSE-MIT](LICENSE-MIT.md) for de
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
-
-
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual
+licensed as above, without any additional terms or conditions.
 
 # Why use Composable?
 
@@ -46,7 +45,8 @@ A composable architecture is based around…
 
 > ### Note
 >
-> If you have already used another unidirectional data flow architecture for application state management, the main take-away is that the State-Reducer pattern is a great fit to Rust’s restrictions on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability):
+> If you have already used another unidirectional data flow architecture for application state management, the main take-away is that the State-Reducer pattern is a
+> great fit to Rust’s restrictions on [Variables and Mutability](https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability):
 >
 > - Rust requires mutable references to be unique
 > - State mutations may only happen within a Reducer
@@ -66,13 +66,10 @@ As for *this crate* specifically. Features include:
 
 - **Reliable**
 
-  No unsafe code. 
+  No unsafe code.
 
-
-
-Furthermore, the optional `async` handling is done without dependence on a runtime. A `Store` runs its `Reducer` entirely within a single thread. At the same time, `Effects` make it easy for an application to run code, concurrently or in parallel, that feeds its results back into the appropriate `Reducer`.
-
-
+Furthermore, the optional `async` handling is done without dependence on a runtime. A `Store` runs its `Reducer` entirely within a single thread. At the same time,
+`Effects` make it easy for an application to run code, concurrently or in parallel, that feeds its results back into the appropriate `Reducer`.
 
 ## Usage
 
@@ -82,17 +79,15 @@ To use Composable, place the following line under the `[dependencies]` section i
 composable = { version = "0.6", git = "https://github.com/bwoods/Architecture.git" }
 ```
 
-
-
 ### Optional Features
+
 ****
+
 - `unstable`: enable features that are still heavily under development. Unreleased features include:
-  
-  - `views`: immediate-mode user interface elements.  
-    See [the module level documentation](https://bwoods.github.io/Architecture/composable/views/index.html) for more.
-  
+
+    - `views`: immediate-mode user interface elements.  
+      See [the module level documentation](https://bwoods.github.io/Architecture/composable/views/index.html) for more.
+
   Note that changes to `unstable` code will **never** be considered a semver breaking change.
 
-
-
-[^wc]: As counted with `tokei --exclude src/views/ --exclude examples --exclude benches`.
+[^wc]: As counted with `tokei composable-architecture --exclude benches`.

@@ -1,12 +1,13 @@
 [package]
 name = "derive_reducers"
 version = "0.0.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 proc-macro = true
 
 [dependencies]
-syn = "2.0"
-quote = "1.0"
-proc-macro2 = "1.0"
+syn = { version = "2", features = ["extra-traits"] }
+quote = "1.0.42"
+proc-macro2 = "1.0.103"
+heck = "0.5.0"

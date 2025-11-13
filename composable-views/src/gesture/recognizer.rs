@@ -1,5 +1,5 @@
 use crate::{Bounds, Gesture, Point};
-use composable::dependencies::Dependency;
+use composable_dependencies::Dependency;
 
 use super::{Id, State};
 

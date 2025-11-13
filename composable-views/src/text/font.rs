@@ -1,7 +1,7 @@
 use rustybuzz::ttf_parser::name_id::{FAMILY, FULL_NAME, SUBFAMILY, UNIQUE_ID, VERSION};
 use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder, Tag};
-use rustybuzz::{shape_with_plan, Face, ShapePlan, UnicodeBuffer};
 pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
+use rustybuzz::{Face, ShapePlan, UnicodeBuffer, shape_with_plan};
 
 use crate::Text;
 
@@ -95,7 +95,7 @@ impl Font<'_> {
 
     /// Returns a `Text` in this font.
     #[inline(never)]
-    pub fn text(&self, rgba: [u8; 4], string: &str) -> Text {
+    pub fn text(&self, rgba: [u8; 4], string: &str) -> Text<'_> {
         let mut unicode = UnicodeBuffer::new();
         unicode.push_str(string);
 
@@ -114,6 +114,8 @@ impl Font<'_> {
             * scale;
 
         Text {
+            #[cfg(debug_assertions)]
+            text: string.to_owned(),
             font: self,
             glyphs,
             width,
@@ -131,8 +133,8 @@ impl Font<'_> {
 impl<'a> Font<'a> {
     /// Create a `Font` from the raw font data.
     #[inline(always)]
-    pub fn from(data: &'a [u8]) -> Option<FontConfig<'a>> {
-        Self::from_collection(data, 0)
+    pub fn from<T: AsRef<[u8]>>(data: &'a T) -> Option<FontConfig<'a>> {
+        Self::from_collection(data.as_ref(), 0)
     }
 
     /// Create a `Font` from a font collection.

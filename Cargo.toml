@@ -1,29 +1,30 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
     "composable-architecture",
-    "composable-views"
+    "composable-dependencies",
+    "composable-views",
+    "examples"
 ]
 
 [workspace.package]
-version = "0.6.0"
-edition = "2021"
+version = "0.7.0"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 
 
 [workspace.dependencies]
 composable = { path = "composable-architecture" }
-composable-views = { path = "composable-views" }
-futures = { version = "0.3.30", features = ["executor"] }
+composable-dependencies = { path = "composable-dependencies" }
+futures = { version = "0.3", features = ["std"], default-features = false }
+mimalloc = { version = "0.1.50" }
 
 # dev-dependencies
-ntest_timeout = "0.9.3"
-divan = "0.1.14"
-insta = "1.39.0"
+static_assertions = "1.1.0"
+embed-doc-image = "0.1.4"
+divan = "0.1.21"
+log = "0.4.28"
 
-
-[profile.dev]
-opt-level = "s"
 
 [profile.release]
 codegen-units = 1

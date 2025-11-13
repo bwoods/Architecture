@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use std::io::{stdout, Read, StdoutLock, Write};
+use std::io::{Read, StdoutLock, Write, stdout};
 use std::ops::Add;
 
 use clap::{ArgGroup, Parser};
@@ -62,7 +62,7 @@ enum Resize {
 }
 
 #[rustfmt::skip]
-fn svg_paths(name: &str, resize: Resize, svg: usvg::Tree) -> std::io::Result<()> {
+fn svg_paths(name: &str, resize: Resize, svg: Tree) -> std::io::Result<()> {
     let size = svg.size();
 
     let scale = match resize {
@@ -72,11 +72,13 @@ fn svg_paths(name: &str, resize: Resize, svg: usvg::Tree) -> std::io::Result<()>
     };
 
     let mut lock = stdout().lock();
-    writeln!(lock, "fn {name}(x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4], transform: &Transform, output: &mut impl Output) {{")?;
-    writeln!(lock, "    let transform = transform")?;
-    writeln!(lock, "        .pre_translate((x, y).into())")?;
-    writeln!(lock, "        .pre_scale(w / {:?}, h / {:?});",size.width() * scale,size.width() * scale)?;
+    writeln!(lock, "#[rustfmt::skip]")?;
+    writeln!(lock, "fn {name}(x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4], output: &mut impl Output) {{")?;
+    writeln!(lock, "    let transform = Transform::translation(x, y)")?;
+    writeln!(lock, "        .pre_scale(w / {:?}, h / {:?});", size.width() * scale, size.width() * scale)?;
+    writeln!(lock)?;
 
+    writeln!(lock, "    output.begin(rgba, &transform);")?;
     recurse(scale, &mut lock, svg.root().children())?;
     writeln!(lock, "}}")
 }
@@ -94,8 +96,7 @@ fn recurse(scale: f32, lock: &mut StdoutLock, nodes: &[Node]) -> std::io::Result
                     match segment {
                         PathSegment::MoveTo(mut p) => {
                             transform.map_point(&mut p);
-                            writeln!(lock)?;
-                            writeln!(lock, "    output.begin({:?}, {:?}, rgba, &transform);", p.x, p.y)?;
+                            writeln!(lock, "    output.move_to({:?}, {:?});", p.x, p.y)?;
                         }
                         PathSegment::LineTo(mut p) => {
                             transform.map_point(&mut p);
