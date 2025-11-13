@@ -1,0 +1,39 @@
+[workspace]
+resolver = "2"
+members = [
+    "composable-architecture"
+]
+
+[workspace.package]
+version = "0.7.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+
+[workspace.dependencies]
+composable = { path = "composable-architecture" }
+futures = { version = "0.3", features = ["std"], default-features = false }
+mimalloc = { version = "*", features = ["v3"] }
+
+# dev-dependencies
+embed-doc-image = "0.1.4"
+divan = "0.1.21"
+
+
+[profile.dev]
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+incremental = false
+debug = false
+strip = true
+lto = "fat"
+
+[profile.bench]
+inherits = "release"
+debug = true
+strip = false
+
+[profile.dev.package."*"]
+opt-level = 3

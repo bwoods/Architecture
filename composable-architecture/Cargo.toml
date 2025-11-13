@@ -1,0 +1,32 @@
+[package]
+name = "composable"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+
+[features]
+testing = []  # Store.into_inner() will not wait until a tets or benchmark is done without this feature
+mimalloc = [] # Useful for more consistent performance between platforms
+
+[dependencies]
+mimalloc.workspace = true
+futures.workspace = true
+pin-project = "1.1.10"
+
+[dependencies.derive_reducers]
+path = "src/derive_macros/derive_reducers"
+
+[dependencies.derive_more]
+version = "2"
+features = ["from", "try_into"]
+default-features = false
+
+
+[dev-dependencies]
+divan.workspace = true
+
+
+[[bench]]
+name = "sends"
+harness = false
