@@ -4,7 +4,7 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::task::{Wake, Waker};
 use std::time::Duration;
 
-pub(super) struct Wait {
+pub(crate) struct Wait {
     condvar: Condvar,
     unparked: Mutex<u32>,
 }
@@ -62,7 +62,7 @@ impl Wait {
     }
 }
 
-pub(super) struct Queue<T> {
+pub(crate) struct Queue<T> {
     queue: Mutex<VecDeque<T>>,
     wait: Arc<Wait>,
 }
@@ -93,13 +93,14 @@ impl<T> Queue<T> {
         take(&mut *queue)
     }
 
-    pub fn waker(self: &Arc<Self>, id: T) -> Waker
+    pub fn waker(self: &Arc<Self>, value: T) -> Waker
     where
-        T: Send + Sync + Copy + 'static,
+        T: Send + Sync + Clone + 'static,
     {
         let queue = self.clone();
+
         Waker::from(Arc::new(WakeFn(move || {
-            queue.send(id);
+            queue.send(value.clone());
         })))
     }
 }

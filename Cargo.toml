@@ -20,9 +20,6 @@ embed-doc-image = "0.1.4"
 divan = "0.1.21"
 
 
-[profile.dev]
-opt-level = "s"
-
 [profile.release]
 codegen-units = 1
 incremental = false

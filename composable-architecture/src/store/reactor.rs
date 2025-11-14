@@ -17,10 +17,9 @@ use std::time::Instant;
 pub(crate) struct Reactor<State, T, R> {
     marker: PhantomData<State>,
     pub handle: JoinHandle<R>,
-    pub wait: Arc<Wait>,
 
-    pub ready: Arc<Queue<Reason>>,
-    pub recv: Arc<Queue<T>>,
+    pub wake_ups: Arc<Queue<Reason>>,
+    pub events: Arc<Queue<T>>,
 }
 
 #[derive(Copy, Clone)]
@@ -43,23 +42,23 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
         R: Send + From<State> + 'static,
     {
         let wait = Wait::new();
-        let recv = Queue::<T>::new(wait.clone());
-        let ready = Queue::new(wait.clone());
-        let handle = Self::start(with, ready.clone(), recv.clone(), wait.clone());
+        let events = Queue::<T>::new(wait.clone());
+        let wake_ups = Queue::new(wait.clone());
+
+        let handle = Self::start(with, wake_ups.clone(), events.clone(), wait);
 
         Self {
             marker: PhantomData,
             handle,
-            wait,
-            ready,
-            recv,
+            wake_ups,
+            events,
         }
     }
 
     fn start<F>(
         initial: F,
-        ready: Arc<Queue<Reason>>,
-        recv: Arc<Queue<T>>,
+        wake_ups: Arc<Queue<Reason>>,
+        events: Arc<Queue<T>>,
         wait: Arc<Wait>,
     ) -> JoinHandle<R>
     where
@@ -86,42 +85,38 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                 let mut now = Instant::now();
 
                 loop {
-                    for value in recv.take() {
-                        Self::reduce(&mut state, value.into(), &effects);
+                    for event in events.take() {
+                        Self::reduce(&mut state, event.into(), &effects);
                     }
 
-                    // During unit tests, time only advances explicitly
+                    // During unit tests, time only advances when Advance(…) is sent
                     if cfg!(not(test)) {
                         now = Instant::now();
                     }
 
                     let here = scheduler.partition_point(|&(when, _)| when <= now);
                     let due = scheduler.drain(..here).map(|(_, id)| id);
-
-                    for id in
-                        pending
+                    #[rustfmt::skip]
+                    let ids = pending
                             .drain(..)
                             .chain(due)
-                            .chain(ready.take().into_iter().filter_map(|reason| match reason {
-                                Reason::Wake(id) => Some(id),
-                                Reason::Shutdown => {
-                                    shutdown = true;
-                                    None
-                                }
-                                Reason::ShrinkToFit => {
-                                    shrink_to_fit = true;
-                                    None
-                                }
-                                #[cfg(test)]
-                                Reason::Advance(duration) => {
-                                    use std::ops::AddAssign;
-                                    now.add_assign(duration);
-                                    None
-                                }
-                            }))
-                    {
+                            .chain( //
+                                wake_ups.take().into_iter().filter_map(|reason| match reason {
+                                        Reason::Wake(id) => Some(id),
+                                        Reason::Shutdown => { shutdown = true; None }
+                                        Reason::ShrinkToFit => { shrink_to_fit = true; None }
+                                        #[cfg(test)]
+                                        Reason::Advance(duration) => {
+                                            use std::ops::AddAssign;
+                                            now.add_assign(duration); // panics on overflow; failing the test
+                                            None
+                                        }
+                                    }),
+                            );
+
+                    for id in ids {
                         if let Some(stream) = tasks.get_mut(&id) {
-                            let waker = ready.waker(Reason::Wake(id)); // mimalloc is faster than a BtreeMap lookup…
+                            let waker = wake_ups.waker(Reason::Wake(id)); // mimalloc is faster than a BtreeMap lookup…
                             let mut context = Context::from_waker(&waker);
                             pin_mut!(stream);
 
@@ -154,12 +149,12 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                     #[cfg(any(test, feature = "testing"))]
                     {
                         is_empty &= tasks.is_empty();
-                        is_empty &= recv.is_empty();
+                        is_empty &= events.is_empty();
                     }
 
                     match (shutdown, is_empty) {
                         (false, true) => {
-                            drop(effects); // drop RefMut (before we block)
+                            drop(effects); // holding the RefMut while we block just feels wrong…
 
                             if shrink_to_fit {
                                 pending.shrink_to_fit();
@@ -191,9 +186,10 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
     }
 
     pub fn stop(&self) {
-        self.ready.send(Reason::Shutdown)
+        self.wake_ups.send(Reason::Shutdown)
     }
 
+    #[inline(never)]
     fn reduce(
         state: &mut State,
         action: <State as Reducer>::Action,
@@ -209,7 +205,7 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
         let next = || effects.borrow_mut().actions.pop_front();
 
         // side effects MUST be run immediately as to never interleave
-        // them with other actions
+        // them with other actions (or external events)
         while let Some(action) = next() {
             state.reduce(action, Rc::downgrade(effects));
         }

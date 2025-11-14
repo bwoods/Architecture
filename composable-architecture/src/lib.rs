@@ -20,6 +20,9 @@ mod effects;
 mod reducer;
 mod store;
 
+#[cfg(any(test, feature = "testing"))]
+pub mod testing;
+
 #[doc(no_inline)]
 pub use derive_macros::{From, TryInto, derive_more};
 // pub use derive_reducers;

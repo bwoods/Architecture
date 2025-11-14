@@ -2,7 +2,10 @@ mod reactor;
 mod wait;
 
 use crate::Reducer;
-use reactor::Reactor;
+
+pub(crate) use reactor::Reactor;
+#[allow(unused_imports)] // only used when testing
+pub(crate) use reactor::Reason;
 
 #[doc = include_str!("README.md")]
 pub struct Store<State: Reducer, Event = <State as Reducer>::Action, Value = State> {
@@ -42,14 +45,14 @@ where
 
     /// Shrinks the memory usage of the store as much as possible.
     pub fn shrink_to_fit(&mut self) {
-        self.reactor.ready.send(reactor::Reason::ShrinkToFit);
+        self.reactor.wake_ups.send(reactor::Reason::ShrinkToFit);
     }
 
     /// Calls the `Store`’s [`Reducer`][`crate::Reducer`] with `event`.
     ///
     /// `Event` are convertible into the `Reducer`’s `Action`s.
     pub fn send(&self, event: Event) {
-        self.reactor.recv.send(event)
+        self.reactor.events.send(event)
     }
 
     /// Stops the `Store`’s runtime and returns its current `state` value.
@@ -65,9 +68,12 @@ where
     /// at any other time will result in compilation errors.
     /// </div>
     #[cfg(any(test, feature = "testing"))]
-    #[allow(unused_variables)]
     pub fn advance(&self, duration: std::time::Duration) {
+        assert!(duration > std::time::Duration::ZERO);
+
         #[cfg(test)]
-        self.reactor.ready.send(reactor::Reason::Advance(duration));
+        self.reactor
+            .wake_ups
+            .send(reactor::Reason::Advance(duration));
     }
 }

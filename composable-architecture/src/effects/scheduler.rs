@@ -8,7 +8,7 @@ use std::ops::ControlFlow;
 use std::rc::Weak;
 use std::time::{Duration, Instant};
 
-/// [`Effects`] are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s. are sent.
+/// [`Effects`] are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s are sent.
 pub trait Scheduler {
     type Item;
 
@@ -40,8 +40,7 @@ pub trait Scheduler {
         if let Some(instant) = self.now().checked_add(duration) {
             self.at(instant, action)
         } else {
-            // if Instant overflowed, the Stream should instead wait forever
-            self.schedule_task(future::pending().into_stream(), None)
+            self.schedule_task(future::pending().into_stream(), None) // pending forever on overflow
         }
     }
 
