@@ -53,3 +53,76 @@ store.recv(Increment, |state| state.n = 4);
 store.send(Decrement, |state| state.n = 3);
 store.recv(Decrement, |state| state.n = 2);
 ```
+
+## Scheduling
+
+```rust
+# use composable::*;
+# use composable::testing::*;
+# use std::time::Duration;
+#
+#[derive(Debug, Default)]
+struct State {
+    previous: Option<Task>,
+    n: usize,
+}
+
+impl PartialEq for State {
+    fn eq(&self, other: &Self) -> bool {
+        self.n.eq(&other.n)
+    }
+}
+
+impl Clone for State {
+    fn clone(&self) -> Self {
+        Self {
+            previous: None,
+            n: self.n,
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq)]
+enum Action {
+    Send,
+    Recv,
+}
+
+use Action::*;
+
+impl Reducer for State {
+    type Action = Action;
+
+    fn reduce(&mut self, action: Action, send: impl Effects<Action = Self::Action>) {
+        match action {
+            Send => {
+                send.debounce(
+                    Recv,
+                    &mut self.previous,
+                    Interval::Trailing(Duration::from_secs(4)),
+                );
+            }
+            Recv => {
+                self.n += 1;
+            }
+        }
+    }
+}
+
+let store = TestStore::with_initial(State::default());
+let no_change: fn(&mut State) = |_| {};
+
+store.send(Send, no_change);
+store.advance(Duration::from_secs(3));
+
+store.send(Send, no_change);
+store.advance(Duration::from_secs(8));
+store.recv(Recv, |state| state.n = 1);
+
+store.send(Send, no_change);
+store.advance(Duration::from_secs(1));
+store.advance(Duration::from_secs(1));
+store.advance(Duration::from_secs(1));
+store.advance(Duration::from_secs(1));
+store.recv(Recv, |state| state.n = 2);
+```
+

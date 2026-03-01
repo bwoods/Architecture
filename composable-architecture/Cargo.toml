@@ -30,3 +30,5 @@ divan.workspace = true
 [[bench]]
 name = "sends"
 harness = false
+required-features = ["testing"]
+

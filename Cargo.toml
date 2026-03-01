@@ -1,7 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "composable-architecture"
+    "composable-architecture",
+    "composable-sqlite",
+    "composable-views"
 ]
 
 [workspace.package]
@@ -16,6 +18,7 @@ futures = { version = "0.3", features = ["std"], default-features = false }
 mimalloc = { version = "*", features = ["v3"] }
 
 # dev-dependencies
+static_assertions = "1.1.0"
 embed-doc-image = "0.1.4"
 divan = "0.1.21"
 

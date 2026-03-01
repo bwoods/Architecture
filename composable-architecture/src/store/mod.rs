@@ -2,9 +2,7 @@ mod reactor;
 mod wait;
 
 use crate::Reducer;
-
 pub(crate) use reactor::Reactor;
-#[allow(unused_imports)] // only used when testing
 pub(crate) use reactor::Reason;
 
 #[doc = include_str!("README.md")]
@@ -45,35 +43,19 @@ where
 
     /// Shrinks the memory usage of the store as much as possible.
     pub fn shrink_to_fit(&mut self) {
-        self.reactor.wake_ups.send(reactor::Reason::ShrinkToFit);
+        self.reactor.other.send(Reason::ShrinkToFit);
     }
 
     /// Calls the `Store`’s [`Reducer`][`crate::Reducer`] with `event`.
     ///
     /// `Event` are convertible into the `Reducer`’s `Action`s.
-    pub fn send(&self, event: Event) {
-        self.reactor.events.send(event)
+    pub fn send(&self, event: impl Into<Event>) {
+        self.reactor.events.send(event.into())
     }
 
     /// Stops the `Store`’s runtime and returns its current `state` value.
     pub fn into_inner(self) -> Value {
         self.reactor.stop();
         self.reactor.handle.join().unwrap()
-    }
-
-    /// During [testing][testing], [`Store`]s are given control over their passage of time.
-    ///
-    /// <div class="warning">
-    /// This method only exists when running unit tests. Attempting to call it
-    /// at any other time will result in compilation errors.
-    /// </div>
-    #[cfg(any(test, feature = "testing"))]
-    pub fn advance(&self, duration: std::time::Duration) {
-        assert!(duration > std::time::Duration::ZERO);
-
-        #[cfg(test)]
-        self.reactor
-            .wake_ups
-            .send(reactor::Reason::Advance(duration));
     }
 }

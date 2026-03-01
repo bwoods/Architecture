@@ -3,12 +3,12 @@
 mod scheduler;
 mod scoped;
 
-pub use crate::effects::scheduler::{Scheduler, Task};
+pub use crate::effects::scheduler::{Interval, Scheduler, Task};
 use futures::Stream;
 use futures::StreamExt;
 use futures::stream;
 use scoped::Scoped;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, VecDeque};
 use std::future::Future;
 use std::marker::PhantomData;
@@ -61,6 +61,7 @@ pub trait Effects: Clone + Scheduler<Item = Self::Action> + 'static {
 pub(crate) struct Inner<Action> {
     #[allow(clippy::type_complexity)]
     pub tasks: BTreeMap<u64, Pin<Box<dyn Stream<Item = ControlFlow<Instant, Action>>>>>,
+    now: Cell<Instant>,
     next_id: u64,
 
     pub timers: VecDeque<(Instant, u64)>,
@@ -68,13 +69,23 @@ pub(crate) struct Inner<Action> {
 }
 
 impl<Action> Inner<Action> {
-    pub fn new() -> Rc<RefCell<Self>> {
+    pub fn new(now: Instant) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Inner {
             next_id: Default::default(),
+            now: Cell::new(now),
             tasks: Default::default(),
             timers: Default::default(),
             actions: Default::default(),
         }))
+    }
+
+    pub fn shrink_to_fit(&mut self) {
+        self.timers.shrink_to_fit();
+        self.actions.shrink_to_fit();
+    }
+
+    pub fn sync(&self, now: Instant) {
+        self.now.set(now);
     }
 
     #[allow(clippy::nonminimal_bool)]
@@ -89,7 +100,6 @@ impl<Action> Inner<Action> {
         let id = self.next_id;
         self.next_id += 1;
 
-        debug_assert_ne!(id, 0); // see reactor::SHUTDOWN
         id
     }
 }

@@ -8,14 +8,12 @@ use std::ops::ControlFlow;
 use std::rc::Weak;
 use std::time::{Duration, Instant};
 
-/// [`Effects`] are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s are sent.
+/// `Effects` are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s are sent.
 pub trait Scheduler {
     type Item;
 
     #[doc(hidden)]
-    fn now(&self) -> Instant {
-        Instant::now()
-    }
+    fn now(&self) -> Instant;
 
     #[doc(hidden)]
     fn schedule_stream<
@@ -126,18 +124,19 @@ pub trait Scheduler {
     }
 }
 
+#[derive(Debug)]
 pub struct Task {
     handle: Option<AbortHandle>,
     when: Option<Instant>,
 }
 
 impl Task {
-    /// Detaches the task; leaving its [`Stream`][`std::future::Stream`] running in the background.
+    /// Detaches the task; leaving its [`Stream`][`futures::Stream`] running in the background.
     pub fn detach(mut self) {
         self.handle = None
     }
 
-    /// Cancels the task; meaning its [`Stream`][`std::future::Stream`] won’t be polled again.
+    /// Cancels the task; meaning its [`Stream`][`futures::Stream`] won’t be polled again.
     pub fn cancel(self) {
         drop(self)
     }
@@ -164,6 +163,12 @@ pub enum Interval {
 #[doc(hidden)]
 impl<Action: 'static> Scheduler for Weak<RefCell<Inner<Action>>> {
     type Item = Action;
+
+    fn now(&self) -> Instant {
+        self.upgrade()
+            .map(|effects| effects.borrow().now.get())
+            .unwrap_or_else(Instant::now) // if we’ve been deallocated, the answer no longer matters…?
+    }
 
     fn schedule_stream<S>(&self, stream: S)
     where

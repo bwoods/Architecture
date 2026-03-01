@@ -1,16 +1,20 @@
 #![doc = include_str!("README.md")]
+
 use crate::store::Reactor;
 use crate::{Effects, Reducer};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
 use std::sync::mpsc::{Receiver, Sender, channel};
-use std::time::Duration;
+use std::sync::{Arc, Barrier};
+use std::time::{Duration, Instant};
 
 pub struct TestStore<State: Reducer>
 where
     <State as Reducer>::Action: Debug,
 {
     reactor: Option<Reactor<Subject<State>, <State as Reducer>::Action, Subject<State>>>,
+    now: Cell<Instant>,
+
     audit: Receiver<(<State as Reducer>::Action, State)>,
     state: RefCell<State>,
 }
@@ -29,9 +33,11 @@ where
 
         let state = RefCell::new(state);
         let reactor = Some(Reactor::new(move || subject));
+        let snapshot = Cell::new(Instant::now());
 
         Self {
             reactor,
+            now: snapshot,
             audit: receiver,
             state,
         }
@@ -58,13 +64,24 @@ where
 
     #[track_caller]
     pub fn recv(&self, action: <State as Reducer>::Action, f: impl FnOnce(&mut State)) {
+        const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+        self.recv_timeout(action, DEFAULT_TIMEOUT, f);
+    }
+
+    #[track_caller]
+    pub fn recv_timeout(
+        &self,
+        action: <State as Reducer>::Action,
+        timeout: Duration,
+        f: impl FnOnce(&mut State),
+    ) {
         let mut state = self.state.borrow_mut();
         f(&mut state);
 
         let (action_, state_) = self
             .audit
-            .recv_timeout(Duration::from_secs(5)) // FIXME: self.timeout
-            .unwrap_or_else(|_| panic!("no action received; {action:?} expected"));
+            .recv_timeout(timeout)
+            .expect("no action received");
 
         assert_eq!(action_, action);
         assert_eq!(state_, *state);
@@ -76,14 +93,16 @@ where
     }
 
     pub fn advance(&self, duration: Duration) {
-        assert!(duration > Duration::ZERO);
+        self.now.update(|instant| instant + duration); // panics on overflow; failing the test
 
-        #[cfg(test)]
+        let barrier = Arc::new(Barrier::new(2));
         self.reactor
             .as_ref()
             .unwrap()
-            .wake_ups
-            .send(crate::store::Reason::Advance(duration));
+            .other
+            .send(crate::store::Reason::Sync(self.now.get(), barrier.clone()));
+
+        barrier.wait();
     }
 }
 
@@ -117,7 +136,6 @@ where
 {
     type Action = <State as Reducer>::Action;
 
-    #[track_caller]
     fn reduce(&mut self, action: Self::Action, send: impl Effects<Action = Self::Action>) {
         self.state.reduce(action.clone(), send);
 

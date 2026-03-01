@@ -4,14 +4,6 @@ use divan::{bench as benchmark, main as run_benchmarks};
 use futures::{StreamExt, future, stream};
 
 fn main() {
-    #[rustfmt::skip]
-    assert!(cfg!(feature = "testing"),
-    r#"
-    Add `--features "testing"` to cargo bench.
-
-    By default the Store shuts down too abruptly for tests to pass.
-    "#);
-
     run_benchmarks();
 }
 

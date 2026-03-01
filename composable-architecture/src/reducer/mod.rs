@@ -12,6 +12,10 @@ pub trait Reducer {
     /// [invoked][`crate::effects::Effects`] on `send`.
     #[doc = include_str!("README.md")]
     fn reduce(&mut self, action: Self::Action, send: impl Effects<Action = Self::Action>);
+
+    #[doc(hidden)]
+    #[inline(always)]
+    fn recurse(&mut self, _action: Self::Action, _send: impl Effects<Action = Self::Action>) {}
 }
 
 impl<T> Reducer for Box<T>

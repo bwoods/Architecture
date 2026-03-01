@@ -7,7 +7,7 @@ edition = "2024"
 proc-macro = true
 
 [dependencies]
-syn = "2"
-quote = "1"
-proc-macro2 = "1"
-heck = "0.5"
+syn = { version = "2", features = ["extra-traits"] }
+quote = "1.0.42"
+proc-macro2 = "1.0.103"
+heck = "0.5.0"

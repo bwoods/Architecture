@@ -20,15 +20,16 @@ mod effects;
 mod reducer;
 mod store;
 
+// #[cfg_attr(docsrs, doc(cfg(test)))]
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;
 
 #[doc(no_inline)]
 pub use derive_macros::{From, TryInto, derive_more};
-// pub use derive_reducers;
+pub use derive_reducers::Composable;
+pub use derive_reducers::Reducers;
 
-pub use effects::Effects;
-pub use effects::Scheduler;
-pub use effects::Task;
+pub use effects::{Effects, Interval};
+pub use effects::{Scheduler, Task};
 pub use reducer::Reducer;
 pub use store::Store;

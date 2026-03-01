@@ -68,6 +68,10 @@ where
 {
     type Item = Child;
 
+    fn now(&self) -> Instant {
+        self.0.now()
+    }
+
     fn schedule_stream<
         S: Stream<Item = ControlFlow<Instant, <Self as Scheduler>::Item>> + 'static,
     >(
