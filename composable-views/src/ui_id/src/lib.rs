@@ -34,17 +34,12 @@ pub fn ui_id(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
         {
             let mut hash = #bytes;
 
-            // If runtime parameters were passed into the macro, perform a 128-bit FNV-1a
+            // If runtime parameters where passed into the macro, perform a 128-bit FNV-1a
             // mix-step to combine them with the current `ui_id` to generate a new one.
-            let prime = 0x0000000001000000000000000000013B;
+            let prime = 0x0000000001000000000000000000013Bu128;
             #( hash = (hash ^ u128::try_from(#exprs).unwrap()).wrapping_mul(prime); )*
 
-            // a standard conforming (version 4, variant 1) UUID
-            hash = hash & 0xffffffffffff0fff3fffffffffffffff;
-            hash = hash | 0x00000000000040008000000000000000;
-
-            // SAFETY: version and variant will NEVER be zero
-            unsafe { std::num::NonZeroU128::new_unchecked(hash) }
+            unsafe { std::num::NonZeroU128::new_unchecked(hash | 0x1u128) }
         }
     };
 

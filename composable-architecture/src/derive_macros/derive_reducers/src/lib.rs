@@ -6,7 +6,7 @@ mod structs;
 use proc_macro::TokenStream;
 use syn::{Data, DeriveInput, parse_macro_input};
 
-/// Derives a Reducer` implementation that recurses through child `Reducer`s
+/// Derives a `Reducer` implementation that recurses through child `Reducer`s
 #[proc_macro_derive(Composable, attributes(reducer))]
 pub fn derive_recursive_reducers(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -19,7 +19,7 @@ pub fn derive_recursive_reducers(input: TokenStream) -> TokenStream {
 }
 
 /// Derives a new trait that contains a method for each Action.
-#[proc_macro_derive(Reducers)]
+#[proc_macro_derive(Reducers, attributes(reducer))]
 pub fn derive_method_reducers(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 

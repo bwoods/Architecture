@@ -1,0 +1,7 @@
+---
+source: composable-views/src/shapes/rounded.rs
+expression: output.into_inner()
+---
+<svg height="256" viewBox="0 0 256 256" width="256" xmlns="http://www.w3.org/2000/svg">
+<path d="M0,112 C0,50.17932,50.17932,0,112,0 L112,0 C173.82068,0,224,50.17932,224,112 L224,112 C224,173.82068,173.82068,224,112,224 L112,224 C50.17932,224,0,173.82068,0,112 z" fill="#000000ff" transform="matrix(1 0 0 1 16 16)"/>
+</svg>

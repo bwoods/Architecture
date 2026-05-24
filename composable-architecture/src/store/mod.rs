@@ -1,16 +1,16 @@
-mod reactor;
-mod wait;
-
 use crate::Reducer;
 pub(crate) use reactor::Reactor;
 pub(crate) use reactor::Reason;
 
+mod reactor;
+mod wait;
+
 #[doc = include_str!("README.md")]
-pub struct Store<State: Reducer, Event = <State as Reducer>::Action, Value = State> {
+pub struct Store<State: Reducer, Value = State, Event = <State as Reducer>::Action> {
     reactor: Reactor<State, Event, Value>,
 }
 
-impl<State, Event, Value> Store<State, Event, Value>
+impl<State, Event, Value> Store<State, Value, Event>
 where
     State: Reducer,
     Event: Send,
@@ -32,7 +32,7 @@ where
     /// construct it are.
     pub fn new<F>(from: F) -> Self
     where
-        State: Send + 'static,
+        State: 'static,
         Event: Into<<State as Reducer>::Action> + Send + 'static,
         F: (FnOnce() -> State) + Send + 'static,
     {

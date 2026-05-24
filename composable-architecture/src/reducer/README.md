@@ -18,13 +18,14 @@ This is most easily done by implementing the [`Reducer`] trait directly on it’
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
 # struct State {
-#     n: usize,
-# }
-# 
+    # n: usize,
+    #
+}
+#
 # #[derive(Debug, PartialEq)]
 # enum Action {
-#     Increment,
-#     Decrement,
+# Increment,
+# Decrement,
 # }
 #
 #
@@ -48,23 +49,24 @@ impl Reducer for State {
 ```
 
 The `reduce` method’s first responsibility is to mutate the feature’s current state given an `action`. Its second responsibility is to trigger effects that feed
-their actions back into the system. Currently `reduce` does not need to run any effects so `_effects` goes unused.
+their actions back into the system. Currently `reduce` does not need to run any `Effects` so `_send` goes unused.
 
 If the action does need side effects, then more would need to be done. For example, if `reduce` always maintained an even number for the `State`, then each
 `Increment` and `Decrement` would need an effect to follow:[^actually…]
 
-[^actually…]: <small>Granted, real code could just adjust the values by two. It *is* a contrived example to show how to use `effects`, after all.</small>
+[^actually…]: <small>Granted, real code could just adjust the values by two. It *is* a contrived example to show how to use `Effects`, after all.</small>
 
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
 # struct State {
-#     n: usize,
-# }
-# 
+    # n: usize,
+    #
+}
+#
 # #[derive(Debug, PartialEq)]
 # enum Action {
-#     Increment,
-#     Decrement,
+# Increment,
+# Decrement,
 # }
 #
 # use composable::*;

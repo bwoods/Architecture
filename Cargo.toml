@@ -1,9 +1,10 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
     "composable-architecture",
-    "composable-sqlite",
-    "composable-views"
+    "composable-dependencies",
+    "composable-views",
+    "examples"
 ]
 
 [workspace.package]
@@ -14,13 +15,15 @@ license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 composable = { path = "composable-architecture" }
+composable-dependencies = { path = "composable-dependencies" }
 futures = { version = "0.3", features = ["std"], default-features = false }
-mimalloc = { version = "*", features = ["v3"] }
+mimalloc = { version = "0.1.50" }
 
 # dev-dependencies
 static_assertions = "1.1.0"
 embed-doc-image = "0.1.4"
 divan = "0.1.21"
+log = "0.4.28"
 
 
 [profile.release]

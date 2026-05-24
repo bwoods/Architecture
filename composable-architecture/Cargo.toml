@@ -13,6 +13,7 @@ mimalloc = [] # Useful for more consistent performance between platforms
 mimalloc.workspace = true
 futures.workspace = true
 pin-project = "1.1.10"
+log = "0.4.29"
 
 [dependencies.derive_reducers]
 path = "src/derive_macros/derive_reducers"
