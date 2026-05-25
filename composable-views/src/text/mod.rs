@@ -7,13 +7,15 @@ mod font;
 /// Text data
 #[doc(hidden)] // documented as views::Text
 pub struct Text<'a> {
-    #[cfg(debug_assertions)]
-    text: String,
     font: &'a Font<'a>,
     glyphs: Glyphs,
     width: f32,
     scale: f32,
     rgba: [u8; 4],
+
+    #[allow(unused)]
+    #[cfg(debug_assertions)]
+    text: String,
 }
 
 impl Text<'_> {
@@ -86,8 +88,8 @@ impl Text<'_> {
 
 impl View for Text<'_> {
     #[inline(always)]
-    fn size(&self) -> Size {
-        (self.width, self.height()).into()
+    fn size(&self, _bounds: Bounds) -> Size {
+        Size::new(self.width, self.height())
     }
 
     fn draw(&self, bounds: Bounds, output: &mut impl Output) {

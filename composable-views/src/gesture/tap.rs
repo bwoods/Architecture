@@ -3,10 +3,10 @@ use crate::{Bounds, Event, Output, Size, View};
 use composable::Effects;
 
 pub struct TapGesture<V, A, E> {
-    pub(crate) id: Id,
-    pub(crate) view: V,
-    pub(crate) action: A,
-    pub(crate) send: E,
+    pub id: Id,
+    pub view: V,
+    pub action: A,
+    pub send: E,
 }
 
 impl<V, A, E> View for TapGesture<V, A, E>
@@ -16,8 +16,8 @@ where
     E: Effects<Action = A>,
 {
     #[inline(always)]
-    fn size(&self) -> Size {
-        self.view.size()
+    fn size(&self, bounds: Bounds) -> Size {
+        self.view.size(bounds)
     }
 
     #[inline]
@@ -27,7 +27,7 @@ where
                 self.id,
                 gesture,
                 offset,
-                Bounds::from_origin_and_size(bounds.min, self.size()),
+                Bounds::from_origin_and_size(bounds.min, self.size(bounds)),
             )
         {
             self.send.action(self.action.clone())
@@ -47,15 +47,17 @@ pub struct Target<V> {
 
 impl<V: View> View for Target<V> {
     #[inline(always)]
-    fn size(&self) -> Size {
-        self.view.size()
+    fn size(&self, bounds: Bounds) -> Size {
+        self.view.size(bounds)
     }
 
     #[inline]
     fn event(&self, event: Event, bounds: Bounds) {
         let mut target = bounds;
-        target.min -= (self.minimum - self.size()) / 2.0;
-        target.set_size(self.minimum.max(self.size()));
+        let size = self.size(bounds);
+
+        target.min -= (self.minimum - size) / 2.0;
+        target.set_size(self.minimum.max(size));
 
         match event {
             Event::Gesture(gesture, location) if target.contains_inclusive(location) => {

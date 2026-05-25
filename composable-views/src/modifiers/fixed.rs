@@ -2,13 +2,16 @@ use crate::{Bounds, Event, Output, Size, View};
 
 ///
 pub struct Fixed<V> {
-    pub(crate) view: V,
-    pub(crate) size: Size,
+    pub view: V,
+    pub size: Size,
 }
 
 impl<V: View> View for Fixed<V> {
-    #[inline(always)]
-    fn size(&self) -> Size {
+    #[inline]
+    fn size(&self, mut bounds: Bounds) -> Size {
+        bounds.set_size(self.size);
+        self.view.size(bounds);
+
         self.size
     }
 
@@ -27,14 +30,18 @@ impl<V: View> View for Fixed<V> {
 
 ///
 pub struct FixedWidth<V: View> {
-    pub(crate) view: V,
-    pub(crate) width: f32,
+    pub view: V,
+    pub width: f32,
 }
 
 impl<V: View> View for FixedWidth<V> {
     #[inline]
-    fn size(&self) -> Size {
-        let mut size = self.view.size();
+    fn size(&self, mut bounds: Bounds) -> Size {
+        let mut size = bounds.size();
+        size.width = self.width;
+        bounds.set_size(size);
+
+        size = self.view.size(bounds);
         size.width = self.width;
 
         size
@@ -67,8 +74,12 @@ pub struct FixedHeight<V: View> {
 
 impl<V: View> View for FixedHeight<V> {
     #[inline]
-    fn size(&self) -> Size {
-        let mut size = self.view.size();
+    fn size(&self, mut bounds: Bounds) -> Size {
+        let mut size = bounds.size();
+        size.height = self.height;
+        bounds.set_size(size);
+
+        size = self.view.size(bounds);
         size.height = self.height;
 
         size
@@ -90,5 +101,15 @@ impl<V: View> View for FixedHeight<V> {
         bounds.set_size(size);
 
         self.view.draw(bounds, onto)
+    }
+
+    #[inline]
+    fn adjust_width(&self, width: f32) {
+        self.view.adjust_width(width);
+    }
+
+    #[inline]
+    fn adjust_height(&self, height: f32) {
+        self.view.adjust_height(height);
     }
 }

@@ -52,7 +52,7 @@ impl State {
             // match the width of the `player` so the clock may center properly
             Spacer::width(player::State::W + (Self::X * 2.0)),
         )
-            .across()
+            .inline()
     }
 }
 
