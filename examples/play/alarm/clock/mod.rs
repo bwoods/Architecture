@@ -1,3 +1,4 @@
+use crate::inter::Inter;
 use crate::nord::Nord;
 use chrono::{DateTime, Datelike, DurationRound, Local, NaiveTime, TimeDelta, Weekday};
 use composable::*;
@@ -32,7 +33,7 @@ impl Reducers for State {
     }
 
     fn pause(&mut self, _pause: bool, _send: impl Effects<Action = Self::Action>) {
-        todo!()
+        // TODO: stop `tick` when `Occluded`
     }
 }
 
@@ -42,19 +43,18 @@ impl State {
             send.action(Action::Tick);
         };
 
-        let width = self.time().size().width;
-
         (
             Spacer::fill(),
             self.time(),
             Spacer::fill(),
-            self.alarm(width),
+            self.alarm(),
             Spacer::fill(),
             Spacer::fill(),
             Spacer::fill(),
-            self.week(width),
+            self.week(),
             Spacer::height(12.0),
         )
+            .justify(Center)
     }
 
     fn time(&self) -> impl View {
@@ -62,7 +62,7 @@ impl State {
         LARGE.text(Nord.5, &str)
     }
 
-    fn alarm(&self, width: f32) -> impl View {
+    fn alarm(&self) -> impl View {
         let str = self
             .alarm
             .map(|when| {
@@ -76,29 +76,26 @@ impl State {
             })
             .unwrap_or_default();
 
-        (Spacer::fill(), SMALL.text(Nord.8, &str), Spacer::fill())
-            .across()
-            .width(width)
+        SMALL.text(Nord.yellow(), &str)
     }
 
-    fn week(&self, width: f32) -> impl View {
+    fn week(&self) -> impl View {
         (0..7)
             .map(|i| self.day(i))
             .collect_array::<7>()
             .unwrap()
-            .across()
-            .width(width)
+            .inline()
     }
 
     fn day(&self, day: u8) -> impl View {
         let str = format!("{}", Weekday::try_from(day).unwrap());
 
         if self.now.weekday().num_days_from_monday() == day as u32 {
-            BOLD.text(Nord.yellow(), &str)
+            BOLD.text(Nord.4, &str)
         } else {
             BODY.text(Nord.3, &str)
         }
-        .padding_right(24.0)
+        .padding_horizontal(12.0)
     }
 
     fn delay(&self, from: &DateTime<Local>) -> Duration {
@@ -117,30 +114,25 @@ impl State {
 }
 
 pub static LARGE: LazyLock<Font<'static>> = LazyLock::new(|| {
-    Font::from(include_bytes!("../../../minimal/inter/InterVariable.ttf"))
-        .unwrap()
+    Inter //
         .variation(b"wght", 135.0)
-        // .feature(b"tnum", 1)
-        .size(215.0)
+        .size(225.0)
 });
 
 pub static BOLD: LazyLock<Font<'static>> = LazyLock::new(|| {
-    Font::from(include_bytes!("../../../minimal/inter/InterVariable.ttf"))
-        .unwrap()
-        .variation(b"wght", 300.0)
+    Inter //
+        .variation(b"wght", 350.0)
         .size(28.0)
 });
 
 pub static BODY: LazyLock<Font<'static>> = LazyLock::new(|| {
-    Font::from(include_bytes!("../../../minimal/inter/InterVariable.ttf"))
-        .unwrap()
+    Inter //
         .variation(b"wght", 200.0)
         .size(28.0)
 });
 
 pub static SMALL: LazyLock<Font<'static>> = LazyLock::new(|| {
-    Font::from(include_bytes!("../../../minimal/inter/InterVariable.ttf"))
-        .unwrap()
+    Inter //
         .variation(b"wght", 300.0)
         .size(26.0)
 });

@@ -56,6 +56,11 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
         }
     }
 
+    /// Each [`Reactor`] runs in a dedicated thread with a specified stack size.
+    /// Thread stack sizes vary between OSes and toolchains, and are often much
+    /// smaller than this.
+    pub const STACK_SIZE: usize = 8 * 1024 * 1024;
+
     fn start<F>(
         initial: F,
         events: Arc<Queue<T>>,
@@ -69,6 +74,7 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
         R: Send + From<State> + 'static,
     {
         Builder::new()
+            .stack_size(Self::STACK_SIZE)
             .name(std::any::type_name::<Self>().into())
             .spawn(move || {
                 let mut state = initial();
