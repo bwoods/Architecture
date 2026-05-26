@@ -1,6 +1,5 @@
 use crate::{Bounds, Output, Size, Transform, View};
-
-pub use font::{Direction, Font, FontConfig, Glyphs, Language, Script};
+pub use font::{Direction, Font, FontConfig, Glyphs, Language, Script, Tag};
 
 mod font;
 

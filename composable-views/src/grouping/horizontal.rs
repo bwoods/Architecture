@@ -42,7 +42,7 @@ macro_rules! horizontal_impl {
         #[allow(unused)]
         #[allow(non_snake_case)]
         impl<$($val: View),+> View for TopAligned<( $($val,)+ )> {
-            #[inline(always)]
+            #[inline]
             fn size(&self, bounds: Bounds) -> Size {
                 let &( $( ref $val, )+ ) = &self.0;
 
@@ -66,7 +66,7 @@ macro_rules! horizontal_impl {
                 total
             }
 
-            #[inline(always)]
+            #[inline]
             fn event(&self, event: Event, mut bounds: Bounds) {
                 let _ = self.size(bounds); // adjusts sizes before .event()
 
@@ -79,7 +79,7 @@ macro_rules! horizontal_impl {
                 )+
             }
 
-            #[inline(always)]
+            #[inline]
             fn draw(&self, mut bounds: Bounds, onto: &mut impl Output) {
                 let _ = self.size(bounds); // adjusts sizes before .draw()
 
@@ -92,7 +92,7 @@ macro_rules! horizontal_impl {
                 )+
             }
 
-            #[inline]
+            #[inline(always)]
             fn adjust_width(&self, width: f32) {
                 let &( $(ref $val,)+ ) = &self.0;
                 $(
@@ -100,7 +100,7 @@ macro_rules! horizontal_impl {
                 )+
             }
 
-            #[inline]
+            #[inline(always)]
             fn adjust_height(&self, height: f32) {
                 let &( $(ref $val,)+ ) = &self.0;
                 $(
@@ -209,14 +209,14 @@ impl<T: View, const N: usize> View for TopAligned<[T; N]> {
         });
     }
 
-    #[inline]
+    #[inline(always)]
     fn adjust_width(&self, width: f32) {
         for view in &self.0 {
             view.adjust_width(width);
         }
     }
 
-    #[inline]
+    #[inline(always)]
     fn adjust_height(&self, height: f32) {
         for view in &self.0 {
             view.adjust_height(height);

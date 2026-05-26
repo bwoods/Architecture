@@ -3,6 +3,8 @@ use std::cell::Cell;
 
 mod recognizer;
 pub use recognizer::*;
+/// Alias for `std::num::NonZeroU128`
+///
 pub use std::num::NonZeroU128 as Id;
 
 mod tap;

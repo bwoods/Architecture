@@ -1,5 +1,6 @@
+pub use rustybuzz::ttf_parser::Tag;
 use rustybuzz::ttf_parser::name_id::{FAMILY, FULL_NAME, SUBFAMILY, UNIQUE_ID, VERSION};
-use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder, Tag};
+use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder};
 pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
 use rustybuzz::{Face, ShapePlan, UnicodeBuffer, shape_with_plan};
 

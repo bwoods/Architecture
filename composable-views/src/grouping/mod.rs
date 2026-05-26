@@ -76,7 +76,7 @@ macro_rules! tuple_impl {
                 )+
             }
 
-            #[inline]
+            #[inline(always)]
             fn adjust_width(&self, width: f32) {
                 let &( $(ref $val,)+ ) = self;
                 $(
@@ -84,7 +84,7 @@ macro_rules! tuple_impl {
                 )+
             }
 
-            #[inline]
+            #[inline(always)]
             fn adjust_height(&self, height: f32) {
                 let &( $(ref $val,)+ ) = self;
                 $(

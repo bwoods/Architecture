@@ -49,7 +49,7 @@ pub trait View: Sized {
     /// How the `View` is drawn
     fn draw(&self, bounds: Bounds, onto: &mut impl Output);
 
-    /// Add a background shape to the `View`
+    /// Add a background shape to the `View`; as defined by a [`Path`]
     fn background<P>(self, path: P) -> Background<Self, P> {
         Background {
             view: self,
@@ -131,6 +131,7 @@ pub trait View: Sized {
     #[allow(unused_variables)]
     fn adjust_height(&self, height: f32) {} // most views do nothing
 
+    /// The `View`’s response to a tap
     fn on_tap<A, E>(self, id: Id, action: A, send: E) -> TapGesture<Self, A, E>
     where
         A: Clone,
@@ -144,6 +145,7 @@ pub trait View: Sized {
         }
     }
 
+    /// The `View`’s response to a tap, but presenting a larger tap surface than is drawn
     fn on_tap_target<A, E>(
         self,
         id: Id,

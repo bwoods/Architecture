@@ -1,6 +1,7 @@
 # A Composable Architecture
 
-The Swift Composable Architecture library improves upon previous Redux-inspired patterns by leveraging the capabilities of the Swift language to achieve better **Type Safety**, **Ergonomics** and **Performance**.
+The Swift Composable Architecture library improves upon previous Redux-inspired patterns by leveraging the capabilities of the Swift language to achieve better
+**Type Safety**, **Ergonomics** and **Performance**.
 
 This crate attempts to do the same to the Swift Composable Architecture itself by further leveraging the capabilities of the Rust language and ecosystem.
 
@@ -76,7 +77,7 @@ Furthermore, the optional `async` handling is done without dependence on a runti
 To use Composable, place the following line under the `[dependencies]` section in your `Cargo.toml`:
 
 ```toml
-composable = { version = "0.6", git = "https://github.com/bwoods/Architecture.git" }
+composable = { version = "0.7", git = "https://github.com/bwoods/Architecture.git" }
 ```
 
 ### Optional Features
@@ -86,7 +87,7 @@ composable = { version = "0.6", git = "https://github.com/bwoods/Architecture.gi
 - `unstable`: enable features that are still heavily under development. Unreleased features include:
 
     - `views`: immediate-mode user interface elements.  
-      See [the module level documentation](https://bwoods.github.io/Architecture/composable/views/index.html) for more.
+      See the `composable_views` crate [documentation](../composable_views/index.html) for more.
 
   Note that changes to `unstable` code will **never** be considered a semver breaking change.
 

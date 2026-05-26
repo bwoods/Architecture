@@ -33,7 +33,7 @@ impl Reducers for State {
     }
 
     fn pause(&mut self, _pause: bool, _send: impl Effects<Action = Self::Action>) {
-        todo!()
+        // TODO: stop `tick` when `Occluded`
     }
 }
 

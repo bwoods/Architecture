@@ -47,16 +47,16 @@ impl From<State> for usize {
     }
 }
 
-const N: usize = 100000;
+const N: usize = 100_000;
 
-mod one_hundred_thousand {
+mod one_hundred_thousand_sends {
     #[allow(unused_imports)]
     use super::*;
     use composable::Store;
 
     #[benchmark(min_time = 1)]
     fn external_sends() {
-        let store = Store::with_initial(State(0));
+        let store: Store<_, _, Action> = Store::with_initial(State(0));
         for _ in 0..N {
             store.send(std::hint::black_box(Action::A));
         }
@@ -67,7 +67,7 @@ mod one_hundred_thousand {
 
     #[benchmark(min_time = 1)]
     fn internal_sends() {
-        let store = Store::with_initial(State(0));
+        let store: Store<_, _, Action> = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::B));
 
         let n: usize = store.into_inner();
@@ -76,7 +76,7 @@ mod one_hundred_thousand {
 
     #[benchmark(min_time = 1)]
     fn task_sends_batched() {
-        let store = Store::with_initial(State(0));
+        let store: Store<_, _, Action> = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::C));
 
         let n: usize = store.into_inner();
@@ -85,7 +85,7 @@ mod one_hundred_thousand {
 
     #[benchmark(min_time = 1)]
     fn task_sends() {
-        let store = Store::with_initial(State(0));
+        let store: Store<_, _, Action> = Store::with_initial(State(0));
         store.send(std::hint::black_box(Action::D));
 
         let n: usize = store.into_inner();
