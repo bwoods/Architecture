@@ -8,8 +8,8 @@ pub struct Background<V, P> {
 
 impl<V: View, P: Path> View for Background<V, P> {
     #[inline(always)]
-    fn size(&self, bounds: Bounds) -> Size {
-        self.view.size(bounds)
+    fn size(&self, within: Size) -> Size {
+        self.view.size(within)
     }
 
     #[inline]
@@ -20,7 +20,7 @@ impl<V: View, P: Path> View for Background<V, P> {
     #[inline]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
         // since the background is drawn first, adjusts size, if necessary
-        let size = self.view.size(bounds);
+        let size = self.view.size(bounds.size());
 
         let shape = self.background.clone().fill();
         shape.draw(Bounds::from_origin_and_size(bounds.min, size), onto);

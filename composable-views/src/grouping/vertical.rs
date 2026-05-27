@@ -23,8 +23,8 @@ macro_rules! vertical_impl {
                 let ( $( $val,)+ ) = self;
 
                 let mut total = 0.0;
-                $( total = f32::max(total, $val.size(Bounds::default()).width); )+
-                let fit = Bounds::from_size(Size::new(total, 0.0));
+                $( total = f32::max(total, $val.size(Size::default()).width); )+
+                let fit = Size::new(total, 0.0);
 
                 let view = match align {
                     VerticalAlignment::Left => {

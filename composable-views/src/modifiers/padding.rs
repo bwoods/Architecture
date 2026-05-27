@@ -7,8 +7,8 @@ pub struct Padding<V> {
 
 impl<V: View> View for Padding<V> {
     #[inline]
-    fn size(&self, bounds: Bounds) -> Size {
-        let mut size = self.view.size(bounds);
+    fn size(&self, within: Size) -> Size {
+        let mut size = self.view.size(within);
         size.width += self.offsets.horizontal();
         size.height += self.offsets.vertical();
 

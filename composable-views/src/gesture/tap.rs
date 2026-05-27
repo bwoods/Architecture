@@ -16,8 +16,8 @@ where
     E: Effects<Action = A>,
 {
     #[inline(always)]
-    fn size(&self, bounds: Bounds) -> Size {
-        self.view.size(bounds)
+    fn size(&self, within: Size) -> Size {
+        self.view.size(within)
     }
 
     #[inline]
@@ -27,7 +27,7 @@ where
                 self.id,
                 gesture,
                 offset,
-                Bounds::from_origin_and_size(bounds.min, self.size(bounds)),
+                Bounds::from_origin_and_size(bounds.min, self.size(bounds.size())),
             )
         {
             self.send.action(self.action.clone())
@@ -47,14 +47,14 @@ pub struct Target<V> {
 
 impl<V: View> View for Target<V> {
     #[inline(always)]
-    fn size(&self, bounds: Bounds) -> Size {
-        self.view.size(bounds)
+    fn size(&self, within: Size) -> Size {
+        self.view.size(within)
     }
 
     #[inline]
     fn event(&self, event: Event, bounds: Bounds) {
         let mut target = bounds;
-        let size = self.size(bounds);
+        let size = self.size(bounds.size());
 
         target.min -= (self.minimum - size) / 2.0;
         target.set_size(self.minimum.max(size));

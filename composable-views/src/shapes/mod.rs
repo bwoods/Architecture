@@ -129,13 +129,13 @@ pub(crate) struct Shape<V, P> {
 
 impl<V: View, P: Path> View for Shape<V, P> {
     #[inline(always)]
-    fn size(&self, bounds: Bounds) -> Size {
-        self.view.size(bounds)
+    fn size(&self, within: Size) -> Size {
+        self.view.size(within)
     }
 
     #[inline]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
-        let size = self.view.size(bounds);
+        let size = self.view.size(bounds.size());
         self.path
             .draw(bounds.min.x, bounds.min.y, size.width, size.height, onto);
     }

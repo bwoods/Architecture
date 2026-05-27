@@ -43,11 +43,11 @@ macro_rules! horizontal_impl {
         #[allow(non_snake_case)]
         impl<$($val: View),+> View for TopAligned<( $($val,)+ )> {
             #[inline]
-            fn size(&self, bounds: Bounds) -> Size {
+            fn size(&self, size: Size) -> Size {
                 let &( $( ref $val, )+ ) = &self.0;
 
                 let mut n = 0;
-                let flexible = Bounds::from_size(Size::new(f32::INFINITY, 0.0));
+                let flexible = Size::new(f32::INFINITY, 0.0);
                 let mut total = Size::zero();
 
                 $(
@@ -58,8 +58,8 @@ macro_rules! horizontal_impl {
                     }
                 )+
 
-                if n > 0 && bounds.max.x != 0.0 && bounds.max.x != f32::INFINITY {
-                    let frac = f32::max(0.0, (bounds.width() - total.width) / n as f32);
+                if n > 0 && size.width != 0.0 && size.width != f32::INFINITY {
+                    let frac = f32::max(0.0, (size.width - total.width) / n as f32);
                     $( $val.adjust_width(frac); )+
                 }
 
@@ -68,11 +68,11 @@ macro_rules! horizontal_impl {
 
             #[inline]
             fn event(&self, event: Event, mut bounds: Bounds) {
-                let _ = self.size(bounds); // adjusts sizes before .event()
+                let _ = self.size(bounds.size()); // adjusts sizes before .event()
 
                 let &( $(ref $val,)+ ) = &self.0;
                 $(
-                    let width = $val.size(bounds).width;
+                    let width = $val.size(bounds.size()).width;
                     $val.event(event.clone(), bounds);
                     bounds.min.x += width;
                     bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
@@ -81,11 +81,11 @@ macro_rules! horizontal_impl {
 
             #[inline]
             fn draw(&self, mut bounds: Bounds, onto: &mut impl Output) {
-                let _ = self.size(bounds); // adjusts sizes before .draw()
+                let _ = self.size(bounds.size()); // adjusts sizes before .draw()
 
                 let &( $(ref $val,)+ ) = &self.0;
                 $(
-                    let width = $val.size(bounds).width;
+                    let width = $val.size(bounds.size()).width;
                     $val.draw(bounds, onto);
                     bounds.min.x += width;
                     bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
@@ -146,7 +146,7 @@ impl<V: View, const N: usize> Horizontal for [V; N] {
 
     fn inline(self) -> impl View {
         let view = TopAligned(self);
-        let height = view.size(Bounds::default()).height;
+        let height = view.size(Size::default()).height;
         FixedHeight { view, height }
     }
 }
@@ -154,9 +154,9 @@ impl<V: View, const N: usize> Horizontal for [V; N] {
 #[doc(hidden)]
 impl<T: View, const N: usize> View for TopAligned<[T; N]> {
     #[inline]
-    fn size(&self, bounds: Bounds) -> Size {
+    fn size(&self, within: Size) -> Size {
         let mut n = 0;
-        let flexible = Bounds::from_size(Size::new(f32::INFINITY, 0.0));
+        let flexible = Size::new(f32::INFINITY, 0.0);
         let mut total = Size::zero();
 
         for view in &self.0 {
@@ -173,8 +173,8 @@ impl<T: View, const N: usize> View for TopAligned<[T; N]> {
             }
         }
 
-        if n > 0 && bounds.max.x != 0.0 && bounds.max.x != f32::INFINITY {
-            let frac = f32::max(0.0, (bounds.width() - total.width) / n as f32);
+        if n > 0 && within.width != 0.0 && within.width != f32::INFINITY {
+            let frac = f32::max(0.0, (within.width - total.width) / n as f32);
             for view in &self.0 {
                 view.adjust_width(frac);
             }
@@ -185,12 +185,12 @@ impl<T: View, const N: usize> View for TopAligned<[T; N]> {
 
     #[inline]
     fn event(&self, event: Event, bounds: Bounds) {
-        let _ = self.size(bounds); // adjusts sizes before .event()
+        let _ = self.size(bounds.size()); // adjusts sizes before .event()
 
         self.0.iter().fold(bounds, |mut bounds, view| {
             view.event(event.clone(), bounds);
 
-            bounds.min.x += view.size(bounds).width;
+            bounds.min.x += view.size(bounds.size()).width;
             bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
             bounds
         });
@@ -198,12 +198,12 @@ impl<T: View, const N: usize> View for TopAligned<[T; N]> {
 
     #[inline]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
-        let _ = self.size(bounds); // adjusts sizes before .draw()
+        let _ = self.size(bounds.size()); // adjusts sizes before .draw()
 
         self.0.iter().fold(bounds, |mut bounds, view| {
             view.draw(bounds, onto);
 
-            bounds.min.x += view.size(bounds).width;
+            bounds.min.x += view.size(bounds.size()).width;
             bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
             bounds
         });

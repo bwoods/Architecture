@@ -8,9 +8,8 @@ pub struct Fixed<V> {
 
 impl<V: View> View for Fixed<V> {
     #[inline]
-    fn size(&self, mut bounds: Bounds) -> Size {
-        bounds.set_size(self.size);
-        self.view.size(bounds);
+    fn size(&self, _size: Size) -> Size {
+        self.view.size(self.size);
 
         self.size
     }
@@ -36,12 +35,9 @@ pub struct FixedWidth<V: View> {
 
 impl<V: View> View for FixedWidth<V> {
     #[inline]
-    fn size(&self, mut bounds: Bounds) -> Size {
-        let mut size = bounds.size();
-        size.width = self.width;
-        bounds.set_size(size);
-
-        size = self.view.size(bounds);
+    fn size(&self, mut within: Size) -> Size {
+        within.width = self.width;
+        let mut size = self.view.size(within);
         size.width = self.width;
 
         size
@@ -74,12 +70,9 @@ pub struct FixedHeight<V: View> {
 
 impl<V: View> View for FixedHeight<V> {
     #[inline]
-    fn size(&self, mut bounds: Bounds) -> Size {
-        let mut size = bounds.size();
-        size.height = self.height;
-        bounds.set_size(size);
-
-        size = self.view.size(bounds);
+    fn size(&self, mut within: Size) -> Size {
+        within.height = self.height;
+        let mut size = self.view.size(within);
         size.height = self.height;
 
         size

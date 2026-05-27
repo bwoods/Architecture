@@ -31,14 +31,14 @@ impl Spacer {
 
 impl View for Spacer {
     #[inline]
-    fn size(&self, bounds: Bounds) -> Size {
+    fn size(&self, within: Size) -> Size {
         let size = self.0.get();
 
         match (size.width != f32::INFINITY, size.height != f32::INFINITY) {
             (true, true) => size,
-            (false, false) => bounds.size(),
-            (true, false) => Size::new(size.width, bounds.height()),
-            (false, true) => Size::new(bounds.width(), size.height),
+            (false, false) => within,
+            (true, false) => Size::new(size.width, within.height),
+            (false, true) => Size::new(within.width, size.height),
         }
     }
 

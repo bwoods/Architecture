@@ -42,7 +42,7 @@ pub mod text;
 
 pub trait View: Sized {
     /// The intrinsic size of the `View`
-    fn size(&self, bounds: Bounds) -> Size;
+    fn size(&self, within: Size) -> Size;
     /// User-interface [`Event`] handling of the `View`
     #[allow(unused_variables)]
     fn event(&self, event: Event, bounds: Bounds) {}
@@ -121,16 +121,19 @@ pub trait View: Sized {
         FixedHeight { view: self, height }
     }
 
+    /// ###### Flexible View handling
     /// Certain views re-compute their size based upon the bounds of their
     /// containing view. [`Spacer::fill`] for example,
     #[allow(unused_variables)]
     fn adjust_width(&self, width: f32) {} // most views do nothing
 
+    /// ###### Flexible View handling
     /// Certain views re-compute their size based upon the bounds of their
     /// containing view. [`Spacer::fill`] for example,
     #[allow(unused_variables)]
     fn adjust_height(&self, height: f32) {} // most views do nothing
 
+    /// ###### Gesture handling
     /// The `View`’s response to a tap
     fn on_tap<A, E>(self, id: Id, action: A, send: E) -> TapGesture<Self, A, E>
     where
@@ -145,6 +148,7 @@ pub trait View: Sized {
         }
     }
 
+    /// ###### Gesture handling
     /// The `View`’s response to a tap, but presenting a larger tap surface than is drawn
     fn on_tap_target<A, E>(
         self,

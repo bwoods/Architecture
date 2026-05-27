@@ -87,7 +87,7 @@ impl Text<'_> {
 
 impl View for Text<'_> {
     #[inline(always)]
-    fn size(&self, _bounds: Bounds) -> Size {
+    fn size(&self, _within: Size) -> Size {
         Size::new(self.width, self.height())
     }
 

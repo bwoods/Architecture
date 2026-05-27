@@ -114,9 +114,8 @@ impl State {
 }
 
 pub static LARGE: LazyLock<Font<'static>> = LazyLock::new(|| {
-    Inter
+    Inter //
         .variation(b"wght", 135.0)
-        // .feature(b"tnum", 1)
         .size(225.0)
 });
 
