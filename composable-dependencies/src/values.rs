@@ -171,7 +171,7 @@ impl<T> Dependency<T> {
 
     /// Converts into a [`Option<&T>`].
     ///
-    /// # Note
+    /// ## Note
     /// This is the preferred method for producing an [`Option`] to use with the
     /// [question mark operator][`?`].[^try]
     ///
@@ -277,7 +277,7 @@ impl<T> Dependency<T> {
 /// as tests are <u>required</u> to explicitly supply all of their dependencies.
 /// </div>
 ///
-/// # Note
+/// ## Note
 /// `DependencyDefault`s are only created as needed. When its first [`Dependency`] is
 ///  created, [`default`][`Default::default`] will be called once and the returned value will
 ///  be cached.
