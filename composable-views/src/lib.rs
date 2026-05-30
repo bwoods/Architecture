@@ -7,17 +7,17 @@ pub type Offsets = lyon::geom::euclid::default::SideOffsets2D<f32>;
 pub use gesture::{Id, TapGesture, Target};
 pub use grouping::horizontal::{Horizontal, HorizontalAlignment::*};
 pub use grouping::vertical::{Vertical, VerticalAlignment::*};
-pub use layout::Spacer;
+use layout::fixed::{Fixed, FixedHeight, FixedWidth};
+use layout::padding::Padding;
+pub use layout::spacing::Spacer;
 use modifiers::background::Background;
-use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
-use modifiers::padding::Padding;
+use modifiers::opacity::Opacity;
 pub use output::{Output, gpu, svg};
 pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Path, Rectangle, RoundedRectangle};
 pub use text::Text;
 pub use ui_id::ui_id;
 
 /// Warnings logged by `View` modifiers should only be logged once, not on _every_ draw cycle.
-#[allow(unused_macros)]
 macro_rules! warn_once {
     ( $( $x:expr ),+ ) => {
         if cfg!(debug_assertions) {
@@ -25,11 +25,12 @@ macro_rules! warn_once {
             let caller = std::panic::Location::caller();
 
             ONCE.call_once(|| {
-                log::warn!("{}", format!("{}: {}", caller, $( $x )*));
+                log::warn!("{}", format!("{}: {}", caller, $( $x ),+));
             });
         }
     };
 }
+#[allow(unused_imports)]
 pub(crate) use warn_once;
 
 mod gesture;
@@ -43,20 +44,15 @@ pub mod text;
 pub trait View: Sized {
     /// The intrinsic size of the `View`
     fn size(&self, within: Size) -> Size;
+
     /// User-interface [`Event`] handling of the `View`
     #[allow(unused_variables)]
     fn event(&self, event: Event, bounds: Bounds) {}
+
     /// How the `View` is drawn
     fn draw(&self, bounds: Bounds, onto: &mut impl Output);
 
-    /// Add a background shape to the `View`; as defined by a [`Path`]
-    fn background<P>(self, path: P) -> Background<Self, P> {
-        Background {
-            view: self,
-            background: path,
-        }
-    }
-
+    /// # View Layout
     /// Add padding to all sides of the `View`
     fn padding(self, top: f32, right: f32, bottom: f32, left: f32) -> impl View {
         Padding {
@@ -65,60 +61,96 @@ pub trait View: Sized {
         }
     }
 
+    /// # View Layout
     /// Add padding to the top of the `View`
     fn padding_top(self, pad: f32) -> impl View {
         self.padding(pad, 0.0, 0.0, 0.0)
     }
 
+    /// # View Layout
     /// Add padding to the right side of the `View`
     fn padding_right(self, pad: f32) -> impl View {
         self.padding(0.0, pad, 0.0, 0.0)
     }
 
+    /// # View Layout
     /// Add padding to the bottom of the `View`
     fn padding_bottom(self, pad: f32) -> impl View {
         self.padding(0.0, 0.0, pad, 0.0)
     }
 
+    /// # View Layout
     /// Add padding to the left side of the `View`
     fn padding_left(self, pad: f32) -> impl View {
         self.padding(0.0, 0.0, 0.0, pad)
     }
 
+    /// # View Layout
     /// Add padding to the horizontal sides of the `View`
     fn padding_horizontal(self, pad: f32) -> impl View {
         self.padding(0.0, pad, 0.0, pad)
     }
 
+    /// # View Layout
     /// Add padding to the vertical sides of the `View`
     fn padding_vertical(self, pad: f32) -> impl View {
         self.padding(pad, 0.0, pad, 0.0)
     }
 
+    /// # View Layout
     /// Add different padding to the horizontal and vertical sides of the `View`
     fn padding_both(self, x: f32, y: f32) -> impl View {
         self.padding(y, x, y, x)
     }
 
+    /// # View Layout
     /// Add the same padding to all sides of the `View`
     fn padding_all(self, pad: f32) -> impl View {
         self.padding(pad, pad, pad, pad)
     }
 
+    /// # View Layout
     /// Set the size of the `View` to a fixed value.
     fn fixed(self, width: f32, height: f32) -> impl View {
         let size = Size::new(width, height);
         Fixed { view: self, size }
     }
 
+    /// # View Layout
     /// Set the width of the `View` to a fixed value.
     fn width(self, width: f32) -> impl View {
         FixedWidth { view: self, width }
     }
 
+    /// # View Layout
     /// Set the height of the `View` to a fixed value.
     fn height(self, height: f32) -> impl View {
         FixedHeight { view: self, height }
+    }
+
+    /// # View Styling
+    /// Draws the `View` with the given opacity
+    /// ## Note
+    /// Opacity values range from zero to one; with
+    /// zero being fully transparent view and
+    /// one being fully opaque
+    #[track_caller]
+    fn opacity<P>(self, opacity: f32) -> Opacity<Self> {
+        let alpha = f32::clamp(opacity, 0.0, 1.0);
+        if cfg!(debug_assertions) && opacity != alpha {
+            warn_once!("opacity ({opacity}) should be between zero and one")
+        }
+
+        Opacity { view: self, alpha }
+    }
+
+    /// # View Styling
+    /// Add a background shape to the `View`; defined by a [`Path`]
+    fn background<P>(self, path: P) -> Background<Self, P> {
+        Background {
+            view: self,
+            background: path,
+        }
     }
 
     /// # Flexible View handling
@@ -143,7 +175,7 @@ pub trait View: Sized {
         1
     }
 
-    /// ###### Gesture handling
+    /// # Gesture handling
     /// The `View`’s response to a tap
     fn on_tap<A, E>(self, id: Id, action: A, send: E) -> TapGesture<Self, A, E>
     where
@@ -158,7 +190,7 @@ pub trait View: Sized {
         }
     }
 
-    /// ###### Gesture handling
+    /// # Gesture handling
     /// The `View`’s response to a tap, but presenting a larger tap surface than is drawn
     fn on_tap_target<A, E>(
         self,
