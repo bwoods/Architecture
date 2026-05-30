@@ -14,9 +14,6 @@ impl View for () {
     }
 
     #[inline(always)]
-    fn event(&self, _event: Event, _bounds: Bounds) {}
-
-    #[inline(always)]
     fn draw(&self, _bounds: Bounds, _onto: &mut impl Output) {}
 }
 
@@ -37,7 +34,7 @@ macro_rules! tuple_impl {
                 $(
                     let next = $val.size(flexible);
                     match next.height == f32::INFINITY {
-                        true => n += 1, // count the number of indeterminate heights
+                        true => n += $val.frac(), // count the number of indeterminate heights
                         false => total = Size::new(f32::max(total.width, next.width), total.height + next.height),
                     }
                 )+
@@ -92,6 +89,17 @@ macro_rules! tuple_impl {
                 $(
                     $val.adjust_height(height);
                 )+
+            }
+
+            #[inline(always)]
+            fn frac(&self) -> usize {
+                let mut n = 0;
+                let &( $(ref $val,)+ ) = self;
+                $(
+                    n += $val.frac();
+                )+
+
+                n
             }
         }
     };

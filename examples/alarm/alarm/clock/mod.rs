@@ -48,9 +48,10 @@ impl State {
             self.time(),
             Spacer::fill(),
             self.alarm(),
-            Spacer::fill(),
-            Spacer::fill(),
-            Spacer::fill(),
+            // Spacer::fill(),
+            // Spacer::fill(),
+            // Spacer::fill(),
+            Spacer::frac::<3>(),
             self.week(),
             Spacer::height(12.0),
         )

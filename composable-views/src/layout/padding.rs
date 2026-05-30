@@ -20,19 +20,36 @@ impl<V: View> View for Padding<V> {
         self.view.event(event, bounds.inner_box(self.offsets))
     }
 
-    #[inline]
+    #[inline(always)]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
         self.view.draw(bounds.inner_box(self.offsets), onto)
     }
 
+    #[inline(always)]
+    fn padding(mut self, top: f32, right: f32, bottom: f32, left: f32) -> impl View {
+        self.offsets.top += top;
+        self.offsets.right += right;
+        self.offsets.bottom += bottom;
+        self.offsets.left += left;
+
+        self
+    }
+
     #[inline]
     fn adjust_width(&self, width: f32) {
-        self.view.adjust_width(width);
+        self.view
+            .adjust_width(f32::max(0.0, width - self.offsets.horizontal()));
     }
 
     #[inline]
     fn adjust_height(&self, height: f32) {
-        self.view.adjust_height(height);
+        self.view
+            .adjust_height(f32::max(0.0, height - self.offsets.vertical()));
+    }
+
+    #[inline(always)]
+    fn frac(&self) -> usize {
+        self.view.frac()
     }
 }
 

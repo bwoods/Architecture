@@ -1,7 +1,5 @@
-#![allow(dead_code)]
-
 #[allow(unused_imports)]
-use crate::{Bounds, Event, FixedHeight, FixedWidth, Output, Size, Spacer, View};
+use crate::{Bounds, Event, FixedHeight, FixedWidth, Output, Padding, Size, Spacer, View};
 
 pub enum HorizontalAlignment {
     Top,
@@ -9,39 +7,45 @@ pub enum HorizontalAlignment {
     Bottom,
 }
 
-struct Aligned<T>(T);
-
 pub trait Horizontal {
     fn align(self, align: HorizontalAlignment) -> impl View;
 
     fn inline(self) -> impl View;
 }
 
-/// Top-aligned behavior is the default, so overheads are eliminated with this
-/// custom implementation.
-struct TopAligned<V>(V);
+/// Aligns a group of `View`s horizontally
+struct Aligned<V>(V);
 
 macro_rules! horizontal_impl {
     ( $($val:ident)+ ) => {
         #[doc(hidden)]
         #[allow(non_snake_case)]
-        impl<$($val: View),+> Horizontal for ( $($val,)+ ) {
-            fn align(self, _align: HorizontalAlignment) -> impl View {
-                // TODO:
+        impl<$( $val: View ),+> Horizontal for ( $( $val, )+ ) {
+            fn align(self, align: HorizontalAlignment) -> impl View {
+                let ( $( $val, )+ ) = self;
+
+                let mut total = 0.0;
+                $( total = f32::max(total, $val.size(Size::default()).height); )+
+                let fit = Size::new(0.0, total);
+
+                let view = match align {
+                    HorizontalAlignment::Top => ( $( Padding::bottom(total - $val.size(fit).height, $val), )+ ),
+                    HorizontalAlignment::Middle =>  ( $( Padding::vertical((total - $val.size(fit).height) / 2.0, $val), )+ ),
+                    HorizontalAlignment::Bottom => ( $( Padding::top(total - $val.size(fit).height, $val), )+ ),
+                };
+
+                Aligned(view)
             }
 
             fn inline(self) -> impl View {
-                TopAligned(self)
-
-                // let height = self.size(Bounds::from_size(Size::new(f32::INFINITY, 0.0))).height;
-                // FixedHeight { view: TopAligned(self), height }
+                Aligned(self)
             }
         }
 
         #[doc(hidden)]
         #[allow(unused)]
         #[allow(non_snake_case)]
-        impl<$($val: View),+> View for TopAligned<( $($val,)+ )> {
+        impl<$( $val: View ),+> View for Aligned<( $( $val, )+ )> {
             #[inline]
             fn size(&self, size: Size) -> Size {
                 let &( $( ref $val, )+ ) = &self.0;
@@ -53,8 +57,11 @@ macro_rules! horizontal_impl {
                 $(
                     let next = $val.size(flexible);
                     match next.width == f32::INFINITY {
-                        true => n += 1, // count the number of indeterminate widths
-                        false => total = Size::new(total.width + next.width, f32::max(total.height, next.height)),
+                        true => n += $val.frac(), // count the number of indeterminate widths
+                        false => total = Size::new(
+                            total.width + next.width,
+                            f32::max(total.height, next.height)
+                        ),
                     }
                 )+
 
@@ -107,6 +114,17 @@ macro_rules! horizontal_impl {
                     $val.adjust_height(height);
                 )+
             }
+
+            #[inline(always)]
+            fn frac(&self) -> usize {
+                let mut n = 0;
+                let &( $(ref $val,)+ ) = &self.0;
+                $(
+                    n += $val.frac();
+                )+
+
+                n
+            }
         }
     };
 }
@@ -145,14 +163,12 @@ impl<V: View, const N: usize> Horizontal for [V; N] {
     }
 
     fn inline(self) -> impl View {
-        let view = TopAligned(self);
-        let height = view.size(Size::default()).height;
-        FixedHeight { view, height }
+        Aligned(self)
     }
 }
 
 #[doc(hidden)]
-impl<T: View, const N: usize> View for TopAligned<[T; N]> {
+impl<T: View, const N: usize> View for Aligned<[T; N]> {
     #[inline]
     fn size(&self, within: Size) -> Size {
         let mut n = 0;
@@ -163,7 +179,7 @@ impl<T: View, const N: usize> View for TopAligned<[T; N]> {
             let next = view.size(flexible);
 
             match next.width == f32::INFINITY {
-                true => n += 1, // count the number of indeterminate widths
+                true => n += view.frac(), // count the number of indeterminate widths
                 false => {
                     total = Size::new(
                         total.width + next.width,
@@ -221,5 +237,10 @@ impl<T: View, const N: usize> View for TopAligned<[T; N]> {
         for view in &self.0 {
             view.adjust_height(height);
         }
+    }
+
+    #[inline(always)]
+    fn frac(&self) -> usize {
+        self.0.iter().fold(0, |n, view| n + view.frac())
     }
 }

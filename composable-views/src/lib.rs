@@ -121,17 +121,27 @@ pub trait View: Sized {
         FixedHeight { view: self, height }
     }
 
-    /// ###### Flexible View handling
-    /// Certain views re-compute their size based upon the bounds of their
-    /// containing view. [`Spacer::fill`] for example,
+    /// # Flexible View handling
+    /// Flexible views re-compute their size based upon the bounds of their
+    /// containing view. [`Spacer::fill`] for example.
+    #[inline(always)]
     #[allow(unused_variables)]
-    fn adjust_width(&self, width: f32) {} // most views do nothing
+    fn adjust_width(&self, width: f32) {}
 
-    /// ###### Flexible View handling
-    /// Certain views re-compute their size based upon the bounds of their
-    /// containing view. [`Spacer::fill`] for example,
+    /// # Flexible View handling
+    /// Flexible views re-compute their size based upon the bounds of their
+    /// containing view. [`Spacer::fill`] for example.
+    #[inline(always)]
     #[allow(unused_variables)]
-    fn adjust_height(&self, height: f32) {} // most views do nothing
+    fn adjust_height(&self, height: f32) {}
+
+    /// # Flexible View handling
+    /// Flexible views may be sized proportionally to each other.
+    #[doc(hidden)]
+    #[inline(always)]
+    fn frac(&self) -> usize {
+        1
+    }
 
     /// ###### Gesture handling
     /// The `View`’s response to a tap
