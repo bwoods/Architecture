@@ -55,7 +55,7 @@ impl Output {
     /// An example WGSL shader that consumes this `Output`’s output:
     ///
     /// ```wgsl
-    #[doc = include_str!("../../../examples/play/rendering/shader.wgsl")]
+    #[doc = include_str!("../../../examples/alarm/rendering/shader.wgsl")]
     /// ```
     /// ## Note
     /// The output is stored in [Normalized Device Coordinates][W3].

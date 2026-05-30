@@ -33,8 +33,8 @@ insta = "1.47"
 
 
 [[bin]]
-name = "Play" # used as the application menu title
-path = "play/main.rs"
+name = "Alarm" # used as the application menu title
+path = "alarm/main.rs"
 
 [lib]
 name = "minimal_ui"
