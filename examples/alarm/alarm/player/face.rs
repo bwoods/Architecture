@@ -6,14 +6,14 @@ pub struct Face;
 
 impl Path for Face {
     fn draw(&self, x: f32, y: f32, w: f32, h: f32, onto: &mut impl Output) {
-        icon(x, y, w, h, Nord.0, onto)
+        icon(x - 10.0, y - 11.0, w / 110.0, h / 110.0, Nord.0, onto)
     }
 }
 
 #[rustfmt::skip]
 fn icon(x: f32, y: f32, w: f32, h: f32, rgba: [u8; 4], output: &mut impl Output) {
-    let transform = Transform::translation(x - 10.0, y - 11.0)
-        .pre_scale(w / 110.0, h / 110.0);
+    let transform = Transform::translation(x, y)
+        .pre_scale(w, h);
 
     output.begin(rgba, &transform);
     output.move_to(34.677803, 81.44397);

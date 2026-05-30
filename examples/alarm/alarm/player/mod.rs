@@ -64,6 +64,13 @@ impl Reducers for State {
     }
 
     fn next(&mut self, send: impl Effects<Action = Action>) {
+        let playing = self.sink.is_playing().unwrap();
+        let lullaby = matches!(self.track, Track::None);
+
+        if playing && lullaby {
+            self.track.next();
+        }
+
         self.track.next();
         self.play(send);
     }
