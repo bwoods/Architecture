@@ -1,5 +1,5 @@
-use crate::{Bounds, Fixed, FixedHeight, FixedWidth, Output, Size, View};
-use std::cell::{Cell, OnceCell};
+use crate::{Bounds, Event, Fixed, FixedHeight, FixedWidth, Output, Size, View};
+use std::cell::Cell;
 
 pub struct Spacer(pub(crate) Cell<Size>);
 
@@ -7,6 +7,13 @@ impl Spacer {
     #[inline(always)]
     pub fn fill() -> impl View {
         Spacer(Size::splat(f32::INFINITY).into())
+    }
+
+    /// - `Spacer::frac::<1>()` is equivalent to `Spacer::fill()`.
+    /// - `Spacer::frac::<3>()` acts more like three `Spacer::fill()` in its place.
+    #[inline(always)]
+    pub fn frac<const N: usize>() -> impl View {
+        Frac::<_, N>(Spacer::fill())
     }
 
     #[inline(always)]
@@ -63,5 +70,39 @@ impl View for Spacer {
 
             size
         });
+    }
+}
+
+struct Frac<V, const N: usize>(V);
+
+impl<V: View, const N: usize> View for Frac<V, N> {
+    #[inline(always)]
+    fn size(&self, within: Size) -> Size {
+        self.0.size(within)
+    }
+
+    #[inline(always)]
+    fn event(&self, event: Event, bounds: Bounds) {
+        self.0.event(event, bounds)
+    }
+
+    #[inline(always)]
+    fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+        self.0.draw(bounds, onto)
+    }
+
+    #[inline(always)]
+    fn adjust_width(&self, width: f32) {
+        self.0.adjust_width(width * N as f32)
+    }
+
+    #[inline(always)]
+    fn adjust_height(&self, height: f32) {
+        self.0.adjust_height(height * N as f32)
+    }
+
+    #[inline(always)]
+    fn frac(&self) -> usize {
+        N
     }
 }

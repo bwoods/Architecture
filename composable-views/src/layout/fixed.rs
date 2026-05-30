@@ -60,6 +60,21 @@ impl<V: View> View for FixedWidth<V> {
 
         self.view.draw(bounds, onto)
     }
+
+    #[inline(always)]
+    fn adjust_width(&self, width: f32) {
+        self.view.adjust_width(width);
+    }
+
+    #[inline(always)]
+    fn adjust_height(&self, height: f32) {
+        self.view.adjust_height(height);
+    }
+
+    #[inline(always)]
+    fn frac(&self) -> usize {
+        self.view.frac()
+    }
 }
 
 ///
@@ -96,13 +111,18 @@ impl<V: View> View for FixedHeight<V> {
         self.view.draw(bounds, onto)
     }
 
-    #[inline]
+    #[inline(always)]
     fn adjust_width(&self, width: f32) {
         self.view.adjust_width(width);
     }
 
-    #[inline]
+    #[inline(always)]
     fn adjust_height(&self, height: f32) {
         self.view.adjust_height(height);
+    }
+
+    #[inline(always)]
+    fn frac(&self) -> usize {
+        self.view.frac()
     }
 }
