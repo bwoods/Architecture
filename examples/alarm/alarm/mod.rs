@@ -26,9 +26,6 @@ pub struct State {
 }
 
 impl State {
-    pub const X: f32 = 32.0;
-    pub const Y: f32 = 36.0;
-
     pub fn new(rendering: rendering::State, windowing: windowing::State) -> Self {
         let player = Default::default();
         let clock = Default::default();
@@ -42,15 +39,17 @@ impl State {
     }
 
     fn view(&self, send: impl Effects<Action = Action>) -> impl View {
+        let player = self.player.view(send.scope()).padding_both(32.0, 36.0);
+        let clock = self.clock.view(send.scope());
+        let margin = player.size(Size::zero()).width;
+
         (
-            self.player
-                .view(send.scope())
-                .padding_both(Self::X, Self::Y),
+            player,
             Spacer::fill(),
-            self.clock.view(send.scope()),
+            clock,
             Spacer::fill(),
             // match the width of the `player` so the clock may center properly
-            Spacer::width(player::State::W + (Self::X * 2.0)),
+            Spacer::width(margin),
         )
             .inline()
     }
