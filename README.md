@@ -11,7 +11,6 @@ This crate attempts to do the same to the Swift Composable Architecture itself b
 <p>The <a href='https://github.com/pointfreeco/swift-composable-architecture'>Composable Architecture</a> (TCA, for short) is a library for building applications in a consistent and understandable way, with composition, testing, and ergonomics in mind. It can be used in SwiftUI, UIKit, and more, and on any Apple platform (iOS, macOS, tvOS, and watchOS).</p>
 <h2>Learn More</h2>
 <p>The Composable Architecture was designed over the course of many episodes on <a href='https://www.pointfree.co/'>Point•Free</a>, a video series exploring functional programming and the Swift language, hosted by Brandon Williams and Stephen Celis.</p>
-<p>You can watch all of the episodes <a href='https://www.pointfree.co/collections/composable-architecture'>here</a>, as well as a dedicated, multipart tour of the architecture from scratch: <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep100-a-tour-of-the-composable-architecture-part-1'>part 1</a>, <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep101-a-tour-of-the-composable-architecture-part-2'>part 2</a>, <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep102-a-tour-of-the-composable-architecture-part-3'>part 3</a> and <a href='https://www.pointfree.co/collections/composable-architecture/a-tour-of-the-composable-architecture/ep103-a-tour-of-the-composable-architecture-part-4'>part 4</a>.</p>
 <p><img src="https://raw.githubusercontent.com/bwoods/Architecture/develop/about/images/Brandon%20Williams%20and%20Stephen%20Celis.jpeg" referrerpolicy="no-referrer"></p>
 </blockquote>
 </details>
@@ -58,7 +57,7 @@ As for *this crate* specifically. Features include:
 
 - **Small**
 
-  The core functionality is under 2000 lines of code and has minimal dependancies.[^wc]
+  The core functionality is around 3000 lines of code and has minimal dependancies.[^wc]
 
 - **Fast**
 
@@ -80,15 +79,14 @@ To use Composable, place the following line under the `[dependencies]` section i
 composable = { version = "0.7", git = "https://github.com/bwoods/Architecture.git" }
 ```
 
-### Optional Features
+### Other crates in the workspace
 
-****
+- [`composable-dependencies`](../composable_dependencies/index.html) supplies scoped/overrideable dependancies.
+- [`composable-views`](../composable_views/index.html) implements  immediate-mode user interface elements that interface directly with `Reducer` `Actions`.
+    - The `examples` crate within the workspace serves to both drive development and document usage of `composable-views`.
+    - **Note** that `composable_views` is under heavy development, and changes to it are not considered a semver breaking change.
 
-- `unstable`: enable features that are still heavily under development. Unreleased features include:
 
-    - `views`: immediate-mode user interface elements.  
-      See the `composable_views` crate [documentation](../composable_views/index.html) for more.
 
-  Note that changes to `unstable` code will **never** be considered a semver breaking change.
 
-[^wc]: As counted with `tokei composable-architecture --exclude benches`.
+[^wc]: As counted with `tokei composable-architecture composable-dependencies --exclude benches`.

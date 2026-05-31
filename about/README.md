@@ -45,7 +45,7 @@ The nightly version of **rustdoc** is used so that the unstable `feature(doc_aut
 
 ~~~sh
 RUSTDOCFLAGS="--cfg docsrs" \
-cargo +nightly doc --package composable \
+cargo +nightly doc --package composable --package composable-dependencies \
                    --package composable-views \
                    --no-deps --all-features || exit
 ~~~
