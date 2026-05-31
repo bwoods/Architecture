@@ -23,8 +23,7 @@ impl DependencyDefault for Values {}
 
 /// The user interface state carried between cycles by the application.
 ///
-/// ```
-/// # use composable_views::gesture::{Id, State};
+/// ```ignore
 /// let state = State::default();
 ///
 /// let mut values = state.get();

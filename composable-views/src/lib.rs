@@ -4,7 +4,8 @@ use composable::*;
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 /// Alias for `euclid::default::SideOffsets2D<f32>`
 pub type Offsets = lyon::geom::euclid::default::SideOffsets2D<f32>;
-pub use gesture::{Id, TapGesture, Target};
+pub use gesture::Id;
+use gesture::{TapGesture, Target};
 pub use grouping::horizontal::{Horizontal, HorizontalAlignment::*};
 pub use grouping::vertical::{Vertical, VerticalAlignment::*};
 use layout::fixed::{Fixed, FixedHeight, FixedWidth};
