@@ -14,19 +14,21 @@ And please only add new entries to the top of this list, right below the `# Unre
 ### Added
 
 - A binary target has been added to covert SVG files into Rust functions that can be used to render them as `Shape`s.
+- `Dependency::get_or_default()` has been added for `Copy` types.
 
 ### Changed
 
 - **Breaking:** `Dependency::new()` is now `Dependency::get()`.
-- `Dependency::get_or_default()` has been added for `Copy` types.
 
 ### Removed
 
-- `View`s have been moved into their own crate (in the workspace). They are still considered an <span class = "stab portability"><code>unstable</code></span> feature and are still not considered with respect to the Semantic Versioning of this project.
+- **Breaking:** `view` has been moved into their own crate (in the workspace). It is still considered an <span class = "stab portability"><code>unstable</code></span> feature and is not considered with respect to the Semantic Versioning of this project.
+- **Breaking:** `dependencies` has been moved into their own crate (in the workspace).
 
 ### Fixed
 
 - Added a default stack size to `Store` threads. The same thread stack size is now used on all platforms. 
+- `Store` has been completely rebuilt over an explicit `Reactor` implementation. This enables it to support  the needs of the `Scheduler` trait without spawning an additional thread.
 
 
 
@@ -34,7 +36,7 @@ And please only add new entries to the top of this list, right below the `# Unre
 
 ### Added
 
-- Asynchronous `Effects` that where removed in version 0.5 have been restored. They now run in a [Local Async Executor](https://maciej.codes/2022-06-09-local-async.html), rather than a mulit-threaded one, 
+- Asynchronous `Effects` that where removed in version 0.5 have been restored. They now run in a [Local Async Executor](https://maciej.codes/2022-06-09-local-async.html), rather than a multi-threaded one, 
 - The `views` feature is gated behind a new <span class = "stab portability"><code>unstable</code></span> feature flag. Development on `View`s may now continue without causing SemVer issues.  
   Unstable features **are not** considered when determining versioning.
 
