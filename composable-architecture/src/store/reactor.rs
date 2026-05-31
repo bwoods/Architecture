@@ -77,7 +77,7 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
             .stack_size(Self::STACK_SIZE)
             .name(std::any::type_name::<Self>().into())
             .spawn(move || {
-                let mut state = initial();
+                let mut state = Box::new(initial());
 
                 let now = Cell::new(Instant::now());
                 let effects = Inner::new(now.get());
@@ -196,7 +196,7 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                             scheduler.make_contiguous().sort_by_key(|(when, _)| *when);
                         }
                         (true, true) => {
-                            return state.into();
+                            return (*state).into();
                         }
                     }
                 }
