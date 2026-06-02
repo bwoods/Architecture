@@ -4,7 +4,7 @@ Please keep one empty line before and after all headers. (This is required for `
 
 And please only add new entries to the top of this list, right below the `# Unreleased` header.
 
-> The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)/[Common Changelog](https://common-changelog.org),
+> The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)/[Common Changelog](https://common-changelog.org), 
 > and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
@@ -28,7 +28,7 @@ And please only add new entries to the top of this list, right below the `# Unre
 ### Fixed
 
 - Added a default stack size to `Store` threads. The same thread stack size is now used on all platforms. 
-- `Store` has been completely rebuilt over an explicit `Reactor` implementation. This enables it to support  the needs of the `Scheduler` trait without spawning an additional thread.
+- `Store` has been completely rebuilt over an explicit [`Reactor`](https://en.wikipedia.org/wiki/Reactor_pattern) implementation. This enables it to support  the needs of the `Scheduler` trait without spawning additional threads.
 
 
 
