@@ -10,7 +10,6 @@ default = []
 
 [dependencies]
 composable.workspace = true
-composable-dependencies.workspace = true
 composable-views = { path = "../composable-views" }
 log.workspace = true
 
@@ -29,7 +28,6 @@ dpi = "0.1.2"
 
 
 [dev-dependencies]
-insta = "1.47"
 
 
 [[bin]]
