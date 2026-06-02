@@ -18,14 +18,13 @@ This is most easily done by implementing the [`Reducer`] trait directly on it’
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
 # struct State {
-    # n: usize,
-    #
-}
+# 	n: usize,
+# }
 #
 # #[derive(Debug, PartialEq)]
 # enum Action {
-# Increment,
-# Decrement,
+# 	Increment,
+# 	Decrement,
 # }
 #
 #
@@ -59,14 +58,13 @@ If the action does need side effects, then more would need to be done. For examp
 ```rust
 # #[derive(Clone, Debug, Default, PartialEq)]
 # struct State {
-    # n: usize,
-    #
-}
+# 	n: usize,
+# }
 #
 # #[derive(Debug, PartialEq)]
 # enum Action {
-# Increment,
-# Decrement,
+# 	Increment,
+# 	Decrement,
 # }
 #
 # use composable::*;
