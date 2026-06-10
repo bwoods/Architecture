@@ -11,8 +11,12 @@ default = []
 [dependencies]
 composable.workspace = true
 composable-views = { path = "../composable-views" }
-log.workspace = true
+tracing.workspace = true
 
+tracing-tracy = { version = "0.11.4", features = ["enable", "only-localhost", "sampling"] }
+tracing-subscriber = "0.3.23"
+
+log = "0.4.1"
 raplay = "0.4.3"
 simple_logger = "5.1.0"
 git-version = "0.3.9"

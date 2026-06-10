@@ -1,7 +1,7 @@
 use composable::*;
-use log::error;
 use muda::Menu;
 use std::sync::mpsc::Sender;
+use tracing::error;
 use winit::event_loop::EventLoopProxy;
 use winit::window::WindowId;
 

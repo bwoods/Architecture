@@ -1,7 +1,6 @@
 //! GPU [`Output`] for `Views`
 
 use crate::Transform;
-use log::{trace, warn};
 use lyon::path::builder::{NoAttributes, Transformed};
 use lyon::path::{BuilderImpl as Builder, Path};
 use lyon::tessellation::{
@@ -9,6 +8,7 @@ use lyon::tessellation::{
     GeometryBuilderError, VertexId,
 };
 use std::mem::replace;
+use tracing::{trace, warn};
 
 ///
 pub struct Output {

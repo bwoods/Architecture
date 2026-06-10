@@ -5,9 +5,9 @@ use composable::*;
 use composable_views::text::Font;
 use composable_views::*;
 use itertools::Itertools;
-use log::trace;
 use std::sync::LazyLock;
 use std::time::Duration;
+use tracing::trace;
 
 #[derive(Clone, From, TryInto, Reducers)]
 pub enum Action {
@@ -48,9 +48,6 @@ impl State {
             self.time(),
             Spacer::fill(),
             self.alarm(),
-            // Spacer::fill(),
-            // Spacer::fill(),
-            // Spacer::fill(),
             Spacer::frac::<3>(),
             self.week(),
             Spacer::height(12.0),

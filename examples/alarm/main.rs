@@ -3,10 +3,10 @@ use crate::{versioning::NAME, versioning::SOURCE, versioning::VERSION};
 use composable::*;
 use composable_views::{Event, Gesture};
 use dpi::LogicalSize;
-use log::{error, trace};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::sync::mpsc::{Receiver, Sender, channel};
+use tracing::{error, trace};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, DeviceEvents, EventLoop};
@@ -237,6 +237,13 @@ impl State {
 }
 
 fn main() {
+    use tracing_subscriber::layer::SubscriberExt;
+
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::registry().with(tracing_tracy::TracyLayer::default()),
+    )
+    .expect("setup tracy layer");
+
     let level = if cfg!(debug_assertions) {
         log::LevelFilter::Info
     } else {

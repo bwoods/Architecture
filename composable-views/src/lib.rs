@@ -26,7 +26,7 @@ macro_rules! warn_once {
             let caller = std::panic::Location::caller();
 
             ONCE.call_once(|| {
-                log::warn!("{}", format!("{}: {}", caller, $( $x ),+));
+                tracing::warn!("{}", format!("{}: {}", caller, $( $x ),+));
             });
         }
     };

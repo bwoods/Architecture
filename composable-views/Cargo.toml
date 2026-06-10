@@ -11,10 +11,10 @@ default = []
 [dependencies]
 composable.workspace = true
 composable-dependencies.workspace = true
+tracing.workspace = true
 rustybuzz = "0.20.1"
 lyon = "1.0.19"
 svg = "0.18.0"
-log = "0.4.29"
 
 # [[bin]] dependencies
 clap = { version = "4.3", features = ["derive"], optional = true }

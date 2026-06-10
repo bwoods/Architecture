@@ -6,13 +6,13 @@ use composable::*;
 use composable_views::*;
 use directories::ProjectDirs;
 use face::Face;
-use log::info;
 use note::Note;
 use raplay::{Sink, Source, source::Symph};
 use std::fs::{File, create_dir_all};
 use std::io::Cursor;
 use std::path::PathBuf;
 use std::time::Duration;
+use tracing::info;
 
 mod face;
 mod note;
@@ -92,10 +92,9 @@ impl Reducers for State {
         let (duration, _) = self.track.play(&mut self.sink);
 
         // TODO: read from .toml file
-        let wake = NaiveTime::from_hms_opt(7, 30, 0).unwrap();
+        let wake = NaiveTime::from_hms_opt(7, 45, 0).unwrap();
         let now = Local::now();
 
-        // TODO: display Today/Tomorrow
         let delay = if now.time() < wake {
             wake.signed_duration_since(now.time())
                 .to_std()

@@ -1,7 +1,7 @@
 use crate::{rendering, windowing};
 use composable::*;
 use composable_views::{gpu::Output, *};
-use log::{debug, error, warn};
+use tracing::{debug, error, warn};
 
 mod clock;
 mod player;

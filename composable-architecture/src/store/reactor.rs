@@ -93,6 +93,8 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                 let mut shutdown = false;
 
                 loop {
+                    let span = tracing::trace_span!("reactor");
+
                     for event in events.take() {
                         Self::reduce(&mut state, event.into(), &effects);
                     }
@@ -164,6 +166,8 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                         is_empty &= events.is_empty();
                     }
 
+                    drop(span); // drop before waiting (or looping)
+
                     match (shutdown, is_empty) {
                         (false, true) => {
                             if shrink_to_fit {
@@ -177,9 +181,13 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                             drop(effects); // holding the RefMut while we block just feels wrong…
 
                             match scheduler.front() {
-                                None => wait.wait(),
+                                None => {
+                                    tracing::trace!("wait");
+                                    wait.wait()
+                                }
                                 Some((when, _)) => {
                                     if cfg!(not(any(test, feature = "testing"))) {
+                                        tracing::trace!("wait_timeout {:?}", when);
                                         wait.wait_timeout(
                                             when.saturating_duration_since(Instant::now()), // a fresh `now`, for precision
                                         );
@@ -190,10 +198,14 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
                             }
                         }
                         (_, false) => {
+                            let span = tracing::trace_span!("collect effects");
+
                             unpolled.extend(effects.tasks.keys());
                             tasks.append(&mut effects.tasks); // MUST come after keys() → unpolled; .append empties .tasks
                             scheduler.append(&mut effects.timers);
                             scheduler.make_contiguous().sort_by_key(|(when, _)| *when);
+
+                            drop(span)
                         }
                         (true, true) => {
                             return (*state).into();
@@ -216,6 +228,7 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
     ) where
         <State as Reducer>::Action: 'static,
     {
+        let span = tracing::trace_span!("reduce");
         state.reduce(action, Rc::downgrade(effects));
 
         // wrapping the `borrow_mut` in a closure to ensure that the
@@ -228,5 +241,7 @@ impl<State: Reducer, T, R> Reactor<State, T, R> {
         while let Some(action) = next() {
             state.reduce(action, Rc::downgrade(effects));
         }
+
+        drop(span);
     }
 }

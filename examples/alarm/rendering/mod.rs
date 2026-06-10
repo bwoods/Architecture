@@ -3,11 +3,11 @@
 use crate::nord::Nord;
 use composable::*;
 use dpi::{LogicalSize, PhysicalSize, Pixel};
-use log::debug;
 use meshopt::typed_to_bytes;
 use std::borrow::Cow;
 use std::sync::Arc;
 use take_once::TakeOnce;
+use tracing::debug;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{
     Adapter, BlendState, BufferAddress, BufferUsages, ColorTargetState, ColorWrites,
