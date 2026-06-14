@@ -1,17 +1,18 @@
+//! # The Inter typeface family
+//!
+//! Inter is a workhorse of a typeface carefully crafted & designed for a wide
+//! range of applications, from detailed user interfaces to marketing & signage.
+//! The Inter typeface family features over 2000 glyphs covering 147 languages.
+//! Weights range from a delicate thin 100 all the way up to a heavy 900.
+//! Each glyph has three dedicated designs for weights 100, 400 and 900 to
+//! ensure excellent quality at any weight. Optical size ranges from "text" to
+//! "display" and there is a true italic variant.
+//!
+//! — https://rsms.me/inter/
+#![allow(rustdoc::bare_urls)]
 #![allow(unused)]
 use composable_views::text::{Direction, Font, FontConfig, Language, Script};
 
-/// # The Inter typeface family
-///
-/// Inter is a workhorse of a typeface carefully crafted & designed for a wide
-/// range of applications, from detailed user interfaces to marketing & signage.
-/// The Inter typeface family features over 2000 glyphs covering 147 languages.
-/// Weights range from a delicate thin 100 all the way up to a heavy 900.
-/// Each glyph has three dedicated designs for weights 100, 400 and 900 to
-/// ensure excellent quality at any weight. Optical size ranges from "text" to
-/// "display" and there is a true italic variant.
-///
-/// — https://rsms.me/inter/
 pub struct Inter;
 
 #[inline(always)]

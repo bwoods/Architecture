@@ -1,12 +1,13 @@
+//! # An arctic, north-bluish color palette.
+//!
+//! Created for the clean and uncluttered design pattern to achieve a optimal focus and readability
+//! for code syntax highlighting and UI components.
+//!
+//! — https://www.nordtheme.com/
+#![allow(rustdoc::bare_urls)]
 #![allow(unused)]
 use std::ops::Deref;
 
-/// # An arctic, north-bluish color palette.
-///
-/// Created for the clean and uncluttered design pattern to achieve a optimal focus and readability
-/// for code syntax highlighting and UI components.
-///
-/// — https://www.nordtheme.com/
 pub struct Nord;
 
 #[allow(non_upper_case_globals)]
@@ -35,8 +36,8 @@ const PALETTE: (
     [u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],
     [u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],[u8; 4],
 ) = (
-    sRGBA[0], sRGBA[1], sRGBA[2], sRGBA[3], sRGBA[4], sRGBA[5], sRGBA[6], sRGBA[7],
-    sRGBA[8], sRGBA[9], sRGBA[10],sRGBA[11],sRGBA[12],sRGBA[13],sRGBA[14],sRGBA[15],
+    sRGBA[ 0],sRGBA[ 1],sRGBA[ 2],sRGBA[ 3],sRGBA[ 4],sRGBA[ 5],sRGBA[ 6],sRGBA[ 7],
+    sRGBA[ 8],sRGBA[ 9],sRGBA[10],sRGBA[11],sRGBA[12],sRGBA[13],sRGBA[14],sRGBA[15],
 );
 
 impl Deref for Nord {
@@ -57,7 +58,6 @@ impl Nord {
     #[inline] // since we can’t const
     pub fn f64(&self, nord: usize) -> [f64; 4] {
         let srgb = sRGBA[nord];
-
         [linear(srgb[0]), linear(srgb[1]), linear(srgb[2]), 1.0]
     }
 
@@ -103,6 +103,6 @@ fn linear(s: u8) -> f64 {
     if s <= 0.0404482362771082 {
         s / 12.92
     } else {
-        ((s + 0.055) / 1.055).powf(2.4)
+        ((s + 0.055) / 1.055).powf(2.4) // ⬅︎ prevents const
     }
 }

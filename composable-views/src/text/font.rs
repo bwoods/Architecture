@@ -1,10 +1,9 @@
+use crate::Text;
 pub use rustybuzz::ttf_parser::Tag;
 use rustybuzz::ttf_parser::name_id::{FAMILY, FULL_NAME, SUBFAMILY, UNIQUE_ID, VERSION};
 use rustybuzz::ttf_parser::{GlyphId, OutlineBuilder};
 pub use rustybuzz::{Direction, Feature, GlyphBuffer as Glyphs, Language, Script};
 use rustybuzz::{Face, ShapePlan, UnicodeBuffer, shape_with_plan};
-
-use crate::Text;
 
 ///
 pub struct Font<'a> {
@@ -227,7 +226,7 @@ impl<'a> FontConfig<'a> {
             self.face.set_variation(tag, value);
         }
 
-        // Using direction.unwrap_or_default() would give an Direction::Invalid
+        // Using direction.unwrap_or_default() would give a Direction::Invalid
         // and that will panic!() in ShapePlan::new()
         let direction = self.direction.unwrap_or(Direction::LeftToRight);
 
