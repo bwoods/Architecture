@@ -60,14 +60,14 @@ pub enum Error {
     Outdated,
     /// The surface has been lost and needs to be recreated.
     ///
-    /// If the device as a whole is lost (see [`set_device_lost_callback()`][crate::Device::set_device_lost_callback]), then
+    /// If the device as a whole is lost (see [`set_device_lost_callback()`][wgpu::Device::set_device_lost_callback]), then
     /// you need to recreate the device and all resources.
     /// Otherwise, call [`Instance::create_surface()`] to recreate the surface,
     /// then [`Surface::configure()`], and try again.
     Lost,
     /// A validation error inside [`Surface::get_current_texture()`] was raised
-    /// and caught by an [error scope](crate::Device::push_error_scope) or
-    /// [`on_uncaptured_error()`][crate::Device::on_uncaptured_error].
+    /// and caught by an [error scope](wgpu::Device::push_error_scope) or
+    /// [`on_uncaptured_error()`][wgpu::Device::on_uncaptured_error].
     ///
     /// Applications should attend to the validation error and try again.
     Validation,
