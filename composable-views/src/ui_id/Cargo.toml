@@ -15,4 +15,4 @@ fastrand = "2.2"
 
 
 [dev-dependencies]
-itertools = "0.14"
+itertools = "0.15.0"

@@ -23,6 +23,8 @@ tracing = "0.1"
 # dev-dependencies
 static_assertions = "1.1.0"
 embed-doc-image = "0.1.4"
+quickcheck = "1.0.3"
+quickcheck_macros = "1.0.0"
 divan = "0.1.21"
 
 
