@@ -44,9 +44,9 @@ rm -rf ../target/doc/ || true
 The nightly version of **rustdoc** is used so that the unstable `feature(doc_auto_cfg)` can be used to [indicate feature-gated items in documentation](https://github.com/rust-random/rand/issues/986). Look for the `docsrs` flag in the crate source to see how it is used.
 
 ~~~sh
-RUSTDOCFLAGS="--cfg docsrs" \
+RUSTDOCFLAGS="--cfg docsrs --html-in-header about/html/before-content.html --html-after-content about/html/after-content.html" \
 cargo +nightly doc --package composable --package composable-dependencies \
-                   --package composable-views \
+                   --package composable-views --package examples --lib \
                    --no-deps --all-features || exit
 ~~~
 
@@ -61,30 +61,33 @@ echo "<meta http-equiv='refresh' content='0; url=composable'>" \
 
 ### Pushing to the documentation branch
 
-Now that the documentation has been generated it must be push to the [appropriate branch](https://github.com/bwoods/Architecture/tree/docs.rs) on GitHub.
+Now that the documentation has been generated it must be pushed to the [appropriate branch](https://github.com/bwoods/Architecture/tree/docs.rs) on GitHub. Although git is being used to manage the documentation files there is no need to preserve the history of this branch. 
 
 ~~~sh
 cd ../target/doc/
 rm -rf .git/ || true
+~~~
+
+It is recreated every time.
+
+~~~sh
 git init --quiet --initial-branch=docs.rs
 rm .lock # remove the lock file; we won't need it
 ~~~
 
-Although git is being used to manage the documentation files there is no needs to preserve the history of this branch. It is recreated every time.
+After all of the file have been added, they are pushed to the remote branch.
 
 ~~~sh
 git add --all
 git commit --quiet --allow-empty-message -m ""
 ~~~
 
-After all of the file have been added, they are pushed to the remote branch.
+Since this branch share no history with any previous version pushed to the repository, a `--force` push is required.
 
 ~~~sh
 git remote add -m docs.rs github https://github.com/bwoods/Architecture.git
 #git push --force --set-upstream github docs.rs
 ~~~
-
-Since this branch share no history with any previous version pushed to the repository, a `--force` push is required.
 
 
 
