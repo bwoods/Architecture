@@ -32,18 +32,14 @@ impl Text for Large<'_> {
 
         self.storage
             .characters(range)
-            .merge(
-                self.regions
-                    .range(min..max)
-                    .filter_map(|offset| {
-                        let pos = Position::from_offset(offset + 1) // base₁ (STX is zero…)
-                            .unwrap();
+            .merge(self.regions.range(min..max).filter_map(|offset| {
+                let pos = Position::from_offset(offset + 1) // base₁ (STX is zero…)
+                    .unwrap();
 
-                        self.buffer
-                            .get(offset as usize..) // skip invalid utf-8 sequence boundaries…
-                            .and_then(|slice| slice.chars().next().map(|ch| (pos, ch)))
-                    }),
-            )
+                self.buffer
+                    .get(offset as usize..) // skip invalid utf-8 sequence boundaries…
+                    .and_then(|slice| slice.chars().next().map(|ch| (pos, ch)))
+            }))
     }
 }
 

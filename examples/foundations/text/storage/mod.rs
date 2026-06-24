@@ -10,7 +10,7 @@ mod ranges;
 pub struct Storage {
     characters: BTreeMap<Position, char>,
     algorithm: Strategy,
-    clock: u16,
+    clock: u32,
 }
 
 impl Storage {
@@ -122,8 +122,8 @@ impl Storage {
     /// The `clock` is incremented every insert to avoid the
     /// [ABA problem](https://en.wikipedia.org/wiki/ABA_problem)
     /// inherent in an insert-delete-insert at the same location.
-    fn next_clock(&mut self) -> u16 {
-        self.clock = u16::wrapping_add(self.clock, 1);
+    fn next_clock(&mut self) -> u32 {
+        self.clock = u32::wrapping_add(self.clock, 1);
         self.clock
     }
 }

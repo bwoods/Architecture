@@ -43,13 +43,13 @@ impl Strategy {
     /// boundary+ and boundary− at each level. Once a decision is
     /// made for a given depth it is always used.
     pub fn boundaries(gap: u32) -> Self {
-        Strategy::Boundaries(Default::default(), gap, [(0, false)].into()) // boundary+ for depth₀
+        Strategy::Boundaries(Default::default(), gap, [(0, false)].into()) // boundary+ for level₀
     }
 
     /// Creates an iterator that generates positions within (p, q).
     pub(crate) fn generate(
         &mut self,
-        clock: u16,
+        clock: u32,
         p: (u64, &[u32]),
         q: (u64, &[u32]),
     ) -> impl Iterator<Item = Position> {
@@ -64,7 +64,7 @@ impl Strategy {
     /// Generates a position within (p, q).
     pub(crate) fn generate_one(
         &mut self,
-        clock: u16,
+        clock: u32,
         p: (u64, &[u32]),
         q: (u64, &[u32]),
     ) -> Position {
@@ -72,18 +72,18 @@ impl Strategy {
             .unwrap_or_else(|| self.next_u32s(p.0, p.1, q.1, clock))
     }
 
-    fn next_u64(&mut self, lhs: u64, rhs: u64, clock: u16) -> Option<Position> {
+    fn next_u64(&mut self, lhs: u64, rhs: u64, clock: u32) -> Option<Position> {
         if rhs - lhs <= 1 {
             return None;
         }
 
         let next = self.next(lhs + 1..rhs, 0);
-        let medium = Position::medium(0, clock, next, 0, 0, 0);
+        let medium = Position::medium(0, clock, next, 0, 0);
         Some(medium) // we deliberately do not create a `small` here…
     }
 
     // FIXME: inserting between STX and [0] is broken
-    fn next_u32s(&mut self, first: u64, p: &[u32], q: &[u32], clock: u16) -> Position {
+    fn next_u32s(&mut self, first: u64, p: &[u32], q: &[u32], clock: u32) -> Position {
         let mut p = Vec::from(p); // TODO: TinyVec?
         let mut len = 0;
 
@@ -96,7 +96,7 @@ impl Strategy {
                 continue;
             }
 
-            let next = self.next(lhs..rhs, len + 1); // first is depth₀
+            let next = self.next(lhs..rhs, len + 1); // first is level₀
             p.truncate(len);
             p.push(next);
 
@@ -187,7 +187,7 @@ fn exhausting_level_zero() {
 
     let mut storage = Storage::with_algorithm(Strategy::boundary());
 
-    // start with a letter near the end of depth₀
+    // start with a letter near the end of level₀
     let pos = Position::small(0, 0, ETX.0 - 3);
     storage.characters.insert(pos, '0');
 

@@ -17,8 +17,8 @@ contents of a text file. Unlike other position variants, there are no gaps betwe
 packet
     +2: ""
     +2: "source"
-    +2: "clock"
-    +2: ""
+    +4: "clock"
+
     +8: "level₀"
     +8: ""
 ```
@@ -29,18 +29,16 @@ positions.
 
 ## Medium
 
-Medium text positions store up to four levels in an inline `array`. Unlike [small] variants, level₀ is stored split into its `upper` and `lower` bytes.
+Medium text positions store up to three levels in an inline `array`.
 
 ```mermaid
 packet
     +2: ""
     +2: "source"
-    +2: "clock"
-    +2: "upper"
-    +4: "lower"
+    +4: "clock"
+    +8: "level₀"
     +4: "level₁"
     +4: "level₂"
-    +4: "level₃"
 ```
 
 The various position allocation strategies are designed to minimize the average lengths of positional identifiers; even under heavy editing. As a result, most of the identifiers seen should be [medium] in size.
@@ -55,21 +53,22 @@ Large positions are limited only by available memory but in practice should be m
 packet
     +2: ""
     +2: "source"
-    +2: "clock"
-    +2: "upper"
+    +4: "clock"
+
     +16: "boxed slice"
 ```
 
-Like the other position variants, the upper bytes of depth₀ are store inline in the `Position`, but the remaining bytes are stored as the first element in `boxed`
-slice; followed by the rest of the identifier.
+Unlike the other position variants, level₀ is not stored inline in the `Position`, but is stored along with the rest of the identifier in the `boxed`
+slice.
 
 ### Note
 
 The [source] and [clock] fields exist primarily to support asynchronous/collaborative editing. However, since the [large] position variant forces the `Position` enum
-to have 8-byte alignment, there is no overhead storing them unconditionally in every `Position`.
+to have 8-byte alignment, there is no overhead to storing them unconditionally in every `Position`.
 
 [small]: #small
 [medium]: #medium
 [large]: #large
 [source]: Position::source
 [clock]: Position::clock
+
