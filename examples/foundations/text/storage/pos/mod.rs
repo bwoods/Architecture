@@ -18,7 +18,7 @@ pub enum Position {
         /// see [Position::clock]
         clock: u16,
 
-        offset: i64,
+        offset: u64,
     },
     #[doc(hidden)]
     M {
@@ -45,10 +45,10 @@ pub enum Position {
 impl Position {
     const LIMIT: usize = 4;
 
-    pub(crate) fn identifier(&self) -> (i64, &[u32]) {
-        fn combine_all<'a>(upper: &'a u16, slice: &'a [u32]) -> (i64, &'a [u32]) {
+    pub(crate) fn identifier(&self) -> (u64, &[u32]) {
+        fn combine_all<'a>(upper: &'a u16, slice: &'a [u32]) -> (u64, &'a [u32]) {
             match slice {
-                [lower, tail @ ..] => (((*upper as i64) << 32) | *lower as i64, tail),
+                [lower, tail @ ..] => (((*upper as u64) << 32) | *lower as u64, tail),
                 _ => unreachable!(), // the slice will ALWAYS contain (at least) lower
             }
         }
@@ -93,28 +93,19 @@ impl Position {
     ///
     /// [medium]: #medium
     /// [large]: #large
-    pub(crate) fn from(first: i64, rest: &[u32], source: u16, clock: u16) -> Self {
-        const MIN: i64 = STX.0;
-        const MAX: i64 = ETX.0;
-
-        match first {
-            MIN => Position::first(), // preserve boundary cases
-            MAX => Position::last(),
-            _ if rest.len() < Position::LIMIT => Position::medium(
+    pub(crate) fn from(first: u64, rest: &[u32], source: u16, clock: u16) -> Self {
+        if rest.len() < Position::LIMIT {
+            Position::medium(
                 source,
                 clock,
-                first as u64, // SAFETY: MIN checked above
+                first,
                 #[allow(clippy::get_first)]
                 *rest.get(0).unwrap_or(&0),
                 *rest.get(1).unwrap_or(&0),
                 *rest.get(2).unwrap_or(&0),
-            ),
-            _ => Position::large(
-                source,
-                clock,
-                first as u64, // SAFETY: MIN checked above
-                rest.into(),
-            ),
+            )
+        } else {
+            Position::large(source, clock, first, rest.into())
         }
     }
 
@@ -128,15 +119,15 @@ impl Position {
     /// [small]: #small
     /// [Err]: Result
     #[inline]
-    pub fn from_offset(offset: usize) -> Result<Self, usize> {
-        if offset < ETX.0 as usize {
-            Ok(Self::small(0, 0, offset as i64))
+    pub fn from_offset(offset: u64) -> Result<Self, u64> {
+        if offset < ETX.0 {
+            Ok(Self::small(0, 0, offset))
         } else {
             Err(offset)
         }
     }
 
-    fn small(source: u16, clock: u16, offset: i64) -> Self {
+    fn small(source: u16, clock: u16, offset: u64) -> Self {
         Self::S {
             source,
             clock,
@@ -173,9 +164,9 @@ impl Position {
 }
 
 /// The “start of text” position (i.e. the position before the first possible position)
-pub(crate) const STX: (i64, &[u32]) = (-1, &[]);
+pub(crate) const STX: (u64, &[u32]) = (0, &[]);
 /// The “end of text” position (i.e. the position _after_ the last position)
-pub(crate) const ETX: (i64, &[u32]) = (0xFA00_0000_0001, &[]); // 250 TiB + 1
+pub(crate) const ETX: (u64, &[u32]) = (0xFA00_0000_0001, &[]); // 250 TiB + 1
 
 impl Position {
     /// The `Position` before the first character in the text.

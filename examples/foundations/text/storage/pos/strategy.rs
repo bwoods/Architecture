@@ -50,8 +50,8 @@ impl Strategy {
     pub(crate) fn generate(
         &mut self,
         clock: u16,
-        p: (i64, &[u32]),
-        q: (i64, &[u32]),
+        p: (u64, &[u32]),
+        q: (u64, &[u32]),
     ) -> impl Iterator<Item = Position> {
         let mut p = Position::from(p.0, p.1, 0, clock);
 
@@ -65,19 +65,19 @@ impl Strategy {
     pub(crate) fn generate_one(
         &mut self,
         clock: u16,
-        p: (i64, &[u32]),
-        q: (i64, &[u32]),
+        p: (u64, &[u32]),
+        q: (u64, &[u32]),
     ) -> Position {
         self.next_u64(p.0, q.0, clock)
-            .unwrap_or_else(|| self.next_u32s(p.0 as u64, p.1, q.1, clock))
+            .unwrap_or_else(|| self.next_u32s(p.0, p.1, q.1, clock))
     }
 
-    fn next_u64(&mut self, lhs: i64, rhs: i64, clock: u16) -> Option<Position> {
+    fn next_u64(&mut self, lhs: u64, rhs: u64, clock: u16) -> Option<Position> {
         if rhs - lhs <= 1 {
             return None;
         }
 
-        let next = self.next(lhs + 1..rhs, 0) as u64; // SAFETY: next ≥1
+        let next = self.next(lhs + 1..rhs, 0);
         let medium = Position::medium(0, clock, next, 0, 0, 0);
         Some(medium) // we deliberately do not create a `small` here…
     }
@@ -100,8 +100,7 @@ impl Strategy {
             p.truncate(len);
             p.push(next);
 
-            // SAFETY: first < ETX < i64::MAX
-            return Position::from(first as i64, &p, 0, clock);
+            return Position::from(first, &p, 0, clock);
         }
     }
 
@@ -167,17 +166,17 @@ impl Boundary for u32 {
     }
 }
 
-impl Boundary for i64 {
+impl Boundary for u64 {
     fn within(rng: &mut Rng, range: impl RangeBounds<Self>) -> Self {
-        rng.i64(range)
+        rng.u64(range)
     }
 
     fn saturating_add(self, other: Self) -> Self {
-        i64::saturating_add(self, other)
+        u64::saturating_add(self, other)
     }
 
     fn saturating_sub(self, other: Self) -> Self {
-        i64::max(0, self - other)
+        u64::max(0, self - other)
     }
 }
 

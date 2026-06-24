@@ -21,28 +21,29 @@ impl Text for Large<'_> {
         let min = match range.start_bound() {
             Included(included) => included.identifier().0,
             Excluded(excluded) => excluded.identifier().0 + 1,
-            Unbounded => i64::MIN,
+            Unbounded => u64::MIN,
         };
 
         let max = match range.end_bound() {
             Included(included) => included.identifier().0 + 1,
             Excluded(excluded) => excluded.identifier().0,
-            Unbounded => i64::MAX,
+            Unbounded => u64::MAX,
         };
 
-        self.storage.characters(range).merge(
-            self.regions
-                .range(min..max)
-                .map(|n| n as usize)
-                .filter_map(|offset| {
-                    let pos = Position::from_offset(offset + 1) // base₁ (STX is zero…)
-                        .unwrap();
+        self.storage
+            .characters(range)
+            .merge(
+                self.regions
+                    .range(min..max)
+                    .filter_map(|offset| {
+                        let pos = Position::from_offset(offset + 1) // base₁ (STX is zero…)
+                            .unwrap();
 
-                    self.buffer
-                        .get(offset..) // skip invalid utf-8 sequence boundaries…
-                        .and_then(|slice| slice.chars().next().map(|ch| (pos, ch)))
-                }),
-        )
+                        self.buffer
+                            .get(offset as usize..) // skip invalid utf-8 sequence boundaries…
+                            .and_then(|slice| slice.chars().next().map(|ch| (pos, ch)))
+                    }),
+            )
     }
 }
 

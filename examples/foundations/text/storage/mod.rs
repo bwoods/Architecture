@@ -21,7 +21,7 @@ impl Storage {
         }
     }
 
-    pub fn replace_range<R, I>(&mut self, range: Range<Position>, iter: I)
+    pub fn replace_range<I>(&mut self, range: Range<Position>, iter: I)
     where
         I: Iterator<Item = char>,
     {
