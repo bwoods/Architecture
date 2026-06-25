@@ -8,16 +8,26 @@ pub struct Small {
     newlines: BTreeSet<Position>,
 }
 
+impl Default for Small {
+    fn default() -> Self {
+        let storage = Storage::default();
+
+        let mut newlines = BTreeSet::default();
+        newlines.insert(Position::first());
+        newlines.insert(Position::last());
+
+        Self { storage, newlines }
+    }
+}
+
 impl FromIterator<char> for Small {
-    /// # Note
-    /// Implicitly removes `'\r'` characters (if any). If DOS linefeeds are
-    /// needed they should be recreated on save.
     fn from_iter<T: IntoIterator<Item = char>>(iter: T) -> Self {
-        let storage = Storage::from_iter(iter.into_iter().filter(|ch| *ch != '\r'));
+        let storage = Storage::from_iter(iter);
 
         let mut newlines = BTreeSet::default();
         newlines.insert(Position::first());
 
+        // this second pass is fine; this is for Small text
         newlines.extend(
             storage
                 .characters(..) //
@@ -33,10 +43,17 @@ impl FromIterator<char> for Small {
 }
 
 impl Text for Small {
-    fn characters(
-        &self,
-        range: impl RangeBounds<Position>,
-    ) -> impl Iterator<Item = (Position, char)> {
+    fn characters<R>(&self, range: R) -> impl Iterator<Item = (Position, char)>
+    where
+        R: RangeBounds<Position> + Clone,
+    {
         self.storage.characters(range)
+    }
+
+    fn newlines<R>(&self, range: R) -> impl Iterator<Item = Position>
+    where
+        R: RangeBounds<Position> + Clone,
+    {
+        self.newlines.range(range).cloned()
     }
 }

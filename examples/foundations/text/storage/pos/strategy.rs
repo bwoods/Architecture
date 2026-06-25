@@ -195,7 +195,7 @@ fn exhausting_level_zero() {
     let string = "abcdef";
     storage.extend(string.chars());
 
-    assert_eq!(storage.string(..), "0abcdef".to_owned());
+    assert_eq!(storage.string(), "0abcdef".to_owned());
 
     // for ch in storage.characters(..) {
     //     println!("{:x?} {:?}", ch.0.path(), ch.1);
@@ -208,8 +208,7 @@ fn exhausting_level_zero() {
 #[test]
 #[ignore]
 pub fn interleaving_anomaly() {
-    use crate::text::Position;
-    use crate::text::storage::Storage;
+    use crate::text::{Position, storage::Storage};
 
     let mut storage = Storage::with_algorithm(Strategy::boundary());
 
@@ -223,7 +222,7 @@ pub fn interleaving_anomaly() {
     storage.insert_before(c.clone(), std::iter::once('b'));
 
     // 'c' will be second, rather than third
-    assert_eq!(storage.string(..), "acb");
+    assert_eq!(storage.string(), "acb");
 
     // for ch in storage.characters(..) {
     //     println!("{:x?} {:?}", ch.0.path(), ch.1);

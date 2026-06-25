@@ -43,6 +43,20 @@ pub enum Position {
 impl Position {
     const LIMIT: usize = 4;
 
+    pub(crate) fn len(&self) -> usize {
+        match self {
+            Position::S { .. } => 1, // special value
+            Position::L { boxed, .. } => boxed.len(),
+            Position::M { array, .. } => {
+                array[2..] // skip upper and lower
+                    .iter()
+                    .position(|n| *n == 0) // exclude trailing zeros
+                    .map(|n| n + 2)
+                    .unwrap_or(Position::LIMIT)
+            }
+        }
+    }
+
     pub(crate) fn identifier(&self) -> (u64, &[u32]) {
         fn combine(slice: &[u32]) -> (u64, &[u32]) {
             match slice {
@@ -54,14 +68,7 @@ impl Position {
         match self {
             Position::S { offset, .. } => (*offset, &[]),
             Position::L { boxed, .. } => combine(boxed),
-            Position::M { array, .. } => {
-                let len = array[2..] // skip upper and lower
-                    .iter()
-                    .position(|n| *n == 0) // exclude trailing zeros
-                    .map(|n| n + 2)
-                    .unwrap_or(Position::LIMIT);
-                combine(&array[..=len])
-            }
+            Position::M { array, .. } => combine(&array[..self.len()]),
         }
     }
 
@@ -118,15 +125,15 @@ impl Position {
     /// [small]: #small
     /// [Err]: Result
     #[inline]
-    pub fn from_offset(offset: u64) -> Result<Self, u64> {
+    pub(crate) fn from_offset(offset: u64) -> Result<Self, u64> {
         if offset < ETX.0 {
-            Ok(Self::small(0, 0, offset))
+            Ok(Self::small(0, 1, offset)) // clock: 1 always > STX
         } else {
             Err(offset)
         }
     }
 
-    fn small(source: u16, clock: u32, offset: u64) -> Self {
+    const fn small(source: u16, clock: u32, offset: u64) -> Self {
         Self::S {
             source,
             clock,
@@ -170,6 +177,9 @@ pub(crate) const STX: (u64, &[u32]) = (0, &[]);
 pub(crate) const ETX: (u64, &[u32]) = (0xFA00_0000_0001, &[]); // 250 TiB + 1
 
 impl Position {
+    pub(crate) const MIN: Position = Position::small(0, 0, STX.0);
+    pub(crate) const MAX: Position = Position::small(0, 0, ETX.0);
+
     /// The `Position` before the first character in the text.
     #[inline]
     pub(crate) fn first() -> Position {

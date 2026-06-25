@@ -1,11 +1,12 @@
+#[allow(unused_imports)]
+use super::Text;
+
 use itertools::Itertools;
 use pos::{ETX, Position, STX, strategy::Strategy};
 use std::collections::BTreeMap;
-use std::ops::Range;
+use std::ops::{Bound::Unbounded, Range, RangeBounds};
 
-pub mod file;
 pub mod pos;
-mod ranges;
 
 pub struct Storage {
     characters: BTreeMap<Position, char>,
@@ -19,6 +20,23 @@ impl Storage {
             algorithm,
             ..Default::default()
         }
+    }
+
+    pub fn characters<R>(&self, range: R) -> impl Iterator<Item = (Position, char)>
+    where
+        R: RangeBounds<Position> + Clone,
+    {
+        // skip `Position::first()` as is it an `Exclusive` bound
+        let skip = (range.start_bound() == Unbounded) as usize;
+
+        // drop `Position::last()` as is it an `Exclusive` bound
+        let drop = (range.end_bound() == Unbounded) as usize;
+
+        self.characters
+            .range(range)
+            .dropping(skip)
+            .dropping_back(drop)
+            .map(|(pos, ch)| (pos.clone(), *ch))
     }
 
     pub fn replace_range<I>(&mut self, range: Range<Position>, iter: I)
@@ -122,9 +140,16 @@ impl Storage {
     /// The `clock` is incremented every insert to avoid the
     /// [ABA problem](https://en.wikipedia.org/wiki/ABA_problem)
     /// inherent in an insert-delete-insert at the same location.
+    /// # Note
+    /// The first value returned will be `1`.
     fn next_clock(&mut self) -> u32 {
         self.clock = u32::wrapping_add(self.clock, 1);
         self.clock
+    }
+
+    #[cfg(test)]
+    fn string(&self) -> String {
+        self.characters(..).map(|(_, ch)| ch).collect()
     }
 }
 
@@ -168,4 +193,42 @@ impl Extend<char> for Storage {
 
         self.insert_after(after, iter.into_iter());
     }
+}
+
+#[test]
+fn grapheme_segmentation() {
+    use super::{Large, Small};
+
+    let string = "👧👧🏻👧🏼👧🏽👧🏾👧🏿";
+    assert_eq!(string.len(), 44); // 44 utf-8 bytes
+
+    let small = Small::from_iter(string.chars());
+    grapheme_segmentation_for(small, string);
+
+    let large = Large::from(string);
+    grapheme_segmentation_for(large, string);
+}
+
+#[cfg(test)]
+fn grapheme_segmentation_for<T: Text>(text: T, string: &str) {
+    use unicode_segmentation::UnicodeSegmentation;
+
+    assert_eq!(text.string(), string);
+    assert_eq!(text.graphemes(..).count(), 6);
+
+    let ours = text
+        .graphemes(..)
+        .map(|(start, stop)| {
+            text.characters(start..stop)
+                .map(|(_, ch)| ch)
+                .collect::<String>()
+        })
+        .collect_vec();
+
+    let theirs = string
+        .grapheme_indices(true)
+        .map(|(_, str)| str.to_owned())
+        .collect_vec();
+
+    assert_eq!(ours, theirs);
 }

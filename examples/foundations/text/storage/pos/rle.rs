@@ -23,8 +23,8 @@ impl RLE {
         self.0
             .into_iter()
             .batching(|iter| {
-                iter.next() // map pairs of values into ranges
-                    .and_then(|x| iter.next().map(|y| x..y))
+                // map consecutive pairs of values into ranges
+                iter.next_tuple().map(|(min, max)| min..max)
             })
             .flatten()
     }
@@ -171,7 +171,7 @@ impl From<&str> for RLE {
 }
 
 #[cfg(test)]
-impl std::fmt::Debug for RLE {
+impl std::fmt::Display for RLE {
     #[allow(clippy::bool_comparison)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut string = String::new();
@@ -201,7 +201,7 @@ fn optimized_dap_example() {
     let str = "0001000111001111";
     let rle = RLE::from(str);
 
-    assert_eq!(format!("{:?}", rle), str);
+    assert_eq!(format!("{}", rle), str);
     assert_eq!(rle.0, vec![3, 4, 7, 10, 12, 16]);
 }
 
@@ -222,7 +222,7 @@ fn property_testing(offsets: std::collections::BTreeSet<u8>) {
         assert!(set.contains(value as usize));
     }
 
-    // bitset iterator returns whether a value is present
+    // bitset iterator returns whether a value is contained
     for (value, contains) in set.into_bit_vec().iter().enumerate() {
         assert_eq!(rle.contains(value as u64), contains);
     }

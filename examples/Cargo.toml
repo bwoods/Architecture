@@ -21,7 +21,6 @@ tracing-subscriber = "0.3.23"
 # foundations
 unicode-segmentation = "1.13.3"
 itertools = "0.15.0"
-#iter-set = "2.0.2"
 fastrand = "2.4.1"
 
 # example apps

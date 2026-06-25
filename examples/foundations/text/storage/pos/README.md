@@ -9,7 +9,7 @@ There three variations of text position.
 ## Small
 
 Small text positions can only hold a single level identifier. They are [most often][offset] used to refer to positions in the (original, unmodified)
-contents of a text file. Unlike other position variants, there are no gaps between these identifiers. The offsets into the file are stored directly at level₀.
+contents of a text file.
 
 [offset]: Position::from_offset
 
@@ -43,7 +43,7 @@ packet
 
 The various position allocation strategies are designed to minimize the average lengths of positional identifiers; even under heavy editing. As a result, most of the identifiers seen should be [medium] in size.
 
-In the occasions that editing produces an identifier that cannot fit within four levels, a [large] position will be generated.
+In the occasions that editing produces an identifier that cannot fit within three levels, a [large] position will be generated.
 
 ## Large
 
