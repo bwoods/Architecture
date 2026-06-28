@@ -133,17 +133,17 @@ impl Font<'_> {
 impl<'a> Font<'a> {
     /// Create a `Font` from the raw font data.
     #[inline(always)]
-    pub fn from<T: AsRef<[u8]>>(data: &'a T) -> Option<FontConfig<'a>> {
+    pub fn from<T: AsRef<[u8]>>(data: &'a T) -> Option<Family<'a>> {
         Self::from_collection(data.as_ref(), 0)
     }
 
     /// Create a `Font` from a font collection.
     /// Returns the font at `index`, if any
     #[inline(never)]
-    pub fn from_collection(data: &'a [u8], index: u32) -> Option<FontConfig<'a>> {
+    pub fn from_collection(data: &'a [u8], index: u32) -> Option<Family<'a>> {
         let face = Face::from_slice(data, index)?;
 
-        Some(FontConfig {
+        Some(Family {
             face,
             features: Vec::default(),
             variations: Vec::default(),
@@ -156,7 +156,7 @@ impl<'a> Font<'a> {
 
 ///
 #[derive(Clone)]
-pub struct FontConfig<'a> {
+pub struct Family<'a> {
     face: Face<'a>,
     features: Vec<Feature>,
     variations: Vec<(Tag, f32)>,
@@ -165,7 +165,7 @@ pub struct FontConfig<'a> {
     language: Option<Language>,
 }
 
-impl<'a> FontConfig<'a> {
+impl<'a> Family<'a> {
     ///
     #[inline]
     pub fn direction(self, direction: Direction) -> Self {

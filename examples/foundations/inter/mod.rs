@@ -11,43 +11,43 @@
 //! — https://rsms.me/inter/
 #![allow(rustdoc::bare_urls)]
 #![allow(unused)]
-use composable_views::text::{Direction, Font, FontConfig, Language, Script};
+use composable_views::text::{Direction, Family, Font, Language, Script};
 
 pub struct Inter;
 
 #[inline(always)]
-fn font() -> FontConfig<'static> {
+fn font() -> Family<'static> {
     Font::from(&Inter).unwrap()
 }
 
 impl Inter {
     #[inline(always)]
-    pub fn direction(self, direction: Direction) -> FontConfig<'static> {
+    pub fn direction(self, direction: Direction) -> Family<'static> {
         font().direction(direction)
     }
 
     #[inline(always)]
-    pub fn script(self, script: Script) -> FontConfig<'static> {
+    pub fn script(self, script: Script) -> Family<'static> {
         font().script(script)
     }
 
     #[inline(always)]
-    pub fn language(self, language: Language) -> FontConfig<'static> {
+    pub fn language(self, language: Language) -> Family<'static> {
         font().language(language)
     }
 
     #[inline(always)]
-    pub fn feature(mut self, tag: &[u8; 4], value: u32) -> FontConfig<'static> {
+    pub fn feature(mut self, tag: &[u8; 4], value: u32) -> Family<'static> {
         font().feature(tag, value)
     }
 
     #[inline(always)]
-    pub fn variation(mut self, tag: &[u8; 4], value: f32) -> FontConfig<'static> {
+    pub fn variation(mut self, tag: &[u8; 4], value: f32) -> Family<'static> {
         font().variation(tag, value)
     }
 
     #[inline(always)]
-    pub fn weight(self, weight: f32) -> FontConfig<'static> {
+    pub fn weight(self, weight: f32) -> Family<'static> {
         font().weight(weight)
     }
 
