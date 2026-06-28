@@ -49,13 +49,18 @@ impl Output {
     }
 
     /// Consumes the `Output` and returns the constructed SVG string.
-    pub fn into_inner(self) -> String {
+    pub fn into_inner(mut self) -> String {
+        self.end_current_node();
         self.svg.to_string()
     }
 }
 
 impl crate::Output for Output {
     fn begin(&mut self, rgba: [u8; 4], transform: &Transform) {
+        if !self.data.is_empty() {
+            self.end_current_node();
+        }
+
         self.transform = *transform;
         self.rgba = rgba;
     }
@@ -86,10 +91,5 @@ impl crate::Output for Output {
 
     fn close(&mut self) {
         self.data.append(Command::Close);
-
-        #[allow(clippy::bool_comparison)]
-        if self.data.is_empty() == false {
-            self.end_current_node();
-        }
     }
 }

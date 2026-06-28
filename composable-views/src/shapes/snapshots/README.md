@@ -33,7 +33,7 @@ This expression will convert all the “expectation” files into SVGs
 
 ~~~sh
 for snap in *.snap; do
-    tail +5 $snap  > $snap.svg
+    tail +5 $snap > $snap.svg
 done
 ~~~
 
@@ -42,7 +42,7 @@ and this
 ~~~sh
 for snap in *.snap.new; do
 	[ -e $snap ] || continue # ignore missing files
-    tail +6 $snap  > $snap.svg
+    tail +6 $snap > $snap.svg
 done
 ~~~
 

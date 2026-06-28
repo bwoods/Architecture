@@ -72,7 +72,7 @@ vertical_impl! { A B C D E F G H I J K L M N O P Q R S T U V W X Y }
 // up to 25 views are supported
 
 #[doc(hidden)]
-impl<T: View, const N: usize> View for [T; N] {
+impl<T: View> View for &[T] {
     #[inline]
     fn size(&self, within: Size) -> Size {
         let mut n = 0;

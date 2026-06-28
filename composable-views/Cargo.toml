@@ -26,7 +26,8 @@ path = "src/ui_id"
 
 
 [dev-dependencies]
-insta = "1.47"
+insta.workspace = true
+uuid = "1.23.4"
 
 
 [[bin]]

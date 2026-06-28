@@ -13,6 +13,7 @@ composable.workspace = true
 composable-views = { path = "../composable-views" }
 tracing.workspace = true
 
+insta.workspace = true
 quickcheck.workspace = true
 quickcheck_macros.workspace = true
 tracing-tracy = { version = "0.11.4", features = ["enable", "only-localhost", "sampling"] }
