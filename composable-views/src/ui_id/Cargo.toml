@@ -15,4 +15,5 @@ fastrand = "2.2"
 
 
 [dev-dependencies]
-itertools = "0.15.0"
+itertools = "0.15"
+uuid = "1.23.4"

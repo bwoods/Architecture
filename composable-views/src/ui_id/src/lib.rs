@@ -4,14 +4,17 @@ use quote::quote;
 use syn::parse::Parser;
 
 #[proc_macro]
-/// Produces a unique id (at compile-time) for every call-site in the source code
+/// Produces a unique id (at compile-time)
 /// ```
 /// let a = ui_id::ui_id!();
 /// let b = ui_id::ui_id!();
 /// assert_ne!(a, b);
 /// ```
 ///
-/// More complex cases are handled by passing in optional runtime values to distinguish ids that are logically different but produced by the same location in the source code. Loops, for example, can be handled by passing in the loop index.
+/// More complex cases are handled by passing in optional runtime values to
+/// distinguish ids that are logically different but produced by the same
+/// location in the source code. Loops, for example, can be handled by passing
+/// in the loop index.
 /// ```
 /// use itertools::Itertools;
 /// (0..1000)
@@ -21,6 +24,25 @@ use syn::parse::Parser;
 ///     .combinations(2)
 ///     .into_iter()
 ///     .for_each(|pair| assert_ne!(pair[0], pair[1]));
+/// ```
+///
+/// The macro actually produces a `NonZero` `u128` so that
+/// an optional id is the same size as the id itself.
+/// ```
+/// let a = ui_id::ui_id!();
+/// assert_eq!(std::mem::size_of_val(&a), size_of::<u128>());
+///
+/// let b = Some(ui_id::ui_id!());
+/// assert_eq!(std::mem::size_of_val(&b), size_of::<u128>());
+/// ```
+///
+/// Since, to do so, zero values need to be protected against, ensuring that
+/// ids are also valid UUIDs is essentially free.
+/// ```
+/// let ui_id = ui_id::ui_id!();
+/// let uuid = uuid::Uuid::from_u128(ui_id.get());
+/// assert_eq!(uuid.get_version_num(), 4);
+/// assert_eq!(uuid.get_variant(), uuid::Variant::RFC4122);
 /// ```
 pub fn ui_id(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let bytes = fastrand::u128(..);
@@ -34,12 +56,17 @@ pub fn ui_id(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
         {
             let mut hash = #bytes;
 
-            // If runtime parameters where passed into the macro, perform a 128-bit FNV-1a
+            // If runtime parameters were passed into the macro, perform a 128-bit FNV-1a
             // mix-step to combine them with the current `ui_id` to generate a new one.
-            let prime = 0x0000000001000000000000000000013Bu128;
+            let prime = 0x0000000001000000000000000000013B;
             #( hash = (hash ^ u128::try_from(#exprs).unwrap()).wrapping_mul(prime); )*
 
-            unsafe { std::num::NonZeroU128::new_unchecked(hash | 0x1u128) }
+            // a standard conforming (version 4, variant 1) UUID
+            hash &= 0xffffffffffff0fff3fffffffffffffff;
+            hash |= 0x00000000000040008000000000000000;
+
+            // SAFETY: version and variant will NEVER be zero
+            unsafe { std::num::NonZeroU128::new_unchecked(hash) }
         }
     };
 

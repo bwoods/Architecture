@@ -36,8 +36,3 @@ impl DependencyDefault for Values {}
 ///
 /// ```
 pub type State = Cell<Values>;
-
-#[test]
-fn confirm_id_niche_optimization() {
-    assert_eq!(std::mem::size_of::<Id>(), std::mem::size_of::<u128>());
-}
