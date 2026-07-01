@@ -8,10 +8,8 @@ There three variations of text position.
 
 ## Small
 
-Small text positions can only hold a single level identifier. They are [most often][offset] used to refer to positions in the (original, unmodified)
+Small text positions can only hold a single level identifier. They are most often used to refer to positions in the (original, unmodified)
 contents of a text file.
-
-[offset]: Position::from_offset
 
 ```mermaid
 packet

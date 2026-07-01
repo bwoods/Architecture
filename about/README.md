@@ -82,7 +82,7 @@ git add --all
 git commit --quiet --allow-empty-message -m ""
 ~~~
 
-Since this branch share no history with any previous version pushed to the repository, a `--force` push is required.
+Since this branch shares no history with any previous version pushed to the repository, a `--force` push is required.
 
 ~~~sh
 git remote add -m docs.rs github https://github.com/bwoods/Architecture.git
