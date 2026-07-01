@@ -17,6 +17,7 @@ pub use output::{Output, gpu, svg};
 pub use shapes::{Circle, ContinuousRoundedRectangle, Ellipse, Path, Rectangle, RoundedRectangle};
 pub use text::Text;
 pub use ui_id::ui_id;
+pub use ui_snapshot::include_snapshot;
 
 /// Warnings logged by `View` modifiers should only be logged once, not on _every_ draw cycle.
 macro_rules! warn_once {
