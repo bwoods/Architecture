@@ -2,7 +2,8 @@ use composable_views::{Bounds, Event, Output, Size, View, include_snapshot};
 use itertools::Itertools;
 use std::ops::{RangeFrom, RangeTo, RangeToInclusive};
 
-pub mod tests;
+#[cfg(test)]
+pub mod test;
 
 /// Presents multiple rows of data.
 ///
@@ -15,8 +16,8 @@ pub struct Table<K> {
 
 impl<K> Table<K> {
     /// If the index type of the Table (`K`) is not [`Default`], an initial
-    /// offset value must be passed in. Otherwise [`Table::default()`] is the
-    /// can be used to construct a `Table` that begins at its top row.
+    /// offset value must be passed in. Otherwise [`Table::default()`] is
+    /// usually used to construct a `Table` (that begins at its first row).
     pub fn with_offset(offset: K) -> Self {
         Self { offset }
     }
@@ -24,15 +25,15 @@ impl<K> Table<K> {
     /// Returns a `View` for the visible rows of the `Table`.
     ///
     /// `Table` neither owns the data it presents, nor has any opinions on the
-    ///  appearance of the rows it presents. The `FnMut` parameter `f` returns
-    ///  an [`Iterator`] over the `View`s to display for the [range][`RangeFrom`]
-    ///  of data the `Table`’s `View` needs to show.
+    ///  appearance of those rows. The `FnMut` parameter `f` returns  an
+    /// [`Iterator`] over the `View`s to display for the [range][`RangeFrom`]
+    ///  of data the `Table`’s view needs to show.
     ///
     /// # Example
     /// A table showing lines of text from a Markdown file containing
     /// <u>Alice's Adventures in Wonderland (1865)</u>:
     ///
-    #[doc = include_snapshot!("tests/snapshots/foundations__table__tests__jump_backward.snap")]
+    #[doc = include_snapshot!("test/snapshots/foundations__table__test__start.snap")]
     pub fn view<F, I, V>(&self, within: Size, mut f: F) -> impl View
     where
         K: Ord + Clone,
@@ -45,23 +46,23 @@ impl<K> Table<K> {
             .by_ref()
             .take_while_inclusive(|view| {
                 height += view.size(within).height;
-                height <= within.height
+                height < within.height
             })
             .collect();
 
         Rows(visible)
     }
 
-    /// Scrolls the `Table` up one row.
-    ///
-    /// # Example
-    /// The table after a `step_forward`:
-    ///
-    #[doc = include_snapshot!("tests/snapshots/foundations__table__tests__step_forward.snap")]
+    /// Scrolls the `Table` forward one row.
     ///
     /// # Note
     /// Calls to `step_forward` will allow overscroll until there is a single
     /// row in view.
+    ///
+    /// # Example
+    /// The table after a `step_forward`:
+    ///
+    #[doc = include_snapshot!("test/snapshots/foundations__table__test__step_forward.snap")]
     pub fn step_forward<F, I>(&mut self, mut f: F)
     where
         K: Ord + Clone,
@@ -74,12 +75,12 @@ impl<K> Table<K> {
         }
     }
 
-    /// Scrolls the `Table` down one row.
+    /// Scrolls the `Table` backward one row.
     ///
     /// # Example
     /// Then performing a `step_backward` undoes the previous [`step_forward`][Self::step_forward]:
     ///
-    #[doc = include_snapshot!("tests/snapshots/foundations__table__tests__step_backward.snap")]
+    #[doc = include_snapshot!("test/snapshots/foundations__table__test__step_backward.snap")]
     pub fn step_backward<F, I>(&mut self, mut f: F)
     where
         K: Ord + Clone,
@@ -93,13 +94,13 @@ impl<K> Table<K> {
 
     /// Attempts to move the last row currently visible to the first row.
     ///
+    /// # Note
+    /// This will allow overscroll until there is a single row in `View`.
+    ///
     /// # Example
     /// A `jump_forward` reveals the next batch of rows:
     ///
-    #[doc = include_snapshot!("tests/snapshots/foundations__table__tests__jump_forward.snap")]
-    ///
-    /// # Note
-    /// This will allow overscroll until there is a single row in `View`.
+    #[doc = include_snapshot!("test/snapshots/foundations__table__test__jump_forward.snap")]
     pub fn jump_forward<F, I, V>(&mut self, within: Size, mut f: F)
     where
         K: Ord + Clone,
@@ -107,24 +108,32 @@ impl<K> Table<K> {
         I: Iterator<Item = (K, V)>,
         V: View,
     {
-        let mut height = 0.0;
         let range = self.offset.clone()..;
 
-        if let Some((offset, _)) = f(range.clone())
-            .by_ref() //
-            .find_or_last(|(_, view)| {
+        let mut prev = self.offset.clone();
+        let mut height = 0.0;
+
+        let offset = f(range.clone())
+            .by_ref()
+            .find_map(|(offset, view)| {
                 height += view.size(within).height;
-                height > within.height
-            })
-        {
-            if offset != self.offset {
-                self.offset = offset;
-            } else {
-                // either the current row is too tall for page_down to work, or
-                // we’re at the bottom; try a row_down
-                if let Some((offset, _)) = f(range).nth(1) {
-                    self.offset = offset;
+
+                if height > within.height {
+                    Some(prev.clone())
+                } else {
+                    prev = offset.clone();
+                    None
                 }
+            })
+            .unwrap_or(prev);
+
+        if offset != self.offset {
+            self.offset = offset;
+        } else {
+            // either the current row is too tall for jump_forward to work,
+            // or we’re at the bottom; try a row down
+            if let Some((offset, _)) = f(range).nth(1) {
+                self.offset = offset;
             }
         }
     }
@@ -134,7 +143,7 @@ impl<K> Table<K> {
     /// # Example
     /// Then performing a `jump_backward` undoes the previous [`jump_forward`][Self::jump_forward]:
     ///
-    #[doc = include_snapshot!("tests/snapshots/foundations__table__tests__jump_backward.snap")]
+    #[doc = include_snapshot!("test/snapshots/foundations__table__test__jump_backward.snap")]
     pub fn jump_backward<F, I, V>(&mut self, within: Size, mut f: F)
     where
         K: Ord + Clone,
@@ -142,25 +151,33 @@ impl<K> Table<K> {
         I: Iterator<Item = (K, V)> + DoubleEndedIterator,
         V: View,
     {
-        let mut height = 0.0;
         let range = ..=self.offset.clone();
 
-        if let Some((offset, _)) = f(range.clone())
+        let mut prev = self.offset.clone();
+        let mut height = 0.0;
+
+        let offset = f(range.clone())
             .by_ref()
-            .rev() //
-            .find_or_last(|(_, view)| {
+            .rev() // ⬅︎
+            .find_map(|(offset, view)| {
                 height += view.size(within).height;
-                height > within.height
-            })
-        {
-            if offset != self.offset {
-                self.offset = offset;
-            } else {
-                // either the current row is too tall for page_up to work, or
-                // we’re at the top; try a single row up
-                if let Some((offset, _)) = f(range).rev().nth(1) {
-                    self.offset = offset;
+
+                if height > within.height {
+                    Some(prev.clone())
+                } else {
+                    prev = offset.clone();
+                    None
                 }
+            })
+            .unwrap_or(prev);
+
+        if offset != self.offset {
+            self.offset = offset;
+        } else {
+            // either the current row is too tall for jump_forward to work,
+            // or we’re at the bottom; try a row down
+            if let Some((offset, _)) = f(range).nth(1) {
+                self.offset = offset;
             }
         }
     }
