@@ -21,7 +21,7 @@ tracing-subscriber = "0.3.23"
 
 # foundations
 unicode-segmentation = "1.13.3"
-itertools = "0.15.0"
+itertools = "0.15"
 fastrand = "2.4.1"
 
 # example apps
@@ -41,6 +41,7 @@ dpi = "0.1.2"
 
 [dev-dependencies]
 bit-set = { version = "0.10", default-features = false }
+
 
 [[bin]]
 name = "Alarm" # used as the application menu title
