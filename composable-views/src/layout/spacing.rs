@@ -3,10 +3,17 @@ use std::cell::Cell;
 
 pub struct Spacer(pub(crate) Cell<Size>);
 
+#[doc(hidden)]
+impl Default for Spacer {
+    fn default() -> Self {
+        Spacer(Size::splat(f32::INFINITY).into())
+    }
+}
+
 impl Spacer {
     #[inline(always)]
     pub fn fill() -> impl View {
-        Spacer(Size::splat(f32::INFINITY).into())
+        Spacer::default()
     }
 
     /// - `Spacer::frac::<1>()` is equivalent to `Spacer::fill()`.
