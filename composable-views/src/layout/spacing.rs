@@ -1,6 +1,7 @@
 use crate::{Bounds, Event, Fixed, FixedHeight, FixedWidth, Output, Size, View};
 use std::cell::Cell;
 
+#[derive(Clone)]
 pub struct Spacer(pub(crate) Cell<Size>);
 
 #[doc(hidden)]
@@ -41,6 +42,16 @@ impl Spacer {
 
     #[inline(always)]
     pub fn empty() -> impl View {}
+
+    #[doc(hidden)]
+    pub fn update(&self, f: impl FnOnce(Size) -> Size) {
+        self.0.update(f)
+    }
+
+    #[doc(hidden)]
+    pub fn get(&self) -> Size {
+        self.0.get()
+    }
 }
 
 impl View for Spacer {
@@ -60,7 +71,7 @@ impl View for Spacer {
     fn draw(&self, _bounds: Bounds, _onto: &mut impl Output) {}
 
     fn adjust_width(&self, width: f32) {
-        self.0.update(|mut size| {
+        self.update(|mut size| {
             if size.width == f32::INFINITY {
                 size.width = width;
             };
@@ -70,7 +81,7 @@ impl View for Spacer {
     }
 
     fn adjust_height(&self, height: f32) {
-        self.0.update(|mut size| {
+        self.update(|mut size| {
             if size.height == f32::INFINITY {
                 size.height = height;
             };

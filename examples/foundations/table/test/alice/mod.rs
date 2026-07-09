@@ -9,7 +9,7 @@ mod noto;
 use noto::*;
 
 pub struct Alice<'a> {
-    pub table: table::State<[&'a str]>,
+    table: table::State<[&'a str]>,
     lines: Vec<&'a str>,
 }
 

@@ -2,18 +2,15 @@ use composable_views::{Bounds, Event, Output, Size, Spacer, View};
 use itertools::Itertools;
 use std::cell::RefCell;
 use std::ops::RangeBounds;
-use traits::{Data, Table};
+#[doc(inline)]
+pub use traits::*;
 
 mod test;
-pub mod traits;
+mod traits;
 
-/// Presents multiple rows of data.
-///
-/// # Note
-/// `Table` alone can only do discrete scrolling, like a terminal.
-/// A (wrapping) `Scrolling` view will be needed for continuous scrolling.
+/// The `State` of a `Table` that must persist between drawing/event cycles
 pub struct State<T: Data + ?Sized> {
-    offset: RefCell<<T as Data>::Key>,
+    shared: RefCell<(Spacer, <T as Data>::Key)>,
 }
 
 impl<T> State<T>
@@ -21,16 +18,42 @@ where
     T: Data + ?Sized,
     <T as Data>::Key: PartialOrd + Clone,
 {
-    pub fn view<'a, F, V>(&'a self, values: &'a T, views: F) -> impl Table + 'a
+    /// Returns a `View` for the visible rows of the table.
+    ///
+    /// The table neither owns the data it presents, nor has any opinions on
+    /// the appearance of those rows. The `values` to be displayed are passed
+    /// in, as well as the function that the table is to use to produces
+    /// `views` for those `Data::Value`s
+    pub fn view<'a, F, V>(&'a self, values: &'a T, views: F) -> impl Table
     where
-        F: Fn(&<T as Data>::Value) -> V + 'a,
+        F: Fn(&<T as Data>::Value) -> V,
         V: View,
     {
         Inner {
-            spacer: Spacer::default(),
-            offset: &self.offset,
+            shared: &self.shared,
+            spacer: Default::default(),
             values,
             views,
+        }
+    }
+
+    pub fn offset(&self) -> <T as Data>::Key {
+        self.shared.borrow().1.clone()
+    }
+
+    pub fn set_offset(&mut self, offset: <T as Data>::Key) {
+        self.shared.borrow_mut().1 = offset;
+    }
+}
+
+impl<T> Default for State<T>
+where
+    T: Data + ?Sized,
+    <T as Data>::Key: Default,
+{
+    fn default() -> Self {
+        Self {
+            shared: Default::default(),
         }
     }
 }
@@ -42,19 +65,7 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            offset: self.offset.borrow().clone().into(),
-        }
-    }
-}
-
-impl<T> Default for State<T>
-where
-    T: Data + ?Sized,
-    <T as Data>::Key: Default,
-{
-    fn default() -> Self {
-        Self {
-            offset: Default::default(),
+            shared: self.shared.borrow().clone().into(),
         }
     }
 }
@@ -63,9 +74,9 @@ struct Inner<'a, T, F>
 where
     T: Data + ?Sized,
 {
-    pub offset: &'a RefCell<<T as Data>::Key>,
+    shared: &'a RefCell<(Spacer, <T as Data>::Key)>,
+    spacer: Spacer, // always acts as a flexible view
     values: &'a T,
-    spacer: Spacer,
     views: F,
 }
 
@@ -77,44 +88,47 @@ where
     V: View,
 {
     fn step_forward(&mut self) {
+        let start = self.shared.borrow().1.clone();
         let offset = self
-            .map(self.offset.borrow().clone().., |_| ())
+            .map(start.., |_| ())
             .nth(1) // next() would just return the current
             .map(|(offset, _)| offset);
 
         if let Some(offset) = offset {
-            *self.offset.borrow_mut() = offset;
+            self.shared.borrow_mut().1 = offset;
         }
     }
 
     fn step_backward(&mut self) {
+        let start = self.shared.borrow().1.clone();
         let offset = self
-            .map(..self.offset.borrow().clone(), |_| ())
+            .map(..start, |_| ())
             .next_back()
             .map(|(offset, _)| offset);
 
         if let Some(offset) = offset {
-            *self.offset.borrow_mut() = offset;
+            self.shared.borrow_mut().1 = offset;
         }
     }
 
-    fn jump_forward(&mut self, size: Size) {
-        let mut total = 0.0;
-        let flexible = Size::splat(f32::INFINITY);
+    fn jump_forward(&mut self) {
+        let (visible, start) = {
+            let borrow = self.shared.borrow();
+            (borrow.0.get(), borrow.1.clone())
+        };
 
+        let mut height = 0.0;
         let offset = self
-            .map(self.offset.borrow().clone().., |val| {
-                (self.views)(val).size(flexible).height
-            })
+            .map(start.., |val| (self.views)(val).size(visible).height)
             .take_while(|(_, current)| {
-                total += current;
-                total < size.height
+                height += current;
+                height < visible.height
             })
             .map(|(offset, _)| offset)
             .last();
 
         if let Some(offset) = offset {
-            *self.offset.borrow_mut() = offset;
+            self.shared.borrow_mut().1 = offset;
         } else {
             // either the current row is too tall for jump_forward to work,
             // or we’re at the bottom; try step_forward
@@ -122,24 +136,25 @@ where
         }
     }
 
-    fn jump_backward(&mut self, size: Size) {
-        let mut total = 0.0;
-        let flexible = Size::splat(f32::INFINITY);
+    fn jump_backward(&mut self) {
+        let (visible, start) = {
+            let borrow = self.shared.borrow();
+            (borrow.0.get(), borrow.1.clone())
+        };
 
+        let mut height = 0.0;
         let offset = self
-            .map(..=self.offset.borrow().clone(), |val| {
-                (self.views)(val).size(flexible).height
-            })
+            .map(..=start, |val| (self.views)(val).size(visible).height)
             .rev()
             .take_while(|(_, current)| {
-                total += current;
-                total < size.height
+                height += current;
+                height < visible.height
             })
             .map(|(offset, _)| offset)
             .last();
 
         if let Some(offset) = offset {
-            *self.offset.borrow_mut() = offset;
+            self.shared.borrow_mut().1 = offset;
         } else {
             // either the current row is too tall for jump_backward to work,
             // or we’re at the top; try step_backward
@@ -164,6 +179,9 @@ where
     }
 
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+        // always cached the last size it was drawn at
+        self.shared.borrow_mut().0.update(|_| bounds.size());
+
         self.visible(bounds).as_ref().draw(bounds, onto)
     }
 
@@ -184,15 +202,18 @@ where
     V: View,
 {
     fn visible(&self, bounds: Bounds) -> impl AsRef<[V]> {
-        let within = self.spacer.size(bounds.size());
-        let mut height = 0.0;
+        let (visible, start) = {
+            let borrow = self.shared.borrow();
+            (borrow.0.get(), borrow.1.clone())
+        };
 
+        let mut height = 0.0;
         self.values
-            .range(self.offset.borrow().clone()..)
+            .range(start..)
             .map(|(_, val)| (self.views)(val))
             .take_while_inclusive(|view| {
                 height += view.size(bounds.size()).height;
-                height < within.height
+                height < visible.height
             })
             .collect_vec()
     }

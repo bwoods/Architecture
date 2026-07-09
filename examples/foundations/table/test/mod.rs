@@ -28,12 +28,12 @@ fn snapshot_testing() {
     assert_snapshot!("step_backward", output.into_inner());
 
     let mut output = Output::new(size.width, size.height);
-    alice.table().jump_forward(size);
+    alice.table().jump_forward();
     alice.table().draw(bounds, &mut output);
     assert_snapshot!("jump_forward", output.into_inner());
 
     let mut output = Output::new(size.width, size.height);
-    alice.table().jump_backward(size);
+    alice.table().jump_backward();
     alice.table().draw(bounds, &mut output);
     assert_snapshot!("jump_backward", output.into_inner());
 }
