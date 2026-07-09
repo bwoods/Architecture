@@ -1,4 +1,4 @@
-//! # An arctic, north-bluish color palette.
+//! # An arctic, north-bluish color palette
 //!
 //! Created for the clean and uncluttered design pattern to achieve a optimal focus and readability
 //! for code syntax highlighting and UI components.
