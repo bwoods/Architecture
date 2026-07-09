@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Produces a unique id (at compile-time)"><title>ui_id in composable_views - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable_views" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (f10db292a 2026-07-07)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script src="https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@11/dist/mermaid.tiny.js"></script>
+</head><body class="rustdoc macro"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">ui_id</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable_views/index.html">composable_<wbr>views</a><span class="version">0.7.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">composable_views</a></div><h1>Macro <span class="macro">ui_id</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"></span></div><pre class="rust item-decl"><code>ui_id!() { <span class="comment">/* proc-macro */</span> }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Produces a unique id (at compile-time)</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>a = <span class="macro">ui_id::ui_id!</span>();
+<span class="kw">let </span>b = <span class="macro">ui_id::ui_id!</span>();
+<span class="macro">assert_ne!</span>(a, b);</code></pre></div>
+<p>More complex cases are handled by passing in optional runtime values to
+distinguish ids that are logically different but produced by the same
+location in the source code. Loops, for example, can be handled by passing
+in the loop index.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>itertools::Itertools;
+(<span class="number">0</span>..<span class="number">1000</span>)
+    .map(|n: usize| { <span class="kw">return </span><span class="macro">ui_id::ui_id!</span>(n) })
+    .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+    .into_iter()
+    .combinations(<span class="number">2</span>)
+    .into_iter()
+    .for_each(|pair| <span class="macro">assert_ne!</span>(pair[<span class="number">0</span>], pair[<span class="number">1</span>]));</code></pre></div>
+<p>The macro actually produces a <code>NonZero</code> <code>u128</code> so that
+an optional id is the same size as the id itself.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>a = <span class="macro">ui_id::ui_id!</span>();
+<span class="macro">assert_eq!</span>(std::mem::size_of_val(<span class="kw-2">&amp;</span>a), size_of::&lt;u128&gt;());
+
+<span class="kw">let </span>b = <span class="prelude-val">Some</span>(<span class="macro">ui_id::ui_id!</span>());
+<span class="macro">assert_eq!</span>(std::mem::size_of_val(<span class="kw-2">&amp;</span>b), size_of::&lt;u128&gt;());</code></pre></div>
+<p>Since, to do so, zero values need to be protected against, ensuring that
+ids are also valid UUIDs is essentially free.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>ui_id = <span class="macro">ui_id::ui_id!</span>();
+<span class="kw">let </span>uuid = uuid::Uuid::from_u128(ui_id.get());
+<span class="macro">assert_eq!</span>(uuid.get_version_num(), <span class="number">4</span>);
+<span class="macro">assert_eq!</span>(uuid.get_variant(), uuid::Variant::RFC4122);</code></pre></div></div></details></section></div></main><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script>mermaid.init({ startOnLoad: true, theme: 'base' }, "pre.language-mermaid > code");</script>
+
+</body></html>

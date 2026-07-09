@@ -1,0 +1,100 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`Reducer`s are responsible for updating a `Store`’s state in response to its `Action`s."><title>Reducer in composable - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (f10db292a 2026-07-07)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script src="https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@11/dist/mermaid.tiny.js"></script>
+</head><body class="rustdoc trait"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Reducer</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable/index.html">composable</a><span class="version">0.7.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Reducer</a></h2><h3><a href="#required-associated-types">Required Associated Types</a></h3><ul class="block"><li><a href="#associatedtype.Action" title="Action">Action</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.reduce" title="reduce">reduce</a></li></ul><h3><a href="#foreign-impls">Implementations on Foreign Types</a></h3><ul class="block"><li><a href="#impl-Reducer-for-Box%3CT%3E" title="Box&#60;T&#62;">Box&#60;T&#62;</a></li><li><a href="#impl-Reducer-for-Option%3CT%3E" title="Option&#60;T&#62;">Option&#60;T&#62;</a></li></ul><h3><a href="#dyn-compatibility">Dyn Compatibility</a></h3><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate composable</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">composable</a></div><h1>Trait <span class="trait">Reducer</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/composable/reducer/mod.rs.html#5-19">Source</a> </span></div><pre class="rust item-decl"><code>pub trait Reducer {
+    type <a href="#associatedtype.Action" class="associatedtype">Action</a>;
+
+    // Required method
+    fn <a href="#tymethod.reduce" class="fn">reduce</a>(
+        &amp;mut self,
+        action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>,
+        send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Action = Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;,
+    );
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><code>Reducer</code>s are responsible for updating a <code>Store</code>’s state in response to its <code>Action</code>s.</p>
+</div></details><h2 id="required-associated-types" class="section-header">Required Associated Types<a href="#required-associated-types" class="anchor">§</a></h2><div class="methods"><details class="toggle" open><summary><section id="associatedtype.Action" class="method"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#7">Source</a><h4 class="code-header">type <a href="#associatedtype.Action" class="associatedtype">Action</a></h4></section></summary><div class="docblock"><p>All of the possible actions that can be used to modify state.</p>
+</div></details></div><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.reduce" class="method"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#14">Source</a><h4 class="code-header">fn <a href="#tymethod.reduce" class="fn">reduce</a>(
+    &amp;mut self,
+    action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>,
+    send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Action = Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;,
+)</h4></section></summary><div class="docblock"><p>Updates the <code>Reducer</code>’s state in response to the action received.</p>
+<p>Additional <code>Action</code>s that need to be performed as a side-effect of an <code>Action</code> should be
+<a href="trait.Effects.html" title="trait composable::Effects">invoked</a> on <code>send</code>.
+The logic of the feature is performed by mutating its current <code>State</code> with <code>Action</code>s.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Clone, Debug, Default, PartialEq)]
+</span><span class="kw">struct </span>State {
+    n: usize,
+}
+
+<span class="attr">#[derive(Debug, PartialEq)]
+</span><span class="kw">enum </span>Action {
+    Increment,
+    Decrement,
+}</code></pre></div>
+<p>This is most easily done by implementing the <a href="trait.Reducer.html" title="trait composable::Reducer"><code>Reducer</code></a> trait directly on it’s <code>State</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>Action::<span class="kw-2">*</span>;
+<span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+
+    <span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, _send: <span class="kw">impl </span>Effects&lt;Action=<span class="self">Self</span>::Action&gt;) {
+        <span class="kw">match </span>action {
+            Increment =&gt; {
+                <span class="self">self</span>.n += <span class="number">1</span>;
+            }
+            Decrement =&gt; {
+                <span class="self">self</span>.n -= <span class="number">1</span>;
+            }
+        }
+    }
+}</code></pre></div>
+<p>The <code>reduce</code> method’s first responsibility is to mutate the feature’s current state given an <code>action</code>. Its second responsibility is to trigger effects that feed
+their actions back into the system. Currently <code>reduce</code> does not need to run any <code>Effects</code> so <code>_send</code> goes unused.</p>
+<p>If the action does need side effects, then more would need to be done. For example, if <code>reduce</code> always maintained an even number for the <code>State</code>, then each
+<code>Increment</code> and <code>Decrement</code> would need an effect to follow:<sup id="fnref1"><a href="#fn1">1</a></sup></p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>Action::<span class="kw-2">*</span>;
+<span class="kw">impl </span>Reducer <span class="kw">for </span>State {
+    <span class="kw">type </span>Action = Action;
+
+    <span class="comment">// This reducer ensures the value is always an even number
+    </span><span class="kw">fn </span>reduce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, action: Action, send: <span class="kw">impl </span>Effects&lt;Action=<span class="self">Self</span>::Action&gt;) {
+        <span class="kw">match </span>action {
+            Increment =&gt; {
+                <span class="self">self</span>.n += <span class="number">1</span>;
+                <span class="kw">if </span><span class="self">self</span>.n % <span class="number">2 </span>== <span class="number">1 </span>{
+                    send.action(Increment); <span class="comment">// ⬅︎
+                </span>}
+            }
+            Decrement =&gt; {
+                <span class="self">self</span>.n -= <span class="number">1</span>;
+                <span class="kw">if </span><span class="self">self</span>.n % <span class="number">2 </span>== <span class="number">1 </span>{
+                    send.action(Decrement); <span class="comment">// ⬅︎
+                </span>}
+            }
+        }
+    }
+}</code></pre></div>
+<ul>
+<li>See <a href="testing/struct.TestStore.html" title="struct composable::testing::TestStore"><code>TestStore</code></a> for a more complete test of this example.</li>
+<li>See <a href="trait.Effects.html" title="trait composable::Effects"><code>Effects</code></a> for all of the effects that can be used within a <code>Reducer</code>.</li>
+</ul>
+<div class="footnotes"><hr><ol><li id="fn1"><p><small>Granted, real code could just adjust the values by two. It <em>is</em> a contrived example to show how to use <code>Effects</code>, after all.</small>&nbsp;<a href="#fnref1">↩</a></p></li></ol></div></div></details></div><h2 id="dyn-compatibility" class="section-header">Dyn Compatibility<a href="#dyn-compatibility" class="anchor">§</a></h2><div class="dyn-compatibility-info"><p>This trait is <b>not</b> <a href="https://doc.rust-lang.org/nightly/reference/items/traits.html#dyn-compatibility">dyn compatible</a>.</p><p><i>In older versions of Rust, dyn compatibility was called "object safety".</i></p></div><h2 id="foreign-impls" class="section-header">Implementations on Foreign Types<a href="#foreign-impls" class="anchor">§</a></h2><details class="toggle implementors-toggle"><summary><section id="impl-Reducer-for-Box%3CT%3E" class="impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#21-30">Source</a><a href="#impl-Reducer-for-Box%3CT%3E" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a> for <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;T&gt;<div class="where">where
+    T: <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>,</div></h3></section></summary><div class="impl-items"><section id="associatedtype.Action-1" class="associatedtype trait-impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#25">Source</a><a href="#associatedtype.Action-1" class="anchor">§</a><h4 class="code-header">type <a href="#associatedtype.Action" class="associatedtype">Action</a> = &lt;T as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a></h4></section><section id="method.reduce" class="method trait-impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#27-29">Source</a><a href="#method.reduce" class="anchor">§</a><h4 class="code-header">fn <a href="#tymethod.reduce" class="fn">reduce</a>(
+    &amp;mut self,
+    action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>,
+    send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Action = Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;,
+)</h4></section></div></details><details class="toggle implementors-toggle"><summary><section id="impl-Reducer-for-Option%3CT%3E" class="impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#32-43">Source</a><a href="#impl-Reducer-for-Option%3CT%3E" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a> for <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;<div class="where">where
+    T: <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>,</div></h3></section></summary><div class="impl-items"><section id="associatedtype.Action-2" class="associatedtype trait-impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#36">Source</a><a href="#associatedtype.Action-2" class="anchor">§</a><h4 class="code-header">type <a href="#associatedtype.Action" class="associatedtype">Action</a> = &lt;T as <a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a>&gt;::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a></h4></section><section id="method.reduce-1" class="method trait-impl"><a class="src rightside" href="../src/composable/reducer/mod.rs.html#38-42">Source</a><a href="#method.reduce-1" class="anchor">§</a><h4 class="code-header">fn <a href="#tymethod.reduce" class="fn">reduce</a>(
+    &amp;mut self,
+    action: Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>,
+    send: impl <a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a>&lt;Action = Self::<a class="associatedtype" href="trait.Reducer.html#associatedtype.Action" title="type composable::Reducer::Action">Action</a>&gt;,
+)</h4></section></div></details><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../trait.impl/composable/reducer/trait.Reducer.js" data-ignore-extern-crates="alloc,core" async></script></section></div></main><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script>mermaid.init({ startOnLoad: true, theme: 'base' }, "pre.language-mermaid > code");</script>
+
+</body></html>

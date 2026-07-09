@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["Composable","Reducers"],"enum":["Interval"],"mod":["about","testing"],"struct":["Store","Task"],"trait":["Effects","Reducer","Scheduler"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["nth","nth_smoothed_fibonacci"],"mod":["fonts","spacing"]};

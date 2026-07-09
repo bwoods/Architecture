@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Event","Gesture"],"macro":["include_snapshot","ui_id"],"mod":["gpu","svg","text"],"struct":["Circle","ContinuousRoundedRectangle","Ellipse","Rectangle","RoundedRectangle","Spacer"],"trait":["Horizontal","Output","Path","Vertical","View"],"type":["Bounds","Id","Offsets","Point","Size","Transform"]};

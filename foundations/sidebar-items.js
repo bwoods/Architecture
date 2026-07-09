@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["inter","nord","noto","scales","table","text"]};

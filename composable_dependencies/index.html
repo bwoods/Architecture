@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Ergonomic dependency handling."><title>composable_dependencies - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable_dependencies" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (f10db292a 2026-07-07)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script src="https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@11/dist/mermaid.tiny.js"></script>
+</head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate composable_dependencies</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable_dependencies/index.html">composable_<wbr>dependencies</a><span class="version">0.7.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#ergonomic-dependency-handling" title="Ergonomic dependency handling.">Ergonomic dependency handling.</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>composable_<wbr>dependencies</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/composable_dependencies/lib.rs.html#1-76">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="ergonomic-dependency-handling"><a class="doc-anchor" href="#ergonomic-dependency-handling">§</a>Ergonomic dependency handling.</h2>
+<p>Dependencies represent resources and effects needed by the application that are outside if its the control: from network requests and file system access all the way
+down to random number generators and the measurement of time.</p>
+<p>Dependency Injection, Dependency Mocking, and other patterns and frameworks are all designed to avoid the problems that application dependencies cause for testing:
+reliability and performance both suffer.</p>
+<p>This crate attempts make dependency handling easy; encouraging its use.</p>
+<!--
+
+# Registering dependencies
+
+
+
+
+
+# Using dependencies
+
+
+
+
+
+# Designing dependencies
+
+
+
+
+
+# Testing with dependencies
+
+--></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Dependency.html" title="struct composable_dependencies::Dependency">Dependency</a></dt><dd>A wrapper type for accessing dependencies</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.DependencyDefault.html" title="trait composable_dependencies::DependencyDefault">Dependency<wbr>Default</a></dt><dd>The default value for a dependency.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.with_dependencies.html" title="fn composable_dependencies::with_dependencies">with_<wbr>dependencies</a></dt><dd>Supply a tuple of dependencies for the supplied closure</dd><dt><a class="fn" href="fn.with_dependency.html" title="fn composable_dependencies::with_dependency">with_<wbr>dependency</a></dt><dd>Supply a single dependency for the supplied closure.</dd></dl></section></div></main><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script>mermaid.init({ startOnLoad: true, theme: 'base' }, "pre.language-mermaid > code");</script>
+
+</body></html>

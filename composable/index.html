@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A Composable Architecture"><title>composable - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="composable" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (f10db292a 2026-07-07)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script src="https://cdn.jsdelivr.net/npm/@mermaid-js/tiny@11/dist/mermaid.tiny.js"></script>
+</head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate composable</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../composable/index.html">composable</a><span class="version">0.7.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#a-composable-architecture" title="A Composable Architecture">A Composable Architecture</a><ul><li><a href="#license" title="License">License</a></li></ul></li><li><a href="#why-use-composable" title="Why use Composable?">Why use Composable?</a><ul><li><a href="#note" title="Note">Note</a></li><li><a href="#usage" title="Usage">Usage</a></li></ul></li></ul><h3><a href="#reexports">Crate Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#derives" title="Derive Macros">Derive Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>composable</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/composable/lib.rs.html#1-35">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="a-composable-architecture"><a class="doc-anchor" href="#a-composable-architecture">§</a>A Composable Architecture</h2>
+<p>The Swift Composable Architecture library improves upon previous Redux-inspired patterns by leveraging the capabilities of the Swift language to achieve better
+<strong>Type Safety</strong>, <strong>Ergonomics</strong> and <strong>Performance</strong>.</p>
+<p>This crate attempts to do the same to the Swift Composable Architecture itself by further leveraging the capabilities of the Rust language and ecosystem.</p>
+<details>
+<summary><strong>What is the Swift Composable Architecture?</strong></summary>
+<blockquote>
+<p>The <a href='https://github.com/pointfreeco/swift-composable-architecture'>Composable Architecture</a> (TCA, for short) is a library for building applications in a consistent and understandable way, with composition, testing, and ergonomics in mind. It can be used in SwiftUI, UIKit, and more, and on any Apple platform (iOS, macOS, tvOS, and watchOS).</p>
+<h2>Learn More</h2>
+<p>The Composable Architecture was designed over the course of many episodes on <a href='https://www.pointfree.co/'>Point•Free</a>, a video series exploring functional programming and the Swift language, hosted by Brandon Williams and Stephen Celis.</p>
+<p><img src="https://raw.githubusercontent.com/bwoods/Architecture/develop/about/images/Brandon%20Williams%20and%20Stephen%20Celis.jpeg" referrerpolicy="no-referrer"></p>
+</blockquote>
+</details>
+<p>The API has diverged to better reflect the different strengths (and weaknesses) of Rust and Swift, but
+the <a href="https://pointfreeco.github.io/swift-composable-architecture/main/documentation/composablearchitecture/">core ideals</a> are the same.</p>
+<ul>
+<li>
+<p><strong>State management</strong></p>
+<p>Using <code>State</code>s and <code>Reducer</code>s to manage Rust’s restrictions
+on <a href="https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability">Variables and Mutability</a>…</p>
+</li>
+<li>
+<p><strong>Composition</strong></p>
+</li>
+<li>
+<p><strong>Side effects</strong></p>
+</li>
+<li>
+<p><strong>Testing</strong></p>
+</li>
+<li>
+<p><strong>Ergonomics</strong></p>
+</li>
+</ul>
+<h3 id="license"><a class="doc-anchor" href="#license">§</a>License</h3>
+<p>Distributed under the terms of both the MIT license and the Apache License (Version 2.0)</p>
+<p>See <a href="LICENSE-APACHE.md">LICENSE-APACHE</a> and <a href="LICENSE-MIT.md">LICENSE-MIT</a> for details.</p>
+<h4 id="contribution"><a class="doc-anchor" href="#contribution">§</a>Contribution</h4>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual
+licensed as above, without any additional terms or conditions.</p>
+<h2 id="why-use-composable"><a class="doc-anchor" href="#why-use-composable">§</a>Why use Composable?</h2>
+<p>A composable architecture is based around…</p>
+<blockquote>
+<h4 id="note"><a class="doc-anchor" href="#note">§</a>Note</h4>
+<p>If you have already used another unidirectional data flow architecture for application state management, the main take-away is that the State-Reducer pattern is a
+great fit to Rust’s restrictions on <a href="https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#variables-and-mutability">Variables and Mutability</a>:</p>
+<ul>
+<li>Rust requires mutable references to be unique</li>
+<li>State mutations may only happen within a Reducer</li>
+</ul>
+</blockquote>
+<p>As for <em>this crate</em> specifically. Features include:</p>
+<ul>
+<li>
+<p><strong>Small</strong></p>
+<p>The core functionality is around 3000 lines of code and has minimal dependancies.<sup id="fnref1"><a href="#fn1">1</a></sup></p>
+</li>
+<li>
+<p><strong>Fast</strong></p>
+<p><code>Store::send</code> takes less than 20 nanoseconds.<br />
+<code>Effects::action</code>s are 5–10× faster.</p>
+</li>
+<li>
+<p><strong>Reliable</strong></p>
+<p>No unsafe code.</p>
+</li>
+</ul>
+<p>Furthermore, the optional <code>async</code> handling is done without dependence on a runtime. A <code>Store</code> runs its <code>Reducer</code> entirely within a single thread. At the same time,
+<code>Effects</code> make it easy for an application to run code, concurrently or in parallel, that feeds its results back into the appropriate <code>Reducer</code>.</p>
+<h3 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h3>
+<p>To use Composable, place the following line under the <code>[dependencies]</code> section in your <code>Cargo.toml</code>:</p>
+<div class="example-wrap"><pre class="language-toml"><code>composable = { version = &quot;0.7&quot;, git = &quot;https://github.com/bwoods/Architecture.git&quot; }</code></pre></div><h4 id="other-crates-in-the-workspace"><a class="doc-anchor" href="#other-crates-in-the-workspace">§</a>Other crates in the workspace</h4>
+<ul>
+<li><a href="../composable_dependencies/index.html"><code>composable-dependencies</code></a> supplies scoped/overrideable dependancies.</li>
+<li><a href="../composable_views/index.html"><code>composable-views</code></a> implements  immediate-mode user interface elements that interface directly with <code>Reducer</code> <code>Actions</code>.
+<ul>
+<li>The <code>examples</code> crate within the workspace serves to both drive development and document usage of <code>composable-views</code>.</li>
+<li><strong>Note</strong> that <code>composable_views</code> is under heavy development, and changes to it are not considered a semver breaking change.</li>
+</ul>
+</li>
+</ul>
+<div class="footnotes"><hr><ol><li id="fn1"><p>As counted with <code>tokei composable-architecture composable-dependencies --exclude benches</code>.&nbsp;<a href="#fnref1">↩</a></p></li></ol></div></div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.From"><code>pub use derive_macros::From;</code></dt><dt id="reexport.TryInto"><code>pub use derive_macros::TryInto;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="about/index.html" title="mod composable::about">about</a></dt><dd><strong>Getting Started</strong></dd><dt><a class="mod" href="testing/index.html" title="mod composable::testing">testing</a><wbr><span class="stab portability" title="Available on crate features `testing` only"><code>testing</code></span></dt><dd>One of the benefits of a Composable Architecture is how much easier it makes the testing of complex domains.</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Store.html" title="struct composable::Store">Store</a></dt><dd>The state container for the application.</dd><dt><a class="struct" href="struct.Task.html" title="struct composable::Task">Task</a></dt></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Interval.html" title="enum composable::Interval">Interval</a></dt><dd>When a <a href="trait.Scheduler.html" title="trait composable::Scheduler"><code>Scheduler</code></a> uses a repeating interval, that interval can begin immediately, a <code>Leading</code>
+interval, or it may begin after the first delay, a <code>Trailing</code> interval.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Effects.html" title="trait composable::Effects">Effects</a></dt><dt><a class="trait" href="trait.Reducer.html" title="trait composable::Reducer">Reducer</a></dt><dd><code>Reducer</code>s are responsible for updating a <code>Store</code>’s state in response to its <code>Action</code>s.</dd><dt><a class="trait" href="trait.Scheduler.html" title="trait composable::Scheduler">Scheduler</a></dt><dd><code>Effects</code> are also <code>Scheduler</code>s — able to apply modifiers to when (and how often) <code>Action</code>s are sent.</dd></dl><h2 id="derives" class="section-header">Derive Macros<a href="#derives" class="anchor">§</a></h2><dl class="item-table"><dt><a class="derive" href="derive.Composable.html" title="derive composable::Composable">Composable</a></dt><dd>Derives a <code>Reducer</code> implementation that recurses through child <code>Reducer</code>s</dd><dt><a class="derive" href="derive.Reducers.html" title="derive composable::Reducers">Reducers</a></dt><dd>Derives a new trait that contains a method for each Action.</dd></dl></section></div></main><!--
+	How we integrated mermaid with our docs
+	  — https://github.com/mersinvald/aquamarine/issues/20
+-->
+<script>mermaid.init({ startOnLoad: true, theme: 'base' }, "pre.language-mermaid > code");</script>
+
+</body></html>
