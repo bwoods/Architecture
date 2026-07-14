@@ -17,9 +17,9 @@ mod rendering;
 mod versioning;
 mod windowing;
 
-#[path = "../foundations/inter/mod.rs"]
+#[path = "../fundamentals/inter/mod.rs"]
 mod inter;
-#[path = "../foundations/nord/mod.rs"]
+#[path = "../fundamentals/nord/mod.rs"]
 mod nord;
 
 #[derive(Clone, From, TryInto)]

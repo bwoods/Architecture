@@ -48,5 +48,5 @@ name = "Alarm" # used as the application menu title
 path = "alarm/main.rs"
 
 [lib]
-name = "foundations"
-path = "foundations/mod.rs"
+name = "fundamentals"
+path = "fundamentals/mod.rs"
