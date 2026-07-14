@@ -215,7 +215,7 @@ impl State {
 
                 queue.submit([encoder.finish()]);
                 // window.pre_present_notify();
-                output.present();
+                queue.present(output);
             }
         }
     }
@@ -293,6 +293,7 @@ impl Reducers for State {
                     power_preference: PowerPreference::default(), // TODO
                     force_fallback_adapter: false,
                     compatible_surface: Some(&surface),
+                    apply_limit_buckets: false,
                 })
                 .await
                 .expect("adapter");
@@ -359,11 +360,11 @@ impl Reducers for State {
             vertex: VertexState {
                 module: &shader,
                 entry_point: None,
-                buffers: &[VertexBufferLayout {
+                buffers: &[Some(VertexBufferLayout {
                     attributes: &vertex_attr_array![0 => Uint32, 1 => Uint32],
                     array_stride: size_of::<(u32, u32)>() as BufferAddress,
                     step_mode: VertexStepMode::Vertex,
-                }],
+                })],
                 compilation_options: Default::default(),
             },
             fragment: Some(FragmentState {

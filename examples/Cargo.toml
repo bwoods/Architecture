@@ -34,13 +34,13 @@ directories = "6.0"
 winit = "0.31.0-beta.2"
 meshopt = "0.6.2"
 chrono = "0.4.42"
-wgpu = "29.0.3"
+wgpu = "30.0.0"
 muda = "0.19.1"
 dpi = "0.1.2"
 
 
 [dev-dependencies]
-bit-set = { version = "0.10", default-features = false }
+bit-set = { version = "0.11.1", default-features = false }
 
 
 [[bin]]
